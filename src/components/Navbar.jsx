@@ -88,7 +88,7 @@ export default function Navbar({ title, onMenuClick }) {
   }, [searchOpen]);
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-slate-200/80 bg-white/95 px-4 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-950/95 lg:px-6"
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-slate-200/80 bg-white/95 px-4 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-950/95 sm:px-6 lg:px-8"
       style={{ boxShadow: "0 1px 0 rgba(15,23,42,0.06), 0 4px 16px rgba(15,23,42,0.04)" }}
     >
       {/* Mobile menu */}

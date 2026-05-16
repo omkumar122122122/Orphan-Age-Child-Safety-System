@@ -7,13 +7,14 @@ const fadeUp = {
   transition: { duration: 0.22, ease: [0.16, 1, 0.3, 1] }
 };
 
-export default function Card({ children, className = "", hover = false }) {
+export default function Card({ children, className = "", hover = false, padding = true }) {
   return (
     <motion.section
       {...fadeUp}
       className={classNames(
         "rounded-2xl border border-slate-200/80 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900",
         hover && "transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover",
+        padding && "p-6",
         className
       )}
     >

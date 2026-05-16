@@ -70,7 +70,7 @@ function SidebarContent({ navItems, roleLabel, user, collapsed, onToggle, onLogo
   return (
     <div className="flex h-full flex-col">
       {/* ── Brand ──────────────────────────────── */}
-      <div className={classNames("flex items-center gap-3 px-4 py-5", collapsed ? "justify-center px-3" : "")}>
+      <div className={classNames("flex items-center gap-3 px-3 py-5", collapsed ? "justify-center" : "px-4")}>
         <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-civic-500 to-indigo-600 shadow-lg shadow-civic-600/30 ring-1 ring-white/10">
           <FiShield className="h-[18px] w-[18px] text-white" />
           <span className={classNames("absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-sidebar", accent.dot)} />
@@ -97,7 +97,7 @@ function SidebarContent({ navItems, roleLabel, user, collapsed, onToggle, onLogo
       <div className="mx-4 h-px bg-white/6" />
 
       {/* ── Navigation ─────────────────────────── */}
-      <nav className="flex-1 overflow-y-auto px-2 py-4" aria-label="Sidebar navigation">
+      <nav className="flex-1 overflow-y-auto px-3 py-3" aria-label="Sidebar navigation">
         <div className="space-y-0.5">
           {navItems.map((item) => (
             <NavItem key={item.path} item={item} collapsed={collapsed} />
@@ -110,8 +110,8 @@ function SidebarContent({ navItems, roleLabel, user, collapsed, onToggle, onLogo
 
       {/* ── User profile footer ─────────────────── */}
       {user && (
-        <div className={classNames("px-2 py-3", collapsed ? "px-2" : "")}>
-          <div className={classNames("flex items-center gap-3 rounded-xl px-3 py-2.5", collapsed ? "justify-center px-2" : "")}>
+        <div className={classNames("px-3 py-3", collapsed ? "px-3" : "")}>
+          <div className={classNames("flex items-center gap-3 rounded-xl px-2 py-2.5", collapsed ? "justify-center" : "")}>
             <div className={classNames(
               "flex shrink-0 items-center justify-center rounded-xl text-xs font-bold text-white shadow-sm",
               "h-8 w-8",
@@ -137,7 +137,7 @@ function SidebarContent({ navItems, roleLabel, user, collapsed, onToggle, onLogo
           <button
             onClick={onLogout}
             className={classNames(
-              "group mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-500 transition-all hover:bg-red-500/10 hover:text-red-400",
+              "group mt-1 flex w-full items-center gap-3 rounded-xl px-2 py-2 text-xs font-medium text-slate-500 transition-all hover:bg-red-500/10 hover:text-red-400",
               collapsed ? "justify-center" : ""
             )}
             aria-label="Sign out"

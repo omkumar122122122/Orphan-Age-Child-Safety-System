@@ -36,7 +36,7 @@ export default function AdminDashboard() {
   const { user } = useAuth();
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-6">
       <Breadcrumb items={["Admin", "Dashboard"]} />
 
       {/* ── Welcome banner ─────────────────────────────── */}

@@ -20,7 +20,7 @@ export default function NotificationPanel({ items = [] }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+      <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800">
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-civic-50 text-civic-600 dark:bg-civic-500/10 dark:text-civic-400">
             <FiBell className="h-3.5 w-3.5" />
@@ -53,7 +53,7 @@ export default function NotificationPanel({ items = [] }) {
                 initial={{ opacity: 0, x: -6 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.04 }}
-                className="flex items-start gap-3 px-5 py-3.5 transition-colors hover:bg-slate-50/60 dark:hover:bg-slate-800/30"
+                className="flex items-start gap-3 px-6 py-4 transition-colors hover:bg-slate-50/60 dark:hover:bg-slate-800/30"
               >
                 <div className={classNames("relative mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", tone.bg)}>
                   <Icon className="h-3.5 w-3.5" />

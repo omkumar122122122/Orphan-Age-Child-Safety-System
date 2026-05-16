@@ -72,7 +72,7 @@ function CellValue({ col, value }) {
 
 export default function DataTable({ columns, rows, onRowClick }) {
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto -mx-[1px]">
       <table className="min-w-full">
         <thead className="table-header">
           <tr>
