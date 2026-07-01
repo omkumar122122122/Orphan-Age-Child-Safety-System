@@ -219,6 +219,7 @@ export const orphanages = [
     establishmentDate: "2012-06-18",
     organizationType: "NGO",
     numberOfChildren: 164,
+    totalAdmissions: 238,
     capacity: 180,
     officialEmail: "office@sunrisecare.org",
     phone: "+91 98765 40001",
@@ -298,9 +299,9 @@ export const orphanages = [
     occupancy: 164,
     compliance: 94
   },
-  { id: "ORP-002", name: "Hope Nest", city: "Jaipur", capacity: 120, occupancy: 101, compliance: 91 },
-  { id: "ORP-003", name: "Little Steps", city: "Lucknow", capacity: 90, occupancy: 86, compliance: 88 },
-  { id: "ORP-004", name: "Care Bridge", city: "Bhopal", capacity: 130, occupancy: 119, compliance: 96 }
+  { id: "ORP-002", name: "Hope Nest", city: "Jaipur", capacity: 120, occupancy: 101, compliance: 91, totalAdmissions: 176 },
+  { id: "ORP-003", name: "Little Steps", city: "Lucknow", capacity: 90, occupancy: 86, compliance: 88, totalAdmissions: 129 },
+  { id: "ORP-004", name: "Care Bridge", city: "Bhopal", capacity: 130, occupancy: 119, compliance: 96, totalAdmissions: 158 }
 ];
 
 export const notifications = [

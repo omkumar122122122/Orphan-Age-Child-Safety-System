@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import Breadcrumb from "../components/Breadcrumb";
 import Card from "../components/Card";
 import DataTable from "../components/DataTable";
@@ -5,6 +6,7 @@ import { orphanages } from "../data/dummyData";
 import { percentage } from "../utils/formatters";
 
 export default function Orphanages() {
+  const navigate = useNavigate();
   const rows = orphanages.map((item) => ({
     ...item,
     occupancyRate: percentage(item.occupancy, item.capacity),
@@ -29,6 +31,7 @@ export default function Orphanages() {
             { key: "complianceRate", label: "Compliance" }
           ]}
           rows={rows}
+          onRowClick={(orphanage) => navigate(`/admin/orphanages/${orphanage.id}`)}
         />
       </Card>
     </div>
