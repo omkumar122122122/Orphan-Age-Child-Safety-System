@@ -1,4 +1,4 @@
-import { FiArrowLeft, FiFileText, FiHome, FiLogOut, FiMail, FiPhone, FiShield, FiUserCheck, FiUsers } from "react-icons/fi";
+import { FiArrowLeft, FiFileText, FiHome, FiMail, FiPhone, FiShield, FiUserCheck, FiUsers } from "react-icons/fi";
 import { useNavigate, useParams } from "react-router-dom";
 import Breadcrumb from "../components/Breadcrumb";
 import Button from "../components/Button";
@@ -10,7 +10,7 @@ import { roleLabels } from "../utils/constants";
 export default function ParentProfile() {
   const { parentId } = useParams();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const visibleChildren =
     user?.role === "orphanage" ? children.filter((child) => child.orphanage === user.department) : children;
   const child = visibleChildren.find((item) => item.parentDetails?.id === parentId);
@@ -80,26 +80,7 @@ export default function ParentProfile() {
           <Field icon={FiFileText} label="Post-adoption Follow-up" value={parent.postAdoptionFollowUp} className="xl:col-span-2" />
         </dl>
       </Card>
-      <LogoutSection onLogout={logout} />
     </div>
-  );
-}
-
-function LogoutSection({ onLogout }) {
-  return (
-    <Card>
-      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-        <div>
-          <h2 className="text-base font-bold text-slate-950 dark:text-white">Account Actions</h2>
-          <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
-            End the current secure dashboard session.
-          </p>
-        </div>
-        <Button variant="danger" icon={FiLogOut} onClick={onLogout} className="w-full md:w-auto">
-          Logout
-        </Button>
-      </div>
-    </Card>
   );
 }
 

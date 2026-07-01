@@ -9,6 +9,8 @@ import Children from "../pages/Children";
 import Login from "../pages/Login";
 import NotFound from "../pages/NotFound";
 import OrphanageDashboard from "../pages/OrphanageDashboard";
+import OrphanageDetail from "../pages/OrphanageDetail";
+import OrphanageFullProfile from "../pages/OrphanageFullProfile";
 import Orphanages from "../pages/Orphanages";
 import ParentDashboard from "../pages/ParentDashboard";
 import ParentProfile from "../pages/ParentProfile";
@@ -33,6 +35,8 @@ export default function AppRoutes() {
           <Route path="register-child" element={<RegisterChild />} />
           <Route path="register-orphanage" element={<RegisterOrphanage />} />
           <Route path="orphanages" element={<Orphanages />} />
+          <Route path="orphanages/:orphanageId" element={<OrphanageDetail />} />
+          <Route path="orphanages/:orphanageId/profile" element={<OrphanageFullProfile />} />
           <Route path="alerts" element={<Alerts />} />
           <Route path="profile" element={<Profile />} />
         </Route>
