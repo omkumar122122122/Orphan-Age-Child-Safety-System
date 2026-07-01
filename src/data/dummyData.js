@@ -1,4 +1,4 @@
-import { FiActivity, FiAlertTriangle, FiHome, FiShield, FiUsers } from "react-icons/fi";
+import { FiActivity, FiAlertTriangle, FiHome, FiPlusCircle, FiShield, FiUser, FiUsers } from "react-icons/fi";
 
 export const users = [
   {
@@ -102,18 +102,22 @@ export const riskDistribution = {
 export const adminNav = [
   { label: "Dashboard", path: "/admin", icon: FiActivity },
   { label: "Children", path: "/admin/children", icon: FiUsers },
+  { label: "Register Child", path: "/admin/register-child", icon: FiPlusCircle },
   { label: "Orphanages", path: "/admin/orphanages", icon: FiHome },
-  { label: "Alerts", path: "/admin/alerts", icon: FiAlertTriangle }
+  { label: "Alerts", path: "/admin/alerts", icon: FiAlertTriangle },
+  { label: "Profile", path: "/admin/profile", icon: FiUser }
 ];
 
 export const parentNav = [
   { label: "Dashboard", path: "/parent", icon: FiActivity },
-  { label: "Child Profile", path: "/parent/profile", icon: FiUsers },
+  { label: "Profile", path: "/parent/profile", icon: FiUser },
   { label: "Notifications", path: "/parent/notifications", icon: FiAlertTriangle }
 ];
 
 export const orphanageNav = [
   { label: "Dashboard", path: "/orphanage", icon: FiActivity },
   { label: "Children", path: "/orphanage/children", icon: FiUsers },
-  { label: "Reports", path: "/orphanage/reports", icon: FiShield }
+  { label: "Register Child", path: "/orphanage/register-child", icon: FiPlusCircle },
+  { label: "Reports", path: "/orphanage/reports", icon: FiShield },
+  { label: "Profile", path: "/orphanage/profile", icon: FiUser }
 ];

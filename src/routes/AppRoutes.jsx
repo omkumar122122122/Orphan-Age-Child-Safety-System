@@ -4,6 +4,7 @@ import OrphanageLayout from "../layouts/OrphanageLayout";
 import ParentLayout from "../layouts/ParentLayout";
 import AdminDashboard from "../pages/AdminDashboard";
 import Alerts from "../pages/Alerts";
+import ChildProfile from "../pages/ChildProfile";
 import Children from "../pages/Children";
 import Login from "../pages/Login";
 import NotFound from "../pages/NotFound";
@@ -11,6 +12,7 @@ import OrphanageDashboard from "../pages/OrphanageDashboard";
 import Orphanages from "../pages/Orphanages";
 import ParentDashboard from "../pages/ParentDashboard";
 import Profile from "../pages/Profile";
+import RegisterChild from "../pages/RegisterChild";
 import Reports from "../pages/Reports";
 import ProtectedRoute from "./ProtectedRoute";
 
@@ -24,8 +26,11 @@ export default function AppRoutes() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
           <Route path="children" element={<Children />} />
+          <Route path="children/:childId" element={<ChildProfile />} />
+          <Route path="register-child" element={<RegisterChild />} />
           <Route path="orphanages" element={<Orphanages />} />
           <Route path="alerts" element={<Alerts />} />
+          <Route path="profile" element={<Profile />} />
         </Route>
       </Route>
 
@@ -41,7 +46,10 @@ export default function AppRoutes() {
         <Route path="/orphanage" element={<OrphanageLayout />}>
           <Route index element={<OrphanageDashboard />} />
           <Route path="children" element={<Children />} />
+          <Route path="children/:childId" element={<ChildProfile />} />
+          <Route path="register-child" element={<RegisterChild />} />
           <Route path="reports" element={<Reports />} />
+          <Route path="profile" element={<Profile />} />
         </Route>
       </Route>
 

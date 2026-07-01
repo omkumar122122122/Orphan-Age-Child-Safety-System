@@ -1,10 +1,10 @@
-import { FiLogOut, FiMenu } from "react-icons/fi";
+import { FiMenu } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
 import Button from "./Button";
 import ThemeToggle from "./ThemeToggle";
 
 export default function Navbar({ title, onMenuClick }) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   return (
     <header className="sticky top-0 z-30 border-b border-white/50 bg-white/70 px-4 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/70 lg:px-8">
@@ -25,9 +25,6 @@ export default function Navbar({ title, onMenuClick }) {
               <p className="text-xs text-slate-500 dark:text-slate-400">{user?.department}</p>
             </div>
           </div>
-          <Button variant="danger" icon={FiLogOut} onClick={logout} className="px-3">
-            <span className="hidden sm:inline">Logout</span>
-          </Button>
         </div>
       </div>
     </header>

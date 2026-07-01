@@ -1,6 +1,6 @@
 import { riskClasses } from "../utils/constants";
 
-export default function DataTable({ columns, rows }) {
+export default function DataTable({ columns, rows, onRowClick }) {
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white/80 dark:border-slate-800 dark:bg-slate-900/70">
       <div className="overflow-x-auto">
@@ -16,7 +16,18 @@ export default function DataTable({ columns, rows }) {
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {rows.map((row) => (
-              <tr key={row.id} className="transition hover:bg-civic-50/60 dark:hover:bg-slate-800/70">
+              <tr
+                key={row.id}
+                className={`transition hover:bg-civic-50/60 dark:hover:bg-slate-800/70 ${onRowClick ? "cursor-pointer" : ""}`}
+                onClick={() => onRowClick?.(row)}
+                tabIndex={onRowClick ? 0 : undefined}
+                onKeyDown={(event) => {
+                  if (onRowClick && (event.key === "Enter" || event.key === " ")) {
+                    event.preventDefault();
+                    onRowClick(row);
+                  }
+                }}
+              >
                 {columns.map((column) => {
                   const value = row[column.key];
                   return (

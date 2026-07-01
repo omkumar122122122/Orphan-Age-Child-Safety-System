@@ -13,8 +13,8 @@ export default function DashboardLayout({ navItems, role, title }) {
     <div className="min-h-screen lg:flex">
       <Sidebar navItems={navItems} roleLabel={roleLabels[role]} />
       {open && (
-        <div className="fixed inset-0 z-40 bg-slate-950/55 lg:hidden">
-          <div className="h-full w-80 max-w-[86vw] bg-white p-5 shadow-2xl dark:bg-slate-950">
+        <div className="fixed inset-0 z-40 bg-slate-950/55 lg:hidden" onClick={() => setOpen(false)}>
+          <div className="h-full w-80 max-w-[86vw] bg-white p-5 shadow-2xl dark:bg-slate-950" onClick={(event) => event.stopPropagation()}>
             <div className="mb-5 flex justify-end">
               <Button variant="ghost" icon={FiX} onClick={() => setOpen(false)} aria-label="Close navigation" className="px-3" />
             </div>
