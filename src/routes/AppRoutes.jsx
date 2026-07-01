@@ -11,6 +11,7 @@ import NotFound from "../pages/NotFound";
 import OrphanageDashboard from "../pages/OrphanageDashboard";
 import Orphanages from "../pages/Orphanages";
 import ParentDashboard from "../pages/ParentDashboard";
+import ParentProfile from "../pages/ParentProfile";
 import Profile from "../pages/Profile";
 import RegisterChild from "../pages/RegisterChild";
 import Reports from "../pages/Reports";
@@ -27,6 +28,7 @@ export default function AppRoutes() {
           <Route index element={<AdminDashboard />} />
           <Route path="children" element={<Children />} />
           <Route path="children/:childId" element={<ChildProfile />} />
+          <Route path="parent-profiles/:parentId" element={<ParentProfile />} />
           <Route path="register-child" element={<RegisterChild />} />
           <Route path="orphanages" element={<Orphanages />} />
           <Route path="alerts" element={<Alerts />} />
@@ -47,6 +49,7 @@ export default function AppRoutes() {
           <Route index element={<OrphanageDashboard />} />
           <Route path="children" element={<Children />} />
           <Route path="children/:childId" element={<ChildProfile />} />
+          <Route path="parent-profiles/:parentId" element={<ParentProfile />} />
           <Route path="register-child" element={<RegisterChild />} />
           <Route path="reports" element={<Reports />} />
           <Route path="profile" element={<Profile />} />

@@ -79,13 +79,28 @@ export const children = [
     adopted: true,
     adoptionDate: "2025-02-18",
     parentDetails: {
+      id: "PAR-1034",
       fatherName: "Sourav Das",
+      fatherPhone: "+91 98765 21034",
+      fatherAadhaar: "XXXX-XXXX-1034",
+      fatherOccupation: "School Teacher",
       motherName: "Mitali Das",
-      contact: "+91 98765 21034",
+      motherPhone: "+91 98765 21035",
+      motherAadhaar: "XXXX-XXXX-2034",
+      motherOccupation: "Nurse",
+      financialCondition: "Stable middle-income household with verified monthly income.",
+      hasAnotherChild: true,
+      otherChildStatus: "Own child",
+      otherChildDetails: "One biological daughter, age 6.",
+      adoptionReason: "Family wanted to provide long-term care and education support to a child.",
+      voterId: "VTR-XXXX-1034",
       email: "das.family@example.com",
       address: "Civil Lines, Jaipur",
       adoptionOrderId: "ADP-2025-018",
-      followUpOfficer: "Ritika Sharma"
+      followUpOfficer: "Ritika Sharma",
+      homeStudyStatus: "Approved",
+      policeVerification: "Completed",
+      postAdoptionFollowUp: "Quarterly welfare visits scheduled through 2027."
     }
   },
   {
@@ -149,13 +164,28 @@ export const children = [
     adopted: true,
     adoptionDate: "2024-12-06",
     parentDetails: {
+      id: "PAR-1102",
       fatherName: "Arjun Sen",
+      fatherPhone: "+91 98765 21102",
+      fatherAadhaar: "XXXX-XXXX-1102",
+      fatherOccupation: "Bank Manager",
       motherName: "Nisha Sen",
-      contact: "+91 98765 21102",
+      motherPhone: "+91 98765 21103",
+      motherAadhaar: "XXXX-XXXX-2102",
+      motherOccupation: "Small Business Owner",
+      financialCondition: "Financially secure, verified savings and regular income.",
+      hasAnotherChild: false,
+      otherChildStatus: "No other child",
+      otherChildDetails: "No other children in the household.",
+      adoptionReason: "The parents completed counseling and chose adoption to build their family.",
+      voterId: "VTR-XXXX-1102",
       email: "sen.family@example.com",
       address: "Arera Colony, Bhopal",
       adoptionOrderId: "ADP-2024-102",
-      followUpOfficer: "Karan Joshi"
+      followUpOfficer: "Karan Joshi",
+      homeStudyStatus: "Approved",
+      policeVerification: "Completed",
+      postAdoptionFollowUp: "Monthly follow-up for the first six months, then quarterly."
     }
   },
   {

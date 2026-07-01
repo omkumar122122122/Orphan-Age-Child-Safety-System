@@ -32,6 +32,8 @@ export default function ChildProfile() {
     );
   }
 
+  const dashboardBase = user?.role === "admin" ? "/admin" : "/orphanage";
+
   return (
     <div className="space-y-6">
       <Breadcrumb items={[roleLabels[user.role], "Children", child.name]} />
@@ -91,11 +93,21 @@ export default function ChildProfile() {
       </Card>
       {child.adopted && child.parentDetails && (
         <Card>
-          <h2 className="text-lg font-extrabold text-slate-950 dark:text-white">Parent / Guardian Details</h2>
+          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+            <h2 className="text-lg font-extrabold text-slate-950 dark:text-white">Parent / Guardian Details</h2>
+            <Button
+              icon={FiUsers}
+              variant="secondary"
+              onClick={() => navigate(`${dashboardBase}/parent-profiles/${child.parentDetails.id}`)}
+            >
+              Follow Up Profile
+            </Button>
+          </div>
           <dl className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <Field icon={FiUserCheck} label="Father Name" value={child.parentDetails.fatherName} />
             <Field icon={FiUserCheck} label="Mother Name" value={child.parentDetails.motherName} />
-            <Field icon={FiPhone} label="Contact Number" value={child.parentDetails.contact} />
+            <Field icon={FiPhone} label="Father Phone" value={child.parentDetails.fatherPhone} />
+            <Field icon={FiPhone} label="Mother Phone" value={child.parentDetails.motherPhone} />
             <Field icon={FiMail} label="Email" value={child.parentDetails.email} />
             <Field icon={FiHome} label="Address" value={child.parentDetails.address} />
             <Field icon={FiFileText} label="Adoption Order ID" value={child.parentDetails.adoptionOrderId} />
