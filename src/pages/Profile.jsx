@@ -18,15 +18,6 @@ export default function Profile() {
       <div className="grid gap-6 xl:grid-cols-[0.7fr_1.3fr]">
         <div className="space-y-6">
           <ProfileCard user={user} />
-          <Card>
-            <h2 className="text-base font-bold text-slate-950 dark:text-white">Account Actions</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
-              End the current secure dashboard session from this profile page.
-            </p>
-            <Button variant="danger" icon={FiLogOut} onClick={logout} className="mt-5 w-full">
-              Logout
-            </Button>
-          </Card>
         </div>
         <Card>
           <h1 className="text-xl font-extrabold text-slate-950 dark:text-white">User Profile</h1>
@@ -51,7 +42,26 @@ export default function Profile() {
           </dl>
         </Card>
       )}
+      <LogoutSection onLogout={logout} />
     </div>
+  );
+}
+
+function LogoutSection({ onLogout }) {
+  return (
+    <Card>
+      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+        <div>
+          <h2 className="text-base font-bold text-slate-950 dark:text-white">Account Actions</h2>
+          <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
+            End the current secure dashboard session.
+          </p>
+        </div>
+        <Button variant="danger" icon={FiLogOut} onClick={onLogout} className="w-full md:w-auto">
+          Logout
+        </Button>
+      </div>
+    </Card>
   );
 }
 

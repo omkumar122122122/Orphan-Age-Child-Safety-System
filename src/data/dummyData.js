@@ -211,7 +211,93 @@ export const children = [
 ];
 
 export const orphanages = [
-  { id: "ORP-001", name: "Sunrise Care Home", city: "Delhi", capacity: 180, occupancy: 164, compliance: 94 },
+  {
+    id: "ORP-001",
+    name: "Sunrise Care Home",
+    registrationNumber: "REG-DL-2012-0148",
+    governmentLicenseNumber: "GOV-CW-DEL-4892",
+    establishmentDate: "2012-06-18",
+    organizationType: "NGO",
+    numberOfChildren: 164,
+    capacity: 180,
+    officialEmail: "office@sunrisecare.org",
+    phone: "+91 98765 40001",
+    alternativeContact: "+91 98765 40002",
+    website: "https://sunrisecare.example.org",
+    country: "India",
+    state: "Delhi",
+    district: "South Delhi",
+    city: "Delhi",
+    fullAddress: "21 Welfare Road, Saket, New Delhi",
+    pinCode: "110017",
+    administrator: {
+      name: "Rohan Verma",
+      designation: "Home Administrator",
+      mobile: "+91 98765 40003",
+      email: "orphanage@example.com",
+      profilePhoto: "rohan-verma-profile.jpg"
+    },
+    kyc: {
+      registrationCertificate: "sunrise-registration-certificate.pdf",
+      ngoCertificate: "sunrise-ngo-certificate.pdf",
+      governmentLicense: "sunrise-government-license.pdf",
+      administratorIdProof: "rohan-verma-id-proof.pdf",
+      panCard: "SUNRISE-pan-card.pdf",
+      gstNumber: "07SUNRISE1234Z1Z",
+      addressProof: "sunrise-address-proof.pdf"
+    },
+    childSummary: {
+      totalBoys: 91,
+      totalGirls: 73,
+      below5: 24,
+      age5To12: 96,
+      above12: 44,
+      specialNeeds: 12
+    },
+    staff: {
+      totalStaff: 46,
+      caretakers: 20,
+      teachers: 8,
+      medicalStaff: 5,
+      securityGuards: 6,
+      volunteers: 7
+    },
+    facilities: [
+      "Medical Room",
+      "CCTV Surveillance",
+      "School",
+      "Playground",
+      "Library",
+      "Computer Lab",
+      "Dining Hall",
+      "Dormitory",
+      "Security Guards",
+      "Biometric Attendance"
+    ],
+    emergencyContact: {
+      contactPerson: "Anita Rao",
+      mobile: "+91 98765 40004",
+      email: "emergency@sunrisecare.org",
+      relationship: "Emergency Response Officer"
+    },
+    aiSafety: {
+      faceRecognitionEnabled: "Yes",
+      cctvInstalled: "Yes",
+      numberOfCameras: 38,
+      visitorFaceVerificationEnabled: "Yes",
+      childAttendanceSystem: "Biometric and face recognition",
+      gpsTrackingAvailable: "Yes",
+      emergencyAlertSystemEnabled: "Yes"
+    },
+    bankDetails: {
+      bankName: "State Bank of India",
+      accountHolderName: "Sunrise Care Home",
+      accountNumber: "XXXXXX4482",
+      ifscCode: "SBIN0001482"
+    },
+    occupancy: 164,
+    compliance: 94
+  },
   { id: "ORP-002", name: "Hope Nest", city: "Jaipur", capacity: 120, occupancy: 101, compliance: 91 },
   { id: "ORP-003", name: "Little Steps", city: "Lucknow", capacity: 90, occupancy: 86, compliance: 88 },
   { id: "ORP-004", name: "Care Bridge", city: "Bhopal", capacity: 130, occupancy: 119, compliance: 96 }
@@ -267,6 +353,7 @@ export const adminNav = [
   { label: "Dashboard", path: "/admin", icon: FiActivity },
   { label: "Children", path: "/admin/children", icon: FiUsers },
   { label: "Register Child", path: "/admin/register-child", icon: FiPlusCircle },
+  { label: "Register Orphanage", path: "/admin/register-orphanage", icon: FiHome },
   { label: "Orphanages", path: "/admin/orphanages", icon: FiHome },
   { label: "Alerts", path: "/admin/alerts", icon: FiAlertTriangle },
   { label: "Profile", path: "/admin/profile", icon: FiUser }

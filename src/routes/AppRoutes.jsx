@@ -14,6 +14,7 @@ import ParentDashboard from "../pages/ParentDashboard";
 import ParentProfile from "../pages/ParentProfile";
 import Profile from "../pages/Profile";
 import RegisterChild from "../pages/RegisterChild";
+import RegisterOrphanage from "../pages/RegisterOrphanage";
 import Reports from "../pages/Reports";
 import ProtectedRoute from "./ProtectedRoute";
 
@@ -30,6 +31,7 @@ export default function AppRoutes() {
           <Route path="children/:childId" element={<ChildProfile />} />
           <Route path="parent-profiles/:parentId" element={<ParentProfile />} />
           <Route path="register-child" element={<RegisterChild />} />
+          <Route path="register-orphanage" element={<RegisterOrphanage />} />
           <Route path="orphanages" element={<Orphanages />} />
           <Route path="alerts" element={<Alerts />} />
           <Route path="profile" element={<Profile />} />
