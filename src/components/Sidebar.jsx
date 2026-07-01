@@ -2,9 +2,15 @@ import { NavLink } from "react-router-dom";
 import { FiShield } from "react-icons/fi";
 import { classNames } from "../utils/formatters";
 
-export default function Sidebar({ navItems, roleLabel }) {
+export default function Sidebar({ navItems, roleLabel, mobile = false }) {
   return (
-    <aside className="hidden min-h-screen w-72 shrink-0 border-r border-white/50 bg-white/70 p-5 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/70 lg:block">
+    <aside
+      className={
+        mobile
+          ? "block min-h-full w-full shrink-0 bg-transparent"
+          : "hidden min-h-screen w-72 shrink-0 border-r border-white/50 bg-white/70 p-5 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/70 lg:block"
+      }
+    >
       <div className="flex items-center gap-3">
         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-civic-600 text-white">
           <FiShield className="h-6 w-6" />

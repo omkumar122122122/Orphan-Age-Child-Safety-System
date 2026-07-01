@@ -31,7 +31,7 @@
 
 @layer components {
   .glass-panel {
-    @apply border border-white/60 bg-white/78 shadow-glass backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/72;
+    @apply border border-white/60 bg-white/[0.78] shadow-glass backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/[0.72];
   }
 
   .focus-ring {
