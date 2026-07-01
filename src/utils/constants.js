@@ -6,8 +6,8 @@ export const roleHome = {
 
 export const roleLabels = {
   admin: "Administrator",
-  parent: "Parent / Guardian",
-  orphanage: "Orphanage Staff"
+  parent: "Parent",
+  orphanage: "Orphanage"
 };
 
 export const riskClasses = {

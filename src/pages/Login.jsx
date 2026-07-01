@@ -14,6 +14,7 @@ export default function Login() {
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [authMode, setAuthMode] = useState("login");
+  const [selectedRole, setSelectedRole] = useState("admin");
   const [signupSuccess, setSignupSuccess] = useState("");
   const { register, handleSubmit, setValue, formState } = useForm({
     defaultValues: { email: "admin@safety.gov", password: "admin123" }
@@ -65,21 +66,6 @@ export default function Login() {
           <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300">
             Role-based monitoring for child records, risk flags, orphanage compliance, guardian communication, and safety reporting.
           </p>
-          <div className="mt-8 grid gap-3 sm:grid-cols-3">
-            {users.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => {
-                  setValue("email", item.email);
-                  setValue("password", item.password);
-                }}
-                className="rounded-xl border border-white/10 bg-white/10 p-4 text-left transition hover:bg-white/15"
-              >
-                <p className="text-sm font-bold">{roleLabels[item.role]}</p>
-                <p className="mt-1 text-xs text-slate-300">{item.email}</p>
-              </button>
-            ))}
-          </div>
         </div>
       </section>
       <section className="flex items-center justify-center px-4 py-10">
@@ -90,29 +76,39 @@ export default function Login() {
                 {authMode === "login" ? "Secure Login" : "Parent Sign Up"}
               </h2>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                {authMode === "login" ? "Use one of the demo accounts." : "Submit adoption parent details for verification."}
+                {authMode === "login" ? "Choose a demo role to continue." : "Submit adoption parent details for verification."}
               </p>
             </div>
             <ThemeToggle />
           </div>
-          <div className="mb-5 grid grid-cols-2 rounded-lg bg-slate-100 p-1 dark:bg-slate-900">
-            <button
-              type="button"
-              onClick={() => setAuthMode("login")}
-              className={`rounded-md px-3 py-2 text-sm font-bold transition ${
-                authMode === "login" ? "bg-white text-slate-950 shadow-sm dark:bg-slate-800 dark:text-white" : "text-slate-500"
-              }`}
-            >
-              Login
-            </button>
+          <div className="mb-5 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div className="flex flex-wrap justify-center sm:justify-between">
+              {users.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedRole(item.role);
+                    setAuthMode("login");
+                    setValue("email", item.email);
+                    setValue("password", item.password);
+                  }}
+                  className={`rounded-lg border px-2.5 py-2.5 text-left transition ${
+                    selectedRole === item.role
+                      ? "border-civic-500 bg-civic-50 shadow-sm dark:border-civic-400 dark:bg-civic-500/10"
+                      : "border-slate-200 bg-white hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">{roleLabels[item.role]}</p>
+                </button>
+              ))}
+            </div>
             <button
               type="button"
               onClick={() => setAuthMode("signup")}
-              className={`rounded-md px-3 py-2 text-sm font-bold transition ${
-                authMode === "signup" ? "bg-white text-slate-950 shadow-sm dark:bg-slate-800 dark:text-white" : "text-slate-500"
-              }`}
+              className="mt-3 w-full rounded-lg border border-civic-200 bg-white px-3 py-2 text-sm font-semibold text-civic-700 transition hover:bg-civic-50 dark:border-civic-500/30 dark:bg-slate-950 dark:text-civic-300 dark:hover:bg-civic-500/10"
             >
-              Parent Sign Up
+              Sign up as parent
             </button>
           </div>
           {authMode === "login" ? (
