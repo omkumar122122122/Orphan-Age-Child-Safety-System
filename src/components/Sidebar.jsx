@@ -7,8 +7,8 @@ export default function Sidebar({ navItems, roleLabel, mobile = false }) {
     <aside
       className={
         mobile
-          ? "block min-h-full w-full shrink-0 bg-transparent"
-          : "hidden min-h-screen w-72 shrink-0 border-r border-white/50 bg-white/70 p-5 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/70 lg:block"
+          ? "block h-full w-full shrink-0 overflow-y-auto bg-transparent"
+          : "hidden h-screen w-72 shrink-0 border-r border-white/50 bg-white/70 p-5 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/70 lg:sticky lg:top-0 lg:block lg:overflow-y-auto"
       }
     >
       <div className="flex items-center gap-3">

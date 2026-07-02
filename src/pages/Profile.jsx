@@ -13,6 +13,7 @@ import ProfileActions from "../components/ProfileActions";
 export default function Profile() {
   const { user, logout } = useAuth();
   const child = children[1];
+  const isAdmin = user?.role === "admin";
   const isParent = user?.role === "parent";
   const isOrphanage = user?.role === "orphanage";
   const hasSideDetails = isParent || isOrphanage;
@@ -21,18 +22,33 @@ export default function Profile() {
   return (
     <div className="space-y-6">
       <Breadcrumb items={[roleLabels[user.role], "Profile"]} />
-      <div className={hasSideDetails ? "grid gap-6 xl:grid-cols-[0.9fr_1.1fr]" : "space-y-6"}>
-        <div className="space-y-6">
-          <ProfileCard user={user} />
-          <Card>
-            <ProfileHeader user={user} />
-            <ProfileInfoGrid user={user} />
-            <ProfileActions onEdit={() => {}} onChangePassword={() => {}} />
-          </Card>
-          <LogoutSection onLogout={logout} />
-        </div>
-        {hasSideDetails && (
+      {isAdmin ? (
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+          <div className="w-full">
+            <ProfileCard user={user} />
+          </div>
           <div className="space-y-6">
+            <Card>
+              <ProfileHeader user={user} />
+              <ProfileInfoGrid user={user} />
+              <ProfileActions onEdit={() => {}} onChangePassword={() => {}} />
+            </Card>
+            <LogoutSection onLogout={logout} />
+          </div>
+        </div>
+      ) : (
+        <div className={hasSideDetails ? "grid gap-6 xl:grid-cols-[0.9fr_1.1fr]" : "space-y-6"}>
+          <div className="space-y-6">
+            <ProfileCard user={user} />
+            <Card>
+              <ProfileHeader user={user} />
+              <ProfileInfoGrid user={user} />
+              <ProfileActions onEdit={() => {}} onChangePassword={() => {}} />
+            </Card>
+            <LogoutSection onLogout={logout} />
+          </div>
+          {hasSideDetails && (
+            <div className="space-y-6">
             {isParent && (
               <Card>
                 <h2 className="text-xl font-extrabold text-slate-950 dark:text-white">Linked Child Welfare Profile</h2>
@@ -47,9 +63,10 @@ export default function Profile() {
               </Card>
             )}
             {isOrphanage && orphanage && <OrphanageProfileDetails orphanage={orphanage} />}
-          </div>
-        )}
-      </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -187,9 +204,9 @@ function OrphanageProfileDetails({ orphanage }) {
   );
 }
 
-function LogoutSection({ onLogout }) {
+function LogoutSection({ onLogout, className = "" }) {
   return (
-    <Card>
+    <Card className={className}>
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h2 className="text-base font-bold text-slate-950 dark:text-white">Account Actions</h2>

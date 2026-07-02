@@ -10,7 +10,7 @@ export default function DashboardLayout({ navItems, role, title }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="min-h-screen lg:flex">
+    <div className="min-h-screen lg:flex lg:items-start">
       <Sidebar navItems={navItems} roleLabel={roleLabels[role]} />
       {open && (
         <div className="fixed inset-0 z-40 bg-slate-950/55 lg:hidden" onClick={() => setOpen(false)}>
