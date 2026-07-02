@@ -54,22 +54,52 @@ export default function Login() {
 
   return (
     <main className="grid min-h-screen lg:grid-cols-[1.08fr_0.92fr]">
-      <section className="flex min-h-[42vh] items-center bg-slate-950 px-6 py-12 text-white lg:min-h-screen lg:px-12">
-        <div className="max-w-3xl">
-          <div className="mb-8 flex h-14 w-14 items-center justify-center rounded-xl bg-civic-600">
-            <FiShield className="h-8 w-8" />
+      <section className="relative overflow-hidden flex min-h-[45vh] items-center bg-slate-950 px-6 py-12 text-white lg:h-screen lg:sticky lg:top-0 lg:self-start lg:px-12">
+        {/* Decorative background glow circles */}
+        <div className="absolute -left-20 -top-20 h-80 w-80 rounded-full bg-civic-600/20 blur-3xl pointer-events-none animate-float" />
+        <div className="absolute -bottom-20 -right-20 h-96 w-96 rounded-full bg-amber-500/10 blur-3xl pointer-events-none animate-float-reverse" />
+        {/* Subtle tech grid pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:3.5rem_3.5rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none" />
+
+        <div className="relative z-10 max-w-3xl w-full">
+          <div className="mb-8 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-civic-500 to-civic-700 shadow-lg shadow-civic-500/30 ring-4 ring-civic-500/10 animate-fade-in">
+            <FiShield className="h-7 w-7 text-white" />
           </div>
-          <p className="text-sm font-bold uppercase tracking-[0.18em] text-amber-300">AI Child Welfare Command Center</p>
-          <h1 className="mt-4 text-4xl font-extrabold leading-tight sm:text-5xl">
-            AI Based Child Safety Management System for Orphanages
-          </h1>
-          <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300">
-            Role-based monitoring for child records, risk flags, orphanage compliance, guardian communication, and safety reporting.
+          <p className="animate-fade-in text-xs font-bold uppercase tracking-[0.2em] text-amber-400">
+            AI Child Welfare Command Center
           </p>
+          <h1 className="mt-6 text-4xl font-black leading-tight tracking-tight text-white sm:text-5xl xl:text-6xl animate-fade-in-up">
+            AI-Powered <span className="bg-gradient-to-r from-amber-600 via-amber-500 to-saffron bg-clip-text text-transparent">Child Safety</span> Management
+          </h1>
+          <p className="mt-6 max-w-xl text-base leading-relaxed text-slate-300/90 animate-fade-in-up-delay">
+            Next-generation platform for real-time monitoring, automated risk detection, orphanage compliance tracking, and secure guardian integrations.
+          </p>
+
+          {/* Tech command center status grid */}
+          <div className="mt-12 grid grid-cols-2 gap-4 max-w-md animate-fade-in-delay-2">
+            <div className="group rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-md transition-all duration-300 hover:bg-white/10 hover:border-white/20">
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">System Status</p>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                </span>
+                <p className="text-lg font-bold text-emerald-400">24/7 Secure</p>
+              </div>
+            </div>
+            <div className="group rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-md transition-all duration-300 hover:bg-white/10 hover:border-white/20">
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">AI Operations</p>
+              <p className="mt-2 text-lg font-bold text-amber-400">Compliance A+</p>
+            </div>
+          </div>
         </div>
       </section>
-      <section className="flex items-center justify-center px-4 py-10">
-        <div className={`glass-panel w-full rounded-xl p-6 ${authMode === "signup" ? "max-w-3xl" : "max-w-md"}`}>
+      <section className="relative overflow-hidden flex items-center justify-center px-4 py-10">
+        {/* Decorative background glow circles on the right side */}
+        <div className="absolute right-10 top-1/4 h-72 w-72 rounded-full bg-civic-500/10 dark:bg-civic-500/5 blur-3xl pointer-events-none animate-float" />
+        <div className="absolute left-10 bottom-1/4 h-72 w-72 rounded-full bg-amber-500/5 dark:bg-amber-500/5 blur-3xl pointer-events-none animate-float-reverse" />
+
+        <div className={`relative z-10 glass-panel w-full rounded-xl p-6 transition-all duration-300 animate-scale-in ${authMode === "signup" ? "max-w-3xl" : "max-w-md"}`}>
           <div className="mb-6 flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-extrabold text-slate-950 dark:text-white">
@@ -93,11 +123,10 @@ export default function Login() {
                     setValue("email", item.email);
                     setValue("password", item.password);
                   }}
-                  className={`rounded-lg border px-2.5 py-2.5 text-left transition ${
-                    selectedRole === item.role
-                      ? "border-civic-500 bg-civic-50 shadow-sm dark:border-civic-400 dark:bg-civic-500/10"
-                      : "border-slate-200 bg-white hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:hover:bg-slate-800"
-                  }`}
+                  className={`rounded-lg border px-2.5 py-2.5 text-left transition ${selectedRole === item.role
+                    ? "border-civic-500 bg-civic-50 shadow-sm dark:border-civic-400 dark:bg-civic-500/10"
+                    : "border-slate-200 bg-white hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:hover:bg-slate-800"
+                    }`}
                 >
                   <p className="text-sm font-semibold text-slate-900 dark:text-white">{roleLabels[item.role]}</p>
                 </button>
