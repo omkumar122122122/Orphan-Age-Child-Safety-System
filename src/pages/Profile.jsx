@@ -1,4 +1,4 @@
-import { FiBriefcase, FiCamera, FiCreditCard, FiFileText, FiHome, FiLogOut, FiMail, FiPhone, FiShield, FiUserCheck, FiUsers } from "react-icons/fi";
+import { Briefcase, Camera, CreditCard, FileText, Home, LogOut, Mail, Phone, Shield, UserCheck, Users } from 'lucide-react'
 import Breadcrumb from "../components/Breadcrumb";
 import Button from "../components/Button";
 import Card from "../components/Card";
@@ -6,6 +6,9 @@ import ProfileCard from "../components/ProfileCard";
 import { useAuth } from "../context/AuthContext";
 import { children, orphanages } from "../data/dummyData";
 import { roleLabels } from "../utils/constants";
+import ProfileHeader from "../components/ProfileHeader";
+import ProfileInfoGrid from "../components/ProfileInfoGrid";
+import ProfileActions from "../components/ProfileActions";
 
 export default function Profile() {
   const { user, logout } = useAuth();
@@ -22,13 +25,9 @@ export default function Profile() {
           <ProfileCard user={user} />
         </div>
         <Card>
-          <h1 className="text-xl font-extrabold text-slate-950 dark:text-white">User Profile</h1>
-          <dl className="mt-5 grid gap-4 sm:grid-cols-2">
-            <Field icon={FiUserCheck} label="Name" value={user.name} />
-            <Field icon={FiMail} label="Email" value={user.email} />
-            <Field icon={FiShield} label="Role" value={roleLabels[user.role]} />
-            <Field icon={FiShield} label="Department" value={user.department} />
-          </dl>
+          <ProfileHeader user={user} />
+          <ProfileInfoGrid user={user} />
+          <ProfileActions onEdit={() => {}} onChangePassword={() => {}} />
         </Card>
       </div>
       {isParent && (
