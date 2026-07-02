@@ -123,7 +123,7 @@ export default function Login() {
                     setValue("email", item.email);
                     setValue("password", item.password);
                   }}
-                  className={`rounded-lg border px-2.5 py-2.5 text-left transition ${selectedRole === item.role
+                  className={`rounded-lg border py-2.5 text-left transition ${item.role === "parent" ? "px-3" : "px-2.5"} ${selectedRole === item.role
                     ? "border-civic-500 bg-civic-50 shadow-sm dark:border-civic-400 dark:bg-civic-500/10"
                     : "border-slate-200 bg-white hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:hover:bg-slate-800"
                     }`}
@@ -134,7 +134,10 @@ export default function Login() {
             </div>
             <button
               type="button"
-              onClick={() => setAuthMode("signup")}
+              onClick={() => {
+                setSelectedRole(null);
+                setAuthMode("signup");
+              }}
               className="mt-3 w-full rounded-lg border border-civic-200 bg-white px-3 py-2 text-sm font-semibold text-civic-700 transition hover:bg-civic-50 dark:border-civic-500/30 dark:bg-slate-950 dark:text-civic-300 dark:hover:bg-civic-500/10"
             >
               Sign up as parent
@@ -218,11 +221,11 @@ function TextArea({ label, error, icon: Icon, ...props }) {
   return (
     <label className="block">
       <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{label}</span>
-      <div className="mt-2 flex rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-950">
+      <div className="mt-2 flex rounded-lg border border-slate-200 bg-white px-3 py-2 focus-within:ring-2 focus-within:ring-inset focus-within:ring-civic-500 focus-within:ring-offset-0 dark:border-slate-700 dark:bg-slate-950">
         {Icon && <Icon className="mr-2 mt-1 h-4 w-4 text-slate-400" />}
         <textarea
           rows={3}
-          className="focus-ring w-full resize-y border-0 bg-transparent text-sm text-slate-950 outline-none placeholder:text-slate-400 dark:text-white"
+          className="w-full resize-y border-0 bg-transparent text-sm text-slate-950 outline-none placeholder:text-slate-400 dark:text-white"
           {...props}
         />
       </div>
@@ -235,9 +238,9 @@ function Select({ label, icon: Icon, children, ...props }) {
   return (
     <label className="block">
       <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{label}</span>
-      <div className="mt-2 flex items-center rounded-lg border border-slate-200 bg-white px-3 dark:border-slate-700 dark:bg-slate-950">
+      <div className="mt-2 flex items-center rounded-lg border border-slate-200 bg-white px-3 focus-within:ring-2 focus-within:ring-inset focus-within:ring-civic-500 focus-within:ring-offset-0 dark:border-slate-700 dark:bg-slate-950">
         {Icon && <Icon className="mr-2 h-4 w-4 text-slate-400" />}
-        <select className="focus-ring min-h-11 w-full border-0 bg-transparent text-sm text-slate-950 outline-none dark:text-white" {...props}>
+        <select className="min-h-11 w-full border-0 bg-transparent text-sm text-slate-950 outline-none dark:text-white" {...props}>
           {children}
         </select>
       </div>

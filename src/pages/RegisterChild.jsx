@@ -209,7 +209,7 @@ function Select({ label, error, children, ...props }) {
     <label className="block">
       <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{label}</span>
       <select
-        className="focus-ring mt-2 min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none disabled:cursor-not-allowed disabled:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:disabled:bg-slate-900"
+        className="mt-2 min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none focus:ring-2 focus:ring-inset focus:ring-civic-500 focus:ring-offset-0 disabled:cursor-not-allowed disabled:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:disabled:bg-slate-900"
         {...props}
       >
         {children}
@@ -225,7 +225,7 @@ function TextArea({ label, error, ...props }) {
       <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{label}</span>
       <textarea
         rows="4"
-        className="focus-ring mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-slate-950 outline-none placeholder:text-slate-400 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+        className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm text-slate-950 outline-none focus:ring-2 focus:ring-inset focus:ring-civic-500 focus:ring-offset-0 placeholder:text-slate-400 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
         {...props}
       />
       {error && <span className="mt-1 block text-xs font-semibold text-red-600">{error}</span>}

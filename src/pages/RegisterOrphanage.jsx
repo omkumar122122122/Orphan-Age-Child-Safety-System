@@ -215,11 +215,11 @@ function TextArea({ label, error, icon: Icon, ...props }) {
   return (
     <label className="block">
       <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{label}</span>
-      <div className="mt-2 flex rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-950">
+      <div className="mt-2 flex rounded-lg border border-slate-200 bg-white px-3 py-2 focus-within:ring-2 focus-within:ring-inset focus-within:ring-civic-500 focus-within:ring-offset-0 dark:border-slate-700 dark:bg-slate-950">
         {Icon && <Icon className="mr-2 mt-1 h-4 w-4 text-slate-400" />}
         <textarea
           rows={3}
-          className="focus-ring w-full resize-y border-0 bg-transparent text-sm text-slate-950 outline-none placeholder:text-slate-400 dark:text-white"
+          className="w-full resize-y border-0 bg-transparent text-sm text-slate-950 outline-none placeholder:text-slate-400 dark:text-white"
           {...props}
         />
       </div>
@@ -232,9 +232,9 @@ function Select({ label, icon: Icon, children, ...props }) {
   return (
     <label className="block">
       <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{label}</span>
-      <div className="mt-2 flex items-center rounded-lg border border-slate-200 bg-white px-3 dark:border-slate-700 dark:bg-slate-950">
+      <div className="mt-2 flex items-center rounded-lg border border-slate-200 bg-white px-3 focus-within:ring-2 focus-within:ring-inset focus-within:ring-civic-500 focus-within:ring-offset-0 dark:border-slate-700 dark:bg-slate-950">
         {Icon && <Icon className="mr-2 h-4 w-4 text-slate-400" />}
-        <select className="focus-ring min-h-11 w-full border-0 bg-transparent text-sm text-slate-950 outline-none dark:text-white" {...props}>
+        <select className="min-h-11 w-full border-0 bg-transparent text-sm text-slate-950 outline-none dark:text-white" {...props}>
           {children}
         </select>
       </div>
