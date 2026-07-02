@@ -1,18 +1,17 @@
-import React from 'react'
-import { Mail, Phone, Hash, Building, Briefcase, Calendar } from 'lucide-react'
+import { Briefcase, Building, Calendar, Hash, Mail, Phone } from "lucide-react";
 
 function InfoField({ icon: Icon, label, value }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 flex items-start gap-3 transition hover:shadow-md">
-      <div className="text-blue-600 bg-blue-50 rounded-md p-2">
+    <div className="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-4 transition hover:shadow-md dark:border-slate-800 dark:bg-slate-950/40">
+      <div className="rounded-md bg-blue-50 p-2 text-blue-600 dark:bg-civic-500/15 dark:text-civic-100">
         <Icon className="h-5 w-5" />
       </div>
       <div className="flex-1">
-        <div className="text-xs font-semibold uppercase text-slate-500">{label}</div>
-        <div className="mt-1 font-medium text-slate-800">{value || 'Not provided'}</div>
+        <div className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">{label}</div>
+        <div className="mt-1 font-medium text-slate-800 dark:text-slate-100">{value || "Not provided"}</div>
       </div>
     </div>
-  )
+  );
 }
 
 export default function ProfileInfoGrid({ user }) {
@@ -26,5 +25,5 @@ export default function ProfileInfoGrid({ user }) {
       <InfoField icon={Briefcase} label="Designation" value={user.designation} />
       <InfoField icon={Calendar} label="Joining Date" value={user.joiningDate} />
     </div>
-  )
+  );
 }

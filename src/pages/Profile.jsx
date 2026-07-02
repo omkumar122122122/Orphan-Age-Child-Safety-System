@@ -1,4 +1,4 @@
-import { Briefcase, Camera, CreditCard, FileText, Home, LogOut, Mail, Phone, Shield, UserCheck, Users } from 'lucide-react'
+import { FiBriefcase, FiCamera, FiCreditCard, FiFileText, FiHome, FiLogOut, FiMail, FiPhone, FiShield, FiUserCheck, FiUsers } from "react-icons/fi";
 import Breadcrumb from "../components/Breadcrumb";
 import Button from "../components/Button";
 import Card from "../components/Card";
@@ -15,36 +15,41 @@ export default function Profile() {
   const child = children[1];
   const isParent = user?.role === "parent";
   const isOrphanage = user?.role === "orphanage";
+  const hasSideDetails = isParent || isOrphanage;
   const orphanage = orphanages.find((item) => item.name === user.department);
 
   return (
     <div className="space-y-6">
       <Breadcrumb items={[roleLabels[user.role], "Profile"]} />
-      <div className="grid gap-6 xl:grid-cols-[0.7fr_1.3fr]">
+      <div className={hasSideDetails ? "grid gap-6 xl:grid-cols-[0.9fr_1.1fr]" : "space-y-6"}>
         <div className="space-y-6">
           <ProfileCard user={user} />
+          <Card>
+            <ProfileHeader user={user} />
+            <ProfileInfoGrid user={user} />
+            <ProfileActions onEdit={() => {}} onChangePassword={() => {}} />
+          </Card>
+          <LogoutSection onLogout={logout} />
         </div>
-        <Card>
-          <ProfileHeader user={user} />
-          <ProfileInfoGrid user={user} />
-          <ProfileActions onEdit={() => {}} onChangePassword={() => {}} />
-        </Card>
+        {hasSideDetails && (
+          <div className="space-y-6">
+            {isParent && (
+              <Card>
+                <h2 className="text-xl font-extrabold text-slate-950 dark:text-white">Linked Child Welfare Profile</h2>
+                <dl className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  <Field label="Child ID" value={child.id} />
+                  <Field label="Name" value={child.name} />
+                  <Field label="Age" value={child.age} />
+                  <Field label="Orphanage" value={child.orphanage} />
+                  <Field label="Health Status" value={child.health} />
+                  <Field label="Attendance" value={`${child.attendance}%`} />
+                </dl>
+              </Card>
+            )}
+            {isOrphanage && orphanage && <OrphanageProfileDetails orphanage={orphanage} />}
+          </div>
+        )}
       </div>
-      {isParent && (
-        <Card>
-          <h2 className="text-xl font-extrabold text-slate-950 dark:text-white">Linked Child Welfare Profile</h2>
-          <dl className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <Field label="Child ID" value={child.id} />
-            <Field label="Name" value={child.name} />
-            <Field label="Age" value={child.age} />
-            <Field label="Orphanage" value={child.orphanage} />
-            <Field label="Health Status" value={child.health} />
-            <Field label="Attendance" value={`${child.attendance}%`} />
-          </dl>
-        </Card>
-      )}
-      {isOrphanage && orphanage && <OrphanageProfileDetails orphanage={orphanage} />}
-      <LogoutSection onLogout={logout} />
     </div>
   );
 }
