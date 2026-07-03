@@ -358,7 +358,7 @@ export default function AIAttendance() {
   };
 
   return (
-    <div className="relative space-y-8 pb-8">
+    <div className="relative space-y-8 overflow-x-hidden pb-8">
       <ToastStack toasts={toasts} onDismiss={(id) => setToasts((current) => current.filter((toast) => toast.id !== id))} />
 
       <div className="absolute -right-20 top-10 h-72 w-72 rounded-full bg-civic-500/15 blur-3xl" />
@@ -369,7 +369,7 @@ export default function AIAttendance() {
       <motion.section
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-panel relative overflow-hidden rounded-3xl p-6 shadow-glass"
+        className="glass-panel relative overflow-hidden rounded-3xl p-6 shadow-md"
       >
         <div className="absolute inset-0 bg-gradient-to-br from-civic-500/10 via-transparent to-violet-500/10" />
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
@@ -398,8 +398,9 @@ export default function AIAttendance() {
         <CardLabel label="Recognition Accuracy" value={`${counts.accuracy}%`} icon={FiShield} />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <Card className="overflow-hidden rounded-3xl">
+      <div className="grid gap-6 grid-cols-1 xl:grid-cols-[1fr_1fr] items-start">
+        <div className="space-y-6 flex flex-col min-w-0">
+          <Card className="overflow-hidden rounded-3xl">
           <div className="flex items-start justify-between gap-4">
             <SectionTitle eyebrow="Live Camera" title="AI face recognition feed" subtitle="Scan a face to verify identity and record attendance automatically." />
             <DetectionDot detected={scanState === "detected"} />
@@ -530,9 +531,8 @@ export default function AIAttendance() {
               </Button>
             </div>
           </div>
-        </Card>
+          </Card>
 
-        <div className="space-y-6">
           <Card className="rounded-3xl">
             <div className="flex items-start justify-between gap-3">
               <SectionTitle eyebrow="Recognition Result" title="Live AI recognition card" subtitle="This card updates automatically after detection." />
@@ -697,10 +697,9 @@ export default function AIAttendance() {
             </div>
           </Card>
         </div>
-      </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <Card className="rounded-3xl">
+        <div className="space-y-6 flex flex-col">
+          <Card className="rounded-3xl">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <SectionTitle eyebrow="Recent Attendance" title="Attendance table" subtitle="Search, filter, and paginate through the latest AI face check-ins." />
             <div className="grid gap-3 sm:grid-cols-2">
@@ -781,9 +780,8 @@ export default function AIAttendance() {
               </Button>
             </div>
           </div>
-        </Card>
+          </Card>
 
-        <div className="space-y-6">
           <Card className="rounded-3xl">
             <SectionTitle eyebrow="Today's Summary" title="Attendance snapshot" subtitle="Quick operational view for the current shift." />
             <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
