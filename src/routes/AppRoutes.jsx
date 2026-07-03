@@ -19,6 +19,7 @@ import Profile from "../pages/Profile";
 import RegisterChild from "../pages/RegisterChild";
 import RegisterOrphanage from "../pages/RegisterOrphanage";
 import Reports from "../pages/Reports";
+import VisitRequest from "../pages/VisitRequest";
 import ProtectedRoute from "./ProtectedRoute";
 
 export default function AppRoutes() {
@@ -47,6 +48,7 @@ export default function AppRoutes() {
         <Route path="/parent" element={<ParentLayout />}>
           <Route index element={<ParentDashboard />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="visit-request" element={<VisitRequest />} />
           <Route path="notifications" element={<Alerts />} />
         </Route>
       </Route>

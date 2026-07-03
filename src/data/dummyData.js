@@ -363,6 +363,7 @@ export const adminNav = [
 export const parentNav = [
   { label: "Dashboard", path: "/parent", icon: FiActivity },
   { label: "Profile", path: "/parent/profile", icon: FiUser },
+  { label: "Visit Request", path: "/parent/visit-request", icon: FiCalendar },
   { label: "Notifications", path: "/parent/notifications", icon: FiAlertTriangle }
 ];
 
