@@ -337,6 +337,8 @@ function OrphanageSelection({ register, selected, onChange }) {
 }
 
 function VisitForm({ register, errors }) {
+  const visitorsField = register("visitors");
+
   return (
     <Card className="rounded-lg">
       <SectionTitle icon={FiFileText} title="Visit Request Form" subtitle="Provide the scheduling and family details required for review" />
@@ -374,7 +376,18 @@ function VisitForm({ register, errors }) {
           />
         </FormField>
         <FormField label="Number of Visitors">
-          <input type="number" min="1" max="5" {...register("visitors")} className={fieldClass} />
+          <input
+            type="text"
+            inputMode="numeric"
+            min="1"
+            max="5"
+            {...visitorsField}
+            onChange={(event) => {
+              event.target.value = event.target.value.replace(/[^0-9]/g, "");
+              visitorsField.onChange(event);
+            }}
+            className={fieldClass}
+          />
         </FormField>
         <FormField label="Relationship of Visitors">
           <input {...register("relationship")} placeholder="Spouse, parent, sibling" className={fieldClass} />

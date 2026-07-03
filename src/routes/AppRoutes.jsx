@@ -12,6 +12,7 @@ import OrphanageDashboard from "../pages/OrphanageDashboard";
 import OrphanageDetail from "../pages/OrphanageDetail";
 import OrphanageFullProfile from "../pages/OrphanageFullProfile";
 import ManageVisitRequests from "../pages/ManageVisitRequests";
+import AIAttendance from "../pages/AIAttendance";
 import Orphanages from "../pages/Orphanages";
 import ParentDashboard from "../pages/ParentDashboard";
 import ParentProfile from "../pages/ParentProfile";
@@ -56,6 +57,7 @@ export default function AppRoutes() {
       <Route element={<ProtectedRoute allowedRoles={["orphanage"]} />}>
         <Route path="/orphanage" element={<OrphanageLayout />}>
           <Route index element={<OrphanageDashboard />} />
+          <Route path="ai-attendance" element={<AIAttendance />} />
           <Route path="visit-requests" element={<ManageVisitRequests />} />
           <Route path="children" element={<Children />} />
           <Route path="children/:childId" element={<ChildProfile />} />

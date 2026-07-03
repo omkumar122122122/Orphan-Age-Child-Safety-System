@@ -1,5 +1,37 @@
-export default function FormInput({ label, error, icon: Icon, ...props }) {
+function sanitizeInputValue(label, type, value) {
+  if (type === "file") {
+    return value;
+  }
+
+  if (type === "number") {
+    return value.replace(/[^0-9]/g, "");
+  }
+
+  if (type === "tel") {
+    return value.replace(/[^0-9]/g, "");
+  }
+
+  if (/name/i.test(label)) {
+    return value.replace(/[^A-Za-z\s'.-]/g, "");
+  }
+
+  return value;
+}
+
+export default function FormInput({ label, error, icon: Icon, onChange, ...props }) {
   const isFile = props.type === "file";
+  const isNumber = props.type === "number";
+  const isTel = props.type === "tel";
+  const inputMode = props.inputMode || (isNumber || isTel ? "numeric" : undefined);
+
+  const handleChange = (event) => {
+    const nextValue = sanitizeInputValue(label, props.type, event.target.value);
+    if (nextValue !== event.target.value) {
+      event.target.value = nextValue;
+    }
+    onChange?.(event);
+  };
+
   return (
     <label className="block">
       <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{label}</span>
@@ -11,6 +43,8 @@ export default function FormInput({ label, error, icon: Icon, ...props }) {
               ? "file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-civic-50 file:text-civic-700 hover:file:bg-civic-100 dark:file:bg-slate-800 dark:file:text-slate-200 cursor-pointer file:cursor-pointer"
               : "min-h-11"
           }`}
+          inputMode={inputMode}
+          onChange={handleChange}
           {...props}
         />
       </div>
