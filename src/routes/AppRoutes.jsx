@@ -13,6 +13,7 @@ import OrphanageDetail from "../pages/OrphanageDetail";
 import OrphanageFullProfile from "../pages/OrphanageFullProfile";
 import ManageVisitRequests from "../pages/ManageVisitRequests";
 import AIAttendance from "../pages/AIAttendance";
+import HealthMonitoring from "../pages/HealthMonitoring";
 import Orphanages from "../pages/Orphanages";
 import ParentDashboard from "../pages/ParentDashboard";
 import ParentProfile from "../pages/ParentProfile";
@@ -63,6 +64,7 @@ export default function AppRoutes() {
           <Route path="children/:childId" element={<ChildProfile />} />
           <Route path="parent-profiles/:parentId" element={<ParentProfile />} />
           <Route path="register-child" element={<RegisterChild />} />
+          <Route path="health-monitoring" element={<HealthMonitoring />} />
           <Route path="reports" element={<Reports />} />
           <Route path="profile" element={<Profile />} />
         </Route>

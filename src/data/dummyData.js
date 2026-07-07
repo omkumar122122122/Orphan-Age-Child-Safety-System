@@ -408,9 +408,9 @@ export const healthRecords = [
       { name: "Influenza",  dateGiven: "2025-11-05", nextDue: "2026-11-05", status: "Pending"   }
     ],
     healthHistory: [
-      { date: "2026-05-14", doctor: "Dr. Priya Sharma",  diagnosis: "Routine checkup",      treatment: "General health assessment",       notes: "Good overall health. Inhaler refilled." },
-      { date: "2026-01-22", doctor: "Dr. Priya Sharma",  diagnosis: "Mild asthma episode",  treatment: "Nebulisation + inhaler prescribed",notes: "Recovered within 2 days. Monitor in winter." },
-      { date: "2025-08-10", doctor: "Dr. Rajan Mehta",   diagnosis: "Routine checkup",      treatment: "Vitamin D supplementation advised",notes: "Slightly low vitamin D levels." }
+      { date: "2026-05-14", doctor: "Dr. Priya Sharma", diagnosis: "Routine checkup",     treatment: "General health assessment",        notes: "Good overall health. Inhaler refilled." },
+      { date: "2026-01-22", doctor: "Dr. Priya Sharma", diagnosis: "Mild asthma episode", treatment: "Nebulisation + inhaler prescribed", notes: "Recovered within 2 days. Monitor in winter." },
+      { date: "2025-08-10", doctor: "Dr. Rajan Mehta",  diagnosis: "Routine checkup",     treatment: "Vitamin D supplementation advised", notes: "Slightly low vitamin D levels." }
     ]
   },
   {
@@ -440,17 +440,145 @@ export const healthRecords = [
       { name: "Influenza",  dateGiven: "2025-10-20", nextDue: "2026-10-20", status: "Pending"   }
     ],
     healthHistory: [
-      { date: "2026-04-02", doctor: "Dr. Neha Kapoor",   diagnosis: "Migraine follow-up",   treatment: "Counselling referred, medication adjusted",  notes: "Headache frequency reduced. Stress management ongoing." },
-      { date: "2026-02-14", doctor: "Dr. Neha Kapoor",   diagnosis: "Severe headache",      treatment: "Paracetamol administered",                   notes: "Peanut exposure confirmed as trigger. Allergy card issued." },
-      { date: "2025-10-30", doctor: "Dr. Rajan Mehta",   diagnosis: "Routine checkup",      treatment: "Iron supplement advised",                    notes: "Mild anaemia detected. Follow-up in 3 months." }
+      { date: "2026-04-02", doctor: "Dr. Neha Kapoor",  diagnosis: "Migraine follow-up", treatment: "Counselling referred, medication adjusted", notes: "Headache frequency reduced. Stress management ongoing." },
+      { date: "2026-02-14", doctor: "Dr. Neha Kapoor",  diagnosis: "Severe headache",    treatment: "Paracetamol administered",                  notes: "Peanut exposure confirmed as trigger. Allergy card issued." },
+      { date: "2025-10-30", doctor: "Dr. Rajan Mehta",  diagnosis: "Routine checkup",    treatment: "Iron supplement advised",                   notes: "Mild anaemia detected. Follow-up in 3 months." }
+    ]
+  },
+  {
+    childId: "CH-1057",
+    childName: "Kabir Khan",
+    age: 7,
+    gender: "Male",
+    bloodGroup: "A+",
+    height: "118 cm",
+    weight: "21 kg",
+    bmi: "15.1",
+    lastCheckup: "2026-06-01",
+    nextCheckup: "2026-09-01",
+    healthStatus: "Healthy",
+    doctor: "Dr. Amit Sinha",
+    allergies: "None recorded",
+    conditions: "No chronic conditions",
+    medications: "None",
+    emergencyContact: "+91 98765 11057",
+    vaccinationStatus: "Up to date",
+    vaccinations: [
+      { name: "BCG",        dateGiven: "2019-05-10", nextDue: null,         status: "Completed" },
+      { name: "Hepatitis B",dateGiven: "2019-05-10", nextDue: null,         status: "Completed" },
+      { name: "OPV",        dateGiven: "2021-02-14", nextDue: null,         status: "Completed" },
+      { name: "MMR",        dateGiven: "2022-08-20", nextDue: null,         status: "Completed" },
+      { name: "Typhoid",    dateGiven: "2025-04-05", nextDue: "2027-04-05", status: "Completed" },
+      { name: "Influenza",  dateGiven: "2025-12-01", nextDue: "2026-12-01", status: "Pending"   }
+    ],
+    healthHistory: [
+      { date: "2026-06-01", doctor: "Dr. Amit Sinha",  diagnosis: "Routine checkup",    treatment: "General assessment, no concerns",  notes: "Excellent health. Weight on track for age." },
+      { date: "2025-12-10", doctor: "Dr. Amit Sinha",  diagnosis: "Routine checkup",    treatment: "Calcium supplement recommended",   notes: "Growing well. Dental check suggested next visit." },
+      { date: "2025-06-18", doctor: "Dr. Rajan Mehta", diagnosis: "Fever — viral",      treatment: "Paracetamol, rest and hydration",  notes: "Recovered fully within 5 days." }
+    ]
+  },
+  {
+    childId: "CH-1034",
+    childName: "Anaya Das",
+    age: 12,
+    gender: "Female",
+    bloodGroup: "O+",
+    height: "148 cm",
+    weight: "38 kg",
+    bmi: "17.3",
+    lastCheckup: "2026-03-18",
+    nextCheckup: "2026-06-18",
+    healthStatus: "Under Observation",
+    doctor: "Dr. Priya Menon",
+    allergies: "None recorded",
+    conditions: "Mild anaemia under nutrition follow-up",
+    medications: "Ferrous sulphate tablet (daily), multivitamin",
+    emergencyContact: "+91 98765 11034",
+    vaccinationStatus: "Up to date",
+    vaccinations: [
+      { name: "BCG",        dateGiven: "2014-04-12", nextDue: null,         status: "Completed" },
+      { name: "Hepatitis B",dateGiven: "2014-04-12", nextDue: null,         status: "Completed" },
+      { name: "MMR",        dateGiven: "2017-10-05", nextDue: null,         status: "Completed" },
+      { name: "OPV",        dateGiven: "2016-07-22", nextDue: null,         status: "Completed" },
+      { name: "Typhoid",    dateGiven: "2023-09-14", nextDue: "2025-09-14", status: "Overdue"   },
+      { name: "Td Booster", dateGiven: null,         nextDue: "2026-08-01", status: "Pending"   }
+    ],
+    healthHistory: [
+      { date: "2026-03-18", doctor: "Dr. Priya Menon",  diagnosis: "Anaemia follow-up",  treatment: "Continued iron therapy, diet chart revised", notes: "Haemoglobin improving — 10.2 g/dL from 9.4." },
+      { date: "2025-12-05", doctor: "Dr. Priya Menon",  diagnosis: "Routine checkup",    treatment: "Iron supplement started",                   notes: "Low haemoglobin detected — 9.4 g/dL. Nutrition plan issued." },
+      { date: "2025-07-20", doctor: "Dr. Rajan Mehta",  diagnosis: "Routine checkup",    treatment: "General health assessment",                 notes: "All vitals normal. Growth on expected curve." }
+    ]
+  },
+  {
+    childId: "CH-1102",
+    childName: "Vihaan Sen",
+    age: 10,
+    gender: "Male",
+    bloodGroup: "O-",
+    height: "138 cm",
+    weight: "30 kg",
+    bmi: "15.7",
+    lastCheckup: "2026-04-25",
+    nextCheckup: "2026-07-25",
+    healthStatus: "Healthy",
+    doctor: "Dr. Karan Joshi",
+    allergies: "None recorded",
+    conditions: "Corrective spectacles prescribed (myopia)",
+    medications: "None",
+    emergencyContact: "+91 98765 11102",
+    vaccinationStatus: "Up to date",
+    vaccinations: [
+      { name: "BCG",        dateGiven: "2016-08-03", nextDue: null,         status: "Completed" },
+      { name: "Hepatitis B",dateGiven: "2016-08-03", nextDue: null,         status: "Completed" },
+      { name: "OPV",        dateGiven: "2018-11-11", nextDue: null,         status: "Completed" },
+      { name: "MMR",        dateGiven: "2020-03-28", nextDue: null,         status: "Completed" },
+      { name: "Typhoid",    dateGiven: "2024-06-10", nextDue: "2026-06-10", status: "Completed" },
+      { name: "Influenza",  dateGiven: "2025-10-15", nextDue: "2026-10-15", status: "Pending"   }
+    ],
+    healthHistory: [
+      { date: "2026-04-25", doctor: "Dr. Karan Joshi",  diagnosis: "Eye follow-up",      treatment: "New spectacle prescription (–1.5D both eyes)", notes: "Vision stable. Review in 6 months." },
+      { date: "2025-11-12", doctor: "Dr. Karan Joshi",  diagnosis: "Routine checkup",    treatment: "Spectacles advised for the first time",        notes: "Myopia detected during school screening. Mild case." },
+      { date: "2025-05-08", doctor: "Dr. Priya Sharma", diagnosis: "Routine checkup",    treatment: "General health assessment",                    notes: "All parameters within normal range." }
+    ]
+  },
+  {
+    childId: "CH-1145",
+    childName: "Riya Patel",
+    age: 8,
+    gender: "Female",
+    bloodGroup: "A-",
+    height: "124 cm",
+    weight: "23 kg",
+    bmi: "14.9",
+    lastCheckup: "2026-05-30",
+    nextCheckup: "2026-08-30",
+    healthStatus: "Healthy",
+    doctor: "Dr. Priya Menon",
+    allergies: "None recorded",
+    conditions: "Fully recovered from wrist fracture (2024)",
+    medications: "Calcium supplement (completed course)",
+    emergencyContact: "+91 98765 11145",
+    vaccinationStatus: "Up to date",
+    vaccinations: [
+      { name: "BCG",        dateGiven: "2018-06-14", nextDue: null,         status: "Completed" },
+      { name: "Hepatitis B",dateGiven: "2018-06-14", nextDue: null,         status: "Completed" },
+      { name: "OPV",        dateGiven: "2020-09-09", nextDue: null,         status: "Completed" },
+      { name: "MMR",        dateGiven: "2021-12-20", nextDue: null,         status: "Completed" },
+      { name: "Typhoid",    dateGiven: "2024-11-03", nextDue: "2026-11-03", status: "Completed" },
+      { name: "Influenza",  dateGiven: "2025-11-20", nextDue: "2026-11-20", status: "Pending"   }
+    ],
+    healthHistory: [
+      { date: "2026-05-30", doctor: "Dr. Priya Menon",  diagnosis: "Routine checkup",     treatment: "General assessment, calcium course ended",   notes: "Wrist fully healed. No further orthopaedic follow-up needed." },
+      { date: "2024-09-15", doctor: "Dr. Rajan Mehta",  diagnosis: "Wrist fracture",      treatment: "Plaster cast, calcium + vitamin D course",   notes: "Left distal radius fracture. Cast removed after 5 weeks." },
+      { date: "2024-06-10", doctor: "Dr. Priya Menon",  diagnosis: "Routine checkup",     treatment: "General health assessment",                  notes: "All vitals normal. Good growth trajectory." }
     ]
   }
 ];
 
 export const healthSummary = {
-  totalChildren: 2,
-  checkupsDue: 1,
-  overdueCheckups: 0,
-  vaccinationsDue: 3,
-  healthyChildren: 1
+  totalChildren: 6,
+  checkupsDue: 3,
+  overdueCheckups: 1,
+  vaccinationsDue: 6,
+  healthyChildren: 4
 };
