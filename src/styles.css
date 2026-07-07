@@ -1,127 +1,273 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  * {
+  *, *::before, *::after {
     box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   body {
     margin: 0;
     min-width: 320px;
-    background:
-      radial-gradient(circle at 12% 18%, rgba(28, 116, 216, 0.12), transparent 30%),
-      radial-gradient(circle at 88% 4%, rgba(15, 159, 110, 0.1), transparent 26%),
-      linear-gradient(135deg, #f6f8fb 0%, #eef3f8 42%, #fff7ed 100%);
-    color: #101828;
+    background-color: #F5F7FB;
+    color: #0f172a;
     font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
   .dark body {
-    background:
-      radial-gradient(circle at 14% 16%, rgba(28, 116, 216, 0.18), transparent 30%),
-      radial-gradient(circle at 90% 8%, rgba(245, 158, 11, 0.1), transparent 24%),
-      linear-gradient(135deg, #0b1120 0%, #111827 48%, #172033 100%);
-    color: #f8fafc;
+    background-color: #0b1120;
+    color: #f1f5f9;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: #334155;
+  }
+
+  ::selection {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+
+  .dark ::selection {
+    background: #1e3a8a;
+    color: #bfdbfe;
   }
 }
 
 @layer components {
-  .glass-panel {
-    @apply border border-white/60 bg-white/[0.78] shadow-md backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/[0.72];
+
+  /* ─── Card / Surface ────────────────────────── */
+  .card {
+    @apply bg-white border border-gray-100 rounded-2xl;
+    box-shadow: 0 1px 3px rgba(15,23,42,0.06), 0 4px 16px rgba(15,23,42,0.06);
   }
 
-  .focus-ring {
-    @apply focus:outline-none focus:ring-2 focus:ring-civic-500 focus:ring-offset-2 dark:focus:ring-offset-slate-950;
+  .dark .card {
+    @apply bg-slate-900 border-slate-800;
   }
+
+  .glass-panel {
+    @apply bg-white/90 border border-white/60 backdrop-blur-xl;
+    box-shadow: 0 1px 3px rgba(15,23,42,0.06), 0 4px 16px rgba(15,23,42,0.06);
+  }
+
+  .dark .glass-panel {
+    @apply bg-slate-900/90 border-slate-700/60;
+  }
+
+  /* ─── Focus ring ────────────────────────────── */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-civic-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900;
+  }
+
+  /* ─── Badge variants ────────────────────────── */
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+
+  .badge-success {
+    @apply badge bg-green-50 text-green-700 ring-1 ring-green-200 dark:bg-green-500/10 dark:text-green-400 dark:ring-green-500/20;
+  }
+
+  .badge-warning {
+    @apply badge bg-amber-50 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/20;
+  }
+
+  .badge-danger {
+    @apply badge bg-red-50 text-red-700 ring-1 ring-red-200 dark:bg-red-500/10 dark:text-red-400 dark:ring-red-500/20;
+  }
+
+  .badge-blue {
+    @apply badge bg-blue-50 text-blue-700 ring-1 ring-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:ring-blue-500/20;
+  }
+
+  .badge-neutral {
+    @apply badge bg-slate-100 text-slate-600 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700;
+  }
+
+  /* ─── Field / Info block ────────────────────── */
+  .field-block {
+    @apply rounded-xl border border-gray-100 bg-gray-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/50;
+  }
+
+  .field-label {
+    @apply text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400;
+  }
+
+  .field-value {
+    @apply mt-1.5 text-sm font-semibold text-slate-900 dark:text-white break-words;
+  }
+
+  /* ─── Section title ─────────────────────────── */
+  .section-eyebrow {
+    @apply text-xs font-bold uppercase tracking-widest text-civic-600 dark:text-civic-400;
+  }
+
+  .section-title {
+    @apply text-lg font-bold text-slate-900 dark:text-white;
+  }
+
+  .section-subtitle {
+    @apply text-sm text-slate-500 dark:text-slate-400 leading-relaxed;
+  }
+
+  /* ─── Page header ───────────────────────────── */
+  .page-title {
+    @apply text-2xl font-bold tracking-tight text-slate-900 dark:text-white;
+  }
+
+  .page-subtitle {
+    @apply mt-1 text-sm text-slate-500 dark:text-slate-400;
+  }
+
+  /* ─── Table ─────────────────────────────────── */
+  .table-wrapper {
+    @apply overflow-hidden rounded-xl border border-gray-100 dark:border-slate-800;
+  }
+
+  .table-header {
+    @apply bg-gray-50 dark:bg-slate-800/80;
+  }
+
+  .table-th {
+    @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400;
+  }
+
+  .table-td {
+    @apply px-4 py-3.5 text-sm text-slate-700 dark:text-slate-200;
+  }
+
+  .table-row {
+    @apply transition-colors hover:bg-civic-50/60 dark:hover:bg-slate-800/60;
+  }
+
+  /* ─── Sidebar nav link ──────────────────────── */
+  .nav-link {
+    @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150 text-slate-400 hover:bg-white/5 hover:text-white;
+  }
+
+  .nav-link-active {
+    @apply bg-civic-600 text-white shadow-lg shadow-civic-600/25;
+  }
+
+  /* ─── Input field ───────────────────────────── */
+  .input-field {
+    @apply mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 transition
+    focus:border-civic-500 focus:ring-2 focus:ring-civic-500/20
+    dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500
+    dark:focus:border-civic-500;
+  }
+
+  /* ─── Stat accent bar colors ────────────────── */
+  .stat-accent-blue   { @apply border-l-4 border-l-civic-500; }
+  .stat-accent-green  { @apply border-l-4 border-l-green-500; }
+  .stat-accent-amber  { @apply border-l-4 border-l-amber-500; }
+  .stat-accent-red    { @apply border-l-4 border-l-red-500; }
+  .stat-accent-indigo { @apply border-l-4 border-l-indigo-500; }
+  .stat-accent-cyan   { @apply border-l-4 border-l-accent-500; }
 }
 
 @layer utilities {
+
+  /* ─── Animations ────────────────────────────── */
   @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
+    from { opacity: 0; }
+    to   { opacity: 1; }
   }
 
   @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(24px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0);    }
+  }
+
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-12px); }
+    to   { opacity: 1; transform: translateY(0);     }
   }
 
   @keyframes scaleIn {
-    from {
-      opacity: 0;
-      transform: scale(0.96);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
+    from { opacity: 0; transform: scale(0.97); }
+    to   { opacity: 1; transform: scale(1);    }
   }
 
-  .animate-fade-in {
-    animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  @keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-16px); }
+    to   { opacity: 1; transform: translateX(0);     }
   }
 
-  .animate-fade-in-up {
-    animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  }
-
-  .animate-scale-in {
-    animation: scaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  }
-
-  .animate-fade-in-delay {
-    opacity: 0;
-    animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
-  }
-
-  .animate-fade-in-up-delay {
-    opacity: 0;
-    animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
-  }
-
-  .animate-fade-in-delay-2 {
-    opacity: 0;
-    animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
+  @keyframes shimmer {
+    0%   { background-position: -400px 0; }
+    100% { background-position: 400px 0;  }
   }
 
   @keyframes float {
-    0%, 100% {
-      transform: translateY(0) scale(1);
-    }
-    50% {
-      transform: translateY(-24px) scale(1.06);
-    }
+    0%, 100% { transform: translateY(0)    scale(1);    }
+    50%       { transform: translateY(-20px) scale(1.04); }
   }
 
   @keyframes floatReverse {
-    0%, 100% {
-      transform: translateY(0) scale(1);
-    }
-    50% {
-      transform: translateY(24px) scale(0.94);
-    }
+    0%, 100% { transform: translateY(0)   scale(1);    }
+    50%       { transform: translateY(20px) scale(0.96); }
   }
 
-  .animate-float {
-    animation: float 14s ease-in-out infinite;
+  @keyframes scanLine {
+    0%   { top: 0%; }
+    100% { top: 100%; }
   }
 
-  .animate-float-reverse {
-    animation: floatReverse 16s ease-in-out infinite;
+  @keyframes pulse-ring {
+    0%   { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.40); }
+    70%  { box-shadow: 0 0 0 12px rgba(37, 99, 235, 0);  }
+    100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);     }
+  }
+
+  .animate-fade-in          { animation: fadeIn       0.5s cubic-bezier(0.16,1,0.3,1) forwards; }
+  .animate-fade-in-up       { animation: fadeInUp     0.5s cubic-bezier(0.16,1,0.3,1) forwards; }
+  .animate-fade-in-down     { animation: fadeInDown   0.4s cubic-bezier(0.16,1,0.3,1) forwards; }
+  .animate-scale-in         { animation: scaleIn      0.4s cubic-bezier(0.16,1,0.3,1) forwards; }
+  .animate-slide-in-left    { animation: slideInLeft  0.4s cubic-bezier(0.16,1,0.3,1) forwards; }
+
+  .animate-fade-in-delay    { opacity: 0; animation: fadeIn   0.5s cubic-bezier(0.16,1,0.3,1) 0.1s forwards; }
+  .animate-fade-in-up-delay { opacity: 0; animation: fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) 0.1s forwards; }
+  .animate-fade-in-delay-2  { opacity: 0; animation: fadeIn   0.5s cubic-bezier(0.16,1,0.3,1) 0.22s forwards; }
+
+  .animate-float         { animation: float        12s ease-in-out infinite; }
+  .animate-float-reverse { animation: floatReverse 14s ease-in-out infinite; }
+  .animate-pulse-ring    { animation: pulse-ring   2s cubic-bezier(0.66,0,0,1) infinite; }
+
+  /* ─── Skeleton shimmer ──────────────────────── */
+  .skeleton {
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 37%, #f1f5f9 63%);
+    background-size: 400px 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+
+  .dark .skeleton {
+    background: linear-gradient(90deg, #1e293b 25%, #293548 37%, #1e293b 63%);
+    background-size: 400px 100%;
   }
 }
-

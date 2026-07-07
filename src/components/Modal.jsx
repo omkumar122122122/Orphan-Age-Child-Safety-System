@@ -1,18 +1,58 @@
+import { useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { FiX } from "react-icons/fi";
-import Button from "./Button";
 
 export default function Modal({ open, title, children, onClose }) {
-  if (!open) return null;
+  /* Close on Escape */
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [open, onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
-      <div className="glass-panel w-full max-w-lg rounded-xl p-5">
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="text-lg font-bold text-slate-950 dark:text-white">{title}</h2>
-          <Button variant="ghost" icon={FiX} onClick={onClose} aria-label="Close modal" className="px-3" />
-        </div>
-        <div className="mt-4">{children}</div>
-      </div>
-    </div>
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+        >
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
+            onClick={onClose}
+            aria-hidden="true"
+          />
+
+          {/* Panel */}
+          <motion.div
+            className="relative z-10 w-full max-w-lg rounded-2xl border border-gray-100 bg-white shadow-modal dark:border-slate-700 dark:bg-slate-900"
+            initial={{ opacity: 0, scale: 0.97, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.97, y: 8 }}
+            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-slate-700">
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">{title}</h2>
+              <button
+                onClick={onClose}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-gray-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
+                aria-label="Close modal"
+              >
+                <FiX className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-5">{children}</div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

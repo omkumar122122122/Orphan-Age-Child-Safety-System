@@ -845,7 +845,8 @@ export default function ManageVisitRequests() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="glass-panel relative overflow-hidden rounded-3xl border border-white/60 p-6 shadow-glass dark:border-white/10"
+          className="glass-panel relative overflow-hidden rounded-3xl border border-white/60 p-6 dark:border-white/10"
+          style={{ boxShadow: "0 1px 4px rgba(15,23,42,0.06)" }}
         >
           <div className="absolute inset-0 bg-gradient-to-br from-civic-500/10 via-transparent to-violet-500/10" />
           <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">

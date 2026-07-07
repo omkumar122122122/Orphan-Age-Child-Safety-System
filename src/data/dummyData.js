@@ -1,4 +1,4 @@
-import { FiActivity, FiAlertTriangle, FiCamera, FiCalendar, FiHome, FiPlusCircle, FiShield, FiUser, FiUsers } from "react-icons/fi";
+import { FiActivity, FiAlertTriangle, FiCamera, FiCalendar, FiHome, FiPlusCircle, FiShield, FiUser, FiUsers, FiHeart } from "react-icons/fi";
 
 export const users = [
   {
@@ -368,11 +368,89 @@ export const parentNav = [
 ];
 
 export const orphanageNav = [
-  { label: "Dashboard", path: "/orphanage", icon: FiActivity },
-  { label: "AI Attendance", path: "/orphanage/ai-attendance", icon: FiCamera },
-  { label: "Visit Requests", path: "/orphanage/visit-requests", icon: FiCalendar },
-  { label: "Children", path: "/orphanage/children", icon: FiUsers },
-  { label: "Register Child", path: "/orphanage/register-child", icon: FiPlusCircle },
-  { label: "Reports", path: "/orphanage/reports", icon: FiShield },
-  { label: "Profile", path: "/orphanage/profile", icon: FiUser }
+  { label: "Dashboard",          path: "/orphanage",                  icon: FiActivity },
+  { label: "AI Attendance",      path: "/orphanage/ai-attendance",    icon: FiCamera },
+  { label: "Visit Requests",     path: "/orphanage/visit-requests",   icon: FiCalendar },
+  { label: "Children",           path: "/orphanage/children",         icon: FiUsers },
+  { label: "Register Child",     path: "/orphanage/register-child",   icon: FiPlusCircle },
+  { label: "Health Monitoring",  path: "/orphanage/health-monitoring",icon: FiHeart },
+  { label: "Reports",            path: "/orphanage/reports",          icon: FiShield },
+  { label: "Profile",            path: "/orphanage/profile",          icon: FiUser }
 ];
+
+/* ─── Health Monitoring Data ──────────────────────────────── */
+
+export const healthRecords = [
+  {
+    childId: "CH-1021",
+    childName: "Ishaan Roy",
+    age: 9,
+    gender: "Male",
+    bloodGroup: "B+",
+    height: "132 cm",
+    weight: "28 kg",
+    bmi: "16.1",
+    lastCheckup: "2026-05-14",
+    nextCheckup: "2026-08-14",
+    healthStatus: "Healthy",
+    doctor: "Dr. Priya Sharma",
+    allergies: "Dust allergy",
+    conditions: "Seasonal asthma",
+    medications: "Salbutamol inhaler (as needed)",
+    emergencyContact: "+91 98765 11021",
+    vaccinationStatus: "Up to date",
+    vaccinations: [
+      { name: "BCG",        dateGiven: "2017-03-10", nextDue: null,         status: "Completed" },
+      { name: "Hepatitis B",dateGiven: "2017-03-10", nextDue: null,         status: "Completed" },
+      { name: "OPV",        dateGiven: "2019-06-20", nextDue: null,         status: "Completed" },
+      { name: "MMR",        dateGiven: "2021-04-15", nextDue: null,         status: "Completed" },
+      { name: "Typhoid",    dateGiven: "2024-01-10", nextDue: "2026-01-10", status: "Completed" },
+      { name: "Influenza",  dateGiven: "2025-11-05", nextDue: "2026-11-05", status: "Pending"   }
+    ],
+    healthHistory: [
+      { date: "2026-05-14", doctor: "Dr. Priya Sharma",  diagnosis: "Routine checkup",      treatment: "General health assessment",       notes: "Good overall health. Inhaler refilled." },
+      { date: "2026-01-22", doctor: "Dr. Priya Sharma",  diagnosis: "Mild asthma episode",  treatment: "Nebulisation + inhaler prescribed",notes: "Recovered within 2 days. Monitor in winter." },
+      { date: "2025-08-10", doctor: "Dr. Rajan Mehta",   diagnosis: "Routine checkup",      treatment: "Vitamin D supplementation advised",notes: "Slightly low vitamin D levels." }
+    ]
+  },
+  {
+    childId: "CH-1088",
+    childName: "Sara Ali",
+    age: 11,
+    gender: "Female",
+    bloodGroup: "AB+",
+    height: "142 cm",
+    weight: "34 kg",
+    bmi: "16.9",
+    lastCheckup: "2026-04-02",
+    nextCheckup: "2026-07-02",
+    healthStatus: "Under Observation",
+    doctor: "Dr. Neha Kapoor",
+    allergies: "Peanuts",
+    conditions: "Recurring migraine",
+    medications: "Paracetamol 250mg (as needed), counselling sessions",
+    emergencyContact: "+91 98765 11088",
+    vaccinationStatus: "Booster pending",
+    vaccinations: [
+      { name: "BCG",        dateGiven: "2015-02-14", nextDue: null,         status: "Completed" },
+      { name: "Hepatitis B",dateGiven: "2015-02-14", nextDue: null,         status: "Completed" },
+      { name: "MMR",        dateGiven: "2018-09-01", nextDue: null,         status: "Completed" },
+      { name: "Typhoid",    dateGiven: "2022-03-18", nextDue: "2024-03-18", status: "Overdue"   },
+      { name: "Td Booster", dateGiven: null,         nextDue: "2026-06-15", status: "Pending"   },
+      { name: "Influenza",  dateGiven: "2025-10-20", nextDue: "2026-10-20", status: "Pending"   }
+    ],
+    healthHistory: [
+      { date: "2026-04-02", doctor: "Dr. Neha Kapoor",   diagnosis: "Migraine follow-up",   treatment: "Counselling referred, medication adjusted",  notes: "Headache frequency reduced. Stress management ongoing." },
+      { date: "2026-02-14", doctor: "Dr. Neha Kapoor",   diagnosis: "Severe headache",      treatment: "Paracetamol administered",                   notes: "Peanut exposure confirmed as trigger. Allergy card issued." },
+      { date: "2025-10-30", doctor: "Dr. Rajan Mehta",   diagnosis: "Routine checkup",      treatment: "Iron supplement advised",                    notes: "Mild anaemia detected. Follow-up in 3 months." }
+    ]
+  }
+];
+
+export const healthSummary = {
+  totalChildren: 2,
+  checkupsDue: 1,
+  overdueCheckups: 0,
+  vaccinationsDue: 3,
+  healthyChildren: 1
+};
