@@ -18,6 +18,7 @@ import HealthMonitoring from "../pages/HealthMonitoring";
 import Orphanages from "../pages/Orphanages";
 import ParentDashboard from "../pages/ParentDashboard";
 import ParentProfile from "../pages/ParentProfile";
+import ChildWelfareFollowUpSession from "../pages/ChildWelfareFollowUpSession";
 import Profile from "../pages/Profile";
 import RegisterChild from "../pages/RegisterChild";
 import RegisterOrphanage from "../pages/RegisterOrphanage";
@@ -52,6 +53,7 @@ export default function AppRoutes() {
           <Route index element={<ParentDashboard />} />
           <Route path="profile" element={<Profile />} />
           <Route path="visit-request" element={<VisitRequest />} />
+          <Route path="child-welfare-follow-up-session" element={<ChildWelfareFollowUpSession />} />
           <Route path="notifications" element={<Alerts />} />
         </Route>
       </Route>

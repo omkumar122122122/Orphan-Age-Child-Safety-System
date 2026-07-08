@@ -364,6 +364,7 @@ export const parentNav = [
   { label: "Dashboard", path: "/parent", icon: FiActivity },
   { label: "Profile", path: "/parent/profile", icon: FiUser },
   { label: "Visit Request", path: "/parent/visit-request", icon: FiCalendar },
+  { label: "Child Welfare Follow-up", path: "/parent/child-welfare-follow-up-session", icon: FiHeart },
   { label: "Notifications", path: "/parent/notifications", icon: FiAlertTriangle }
 ];
 
