@@ -1,4 +1,4 @@
-import { FiActivity, FiAlertTriangle, FiCamera, FiCalendar, FiHome, FiPlusCircle, FiShield, FiUser, FiUsers, FiHeart } from "react-icons/fi";
+import { FiActivity, FiAlertTriangle, FiCamera, FiCalendar, FiFileText, FiHome, FiPlusCircle, FiShield, FiUser, FiUsers, FiHeart } from "react-icons/fi";
 
 export const users = [
   {
@@ -373,6 +373,7 @@ export const orphanageNav = [
   { label: "Visit Requests",     path: "/orphanage/visit-requests",   icon: FiCalendar },
   { label: "Children",           path: "/orphanage/children",         icon: FiUsers },
   { label: "Register Child",     path: "/orphanage/register-child",   icon: FiPlusCircle },
+  { label: "Adoption Management", path: "/orphanage/adoption-management", icon: FiFileText },
   { label: "Health Monitoring",  path: "/orphanage/health-monitoring",icon: FiHeart },
   { label: "Reports",            path: "/orphanage/reports",          icon: FiShield },
   { label: "Profile",            path: "/orphanage/profile",          icon: FiUser }
