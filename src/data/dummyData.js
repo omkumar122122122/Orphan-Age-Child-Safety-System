@@ -1,4 +1,4 @@
-import { FiActivity, FiAlertTriangle, FiCamera, FiCalendar, FiHome, FiPlusCircle, FiShield, FiUser, FiUsers } from "react-icons/fi";
+import { FiActivity, FiAlertTriangle, FiCamera, FiCalendar, FiHome, FiMessageCircle, FiPlusCircle, FiShield, FiUser, FiUserCheck, FiUsers } from "react-icons/fi";
 
 export const users = [
   {
@@ -353,6 +353,7 @@ export const riskDistribution = {
 export const adminNav = [
   { label: "Dashboard", path: "/admin", icon: FiActivity },
   { label: "Children", path: "/admin/children", icon: FiUsers },
+  { label: "Parent Verification", path: "/admin/parent-verification", icon: FiUserCheck },
   { label: "Register Child", path: "/admin/register-child", icon: FiPlusCircle },
   { label: "Register Orphanage", path: "/admin/register-orphanage", icon: FiHome },
   { label: "Orphanages", path: "/admin/orphanages", icon: FiHome },
@@ -362,6 +363,7 @@ export const adminNav = [
 
 export const parentNav = [
   { label: "Dashboard", path: "/parent", icon: FiActivity },
+  { label: "Sahayak AI", path: "/parent/sahayak-ai", icon: FiMessageCircle },
   { label: "Profile", path: "/parent/profile", icon: FiUser },
   { label: "Visit Request", path: "/parent/visit-request", icon: FiCalendar },
   { label: "Notifications", path: "/parent/notifications", icon: FiAlertTriangle }
