@@ -1,235 +1,424 @@
-import { FiBriefcase, FiCamera, FiCreditCard, FiFileText, FiHome, FiLogOut, FiMail, FiPhone, FiShield, FiUserCheck, FiUsers } from "react-icons/fi";
+import {
+  FiBriefcase, FiCamera, FiCreditCard, FiFileText,
+  FiHome, FiLogOut, FiMail, FiPhone, FiShield,
+  FiUserCheck, FiUsers, FiHeart, FiCheckCircle, FiUser
+} from "react-icons/fi";
+import { motion } from "framer-motion";
 import Breadcrumb from "../components/Breadcrumb";
 import Button from "../components/Button";
-import Card from "../components/Card";
-import ProfileCard from "../components/ProfileCard";
+import ProfileActions from "../components/ProfileActions";
 import { useAuth } from "../context/AuthContext";
 import { children, orphanages } from "../data/dummyData";
 import { roleLabels } from "../utils/constants";
-import ProfileHeader from "../components/ProfileHeader";
-import ProfileInfoGrid from "../components/ProfileInfoGrid";
-import ProfileActions from "../components/ProfileActions";
+import { classNames } from "../utils/formatters";
 
+/* ── role avatar colours ─────────────────────────────────── */
+const roleAvatarBg = {
+  admin:     "bg-indigo-600",
+  orphanage: "bg-civic-600",
+  parent:    "bg-emerald-600",
+};
+
+const roleBadge = {
+  admin:     "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400",
+  orphanage: "bg-civic-50 text-civic-700 dark:bg-civic-500/10 dark:text-civic-400",
+  parent:    "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
+};
+
+/* ════════════════════════════════════════════════════════════
+   MAIN
+═══════════════════════════════════════════════════════════ */
 export default function Profile() {
   const { user, logout } = useAuth();
-  const child = children[1];
-  const isAdmin = user?.role === "admin";
-  const isParent = user?.role === "parent";
+  const isAdmin     = user?.role === "admin";
+  const isParent    = user?.role === "parent";
   const isOrphanage = user?.role === "orphanage";
-  const hasSideDetails = isParent || isOrphanage;
-  const orphanage = orphanages.find((item) => item.name === user.department);
+  const orphanage   = orphanages.find((o) => o.name === user.department);
+  const child       = children[1]; // linked child for parent demo
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <Breadcrumb items={[roleLabels[user.role], "Profile"]} />
-      {isAdmin ? (
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-          <div className="w-full">
-            <ProfileCard user={user} />
-          </div>
-          <div className="space-y-6">
-            <Card>
-              <ProfileHeader user={user} />
-              <ProfileInfoGrid user={user} />
-              <ProfileActions onEdit={() => {}} onChangePassword={() => {}} />
-            </Card>
-            <LogoutSection onLogout={logout} />
-          </div>
-        </div>
-      ) : (
-        <div className={hasSideDetails ? "grid gap-6 xl:grid-cols-[0.9fr_1.1fr]" : "space-y-6"}>
-          <div className="space-y-6">
-            <ProfileCard user={user} />
-            <Card>
-              <ProfileHeader user={user} />
-              <ProfileInfoGrid user={user} />
-              <ProfileActions onEdit={() => {}} onChangePassword={() => {}} />
-            </Card>
-            <LogoutSection onLogout={logout} />
-          </div>
-          {hasSideDetails && (
-            <div className="space-y-6">
-            {isParent && (
-              <Card>
-                <h2 className="text-xl font-extrabold text-slate-950 dark:text-white">Linked Child Welfare Profile</h2>
-                <dl className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                  <Field label="Child ID" value={child.id} />
-                  <Field label="Name" value={child.name} />
-                  <Field label="Age" value={child.age} />
-                  <Field label="Orphanage" value={child.orphanage} />
-                  <Field label="Health Status" value={child.health} />
-                  <Field label="Attendance" value={`${child.attendance}%`} />
-                </dl>
-              </Card>
-            )}
-            {isOrphanage && orphanage && <OrphanageProfileDetails orphanage={orphanage} />}
+
+      {/* ── Hero header card ─────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900"
+      >
+        {/* top colour bar */}
+        <div className={classNames("h-2 w-full", roleAvatarBg[user.role] ?? "bg-slate-600")} />
+
+        <div className="flex flex-col gap-5 px-6 py-5 sm:flex-row sm:items-start sm:justify-between">
+          {/* left: avatar + name */}
+          <div className="flex items-center gap-4">
+            <div className={classNames(
+              "flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl text-2xl font-bold text-white shadow-sm",
+              roleAvatarBg[user.role] ?? "bg-slate-600"
+            )}>
+              {user.avatar ?? <FiUser className="h-7 w-7" />}
             </div>
-          )}
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-lg font-bold text-slate-900 dark:text-white">{user.name}</h1>
+                <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700 ring-1 ring-green-200 dark:bg-green-500/10 dark:text-green-400 dark:ring-green-500/20">
+                  <FiCheckCircle className="h-3 w-3" />
+                  Active
+                </span>
+                <span className={classNames("rounded-md px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide", roleBadge[user.role] ?? "bg-slate-100 text-slate-600")}>
+                  {user.role}
+                </span>
+              </div>
+              <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{user.department}</p>
+              {user.email && <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">{user.email}</p>}
+            </div>
+          </div>
+
+          {/* right: quick stats */}
+          <div className="flex shrink-0 flex-wrap gap-3">
+            {isAdmin && (
+              <>
+                <StatPill label="Role"       value="Administrator" />
+                <StatPill label="Access"     value="Full System"   />
+              </>
+            )}
+            {isParent && (
+              <>
+                <StatPill label="KYC"        value="Verified"      color="green" />
+                <StatPill label="Trust Score"value="95 / 100"      color="civic" />
+                <StatPill label="Risk Level" value="Low"           color="green" />
+              </>
+            )}
+            {isOrphanage && orphanage && (
+              <>
+                <StatPill label="Children"   value={`${orphanage.occupancy} in care`} />
+                <StatPill label="Compliance" value={`${orphanage.compliance}%`}       color="green" />
+              </>
+            )}
+          </div>
         </div>
-      )}
+
+        {/* profile actions */}
+        <div className="border-t border-gray-100 dark:border-slate-800">
+          <ProfileActions onEdit={() => {}} onChangePassword={() => {}} />
+        </div>
+      </motion.div>
+
+      {/* ── Contact & identity info ───────────────────────────── */}
+      <SectionCard title="Personal Information" icon={FiUser}>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <Field label="Full Name"    value={user.name} />
+          <Field label="Email"        value={user.email} />
+          <Field label="Phone"        value={user.phone} />
+          <Field label="Employee ID"  value={user.employeeId} />
+          <Field label="Department"   value={user.department} />
+          <Field label="Designation"  value={user.designation} />
+          <Field label="Joining Date" value={user.joiningDate} />
+          <Field label="Role"         value={roleLabels[user.role]} />
+        </div>
+      </SectionCard>
+
+      {/* ── Role-specific details ─────────────────────────────── */}
+      {isParent && <ParentDetails child={child} />}
+      {isOrphanage && orphanage && <OrphanageProfileDetails orphanage={orphanage} />}
+
+      {/* ── Sign out ──────────────────────────────────────────── */}
+      <LogoutSection onLogout={logout} />
     </div>
   );
 }
 
-function OrphanageProfileDetails({ orphanage }) {
+/* ════════════════════════════════════════════════════════════
+   PARENT — Linked Child & Adoption Details
+═══════════════════════════════════════════════════════════ */
+function ParentDetails({ child }) {
   return (
-    <div className="space-y-6">
-      <Card>
-        <h2 className="text-xl font-extrabold text-slate-950 dark:text-white">Orphanage Registration Details</h2>
-        <dl className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <Field icon={FiHome} label="Orphanage Name" value={orphanage.name} />
-          <Field icon={FiFileText} label="Registration Number" value={orphanage.registrationNumber} />
-          <Field icon={FiShield} label="Government License Number" value={orphanage.governmentLicenseNumber} />
-          <Field icon={FiFileText} label="Date of Establishment" value={orphanage.establishmentDate} />
-          <Field icon={FiBriefcase} label="Type of Organization" value={orphanage.organizationType} />
-          <Field icon={FiUsers} label="Number of Children" value={orphanage.numberOfChildren} />
-          <Field icon={FiUsers} label="Capacity" value={orphanage.capacity} />
-        </dl>
-      </Card>
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.08 }}
+      className="space-y-5"
+    >
+      {/* Linked child card */}
+      <SectionCard title="Linked Child Welfare Profile" icon={FiHeart} iconBg="bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400">
+        {/* child avatar row */}
+        <div className="mb-4 flex items-center gap-4 rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-sm font-bold text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">
+            {child.name.split(" ").map(n => n[0]).join("")}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-bold text-slate-900 dark:text-white">{child.name}</p>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              {child.orphanage} · Age {child.age} · {child.educationLevel}
+            </p>
+          </div>
+          <HealthBadge status={child.health} />
+        </div>
+        {/* fields grid */}
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <Field label="Child ID"             value={child.id} />
+          <Field label="Full Name"            value={child.name} />
+          <Field label="Age"                  value={`${child.age} years`} />
+          <Field label="Gender"               value={child.gender} />
+          <Field label="Blood Group"          value={child.bloodGroup} />
+          <Field label="Orphanage"            value={child.orphanage} />
+          <Field label="Education Level"      value={child.educationLevel} />
+          <Field label="Admission Date"       value={child.admissionDate} />
+          <Field label="Case Worker"          value={child.caseWorker} />
+          <Field label="Health Status"        value={child.health} />
+          <Field label="Vaccination Status"   value={child.vaccinationStatus} />
+          <Field label="Attendance"           value={`${child.attendance}%`} />
+          <Field label="Allergies"            value={child.allergies} wide />
+          <Field label="Medical History"      value={child.medicalHistory} wide />
+          <Field label="Emergency Contact"    value={child.emergencyContact} wide />
+        </div>
+      </SectionCard>
 
-      <Card>
-        <h2 className="text-lg font-extrabold text-slate-950 dark:text-white">Contact Information</h2>
-        <dl className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Field icon={FiMail} label="Official Email" value={orphanage.officialEmail} />
-          <Field icon={FiPhone} label="Phone Number" value={orphanage.phone} />
-          <Field icon={FiPhone} label="Alternative Contact" value={orphanage.alternativeContact} />
-          <Field icon={FiHome} label="Website" value={orphanage.website} />
-        </dl>
-      </Card>
+      {/* Parent AI verification summary */}
+      <SectionCard title="AI Verification Summary" icon={FiShield} iconBg="bg-civic-50 text-civic-600 dark:bg-civic-500/10 dark:text-civic-400">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <AiMetric label="KYC Status"           value="Verified"          color="green" />
+          <AiMetric label="Face Match"           value="99%"               color="civic" />
+          <AiMetric label="AI Trust Score"       value="95 / 100"          color="civic" />
+          <AiMetric label="Document Verification"value="All Verified"      color="green" />
+          <AiMetric label="Background Check"     value="Passed"            color="green" />
+          <AiMetric label="Risk Level"           value="Low"               color="green" />
+        </div>
+      </SectionCard>
+    </motion.div>
+  );
+}
 
-      <Card>
-        <h2 className="text-lg font-extrabold text-slate-950 dark:text-white">Address</h2>
-        <dl className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <Field icon={FiHome} label="Country" value={orphanage.country} />
-          <Field icon={FiHome} label="State" value={orphanage.state} />
-          <Field icon={FiHome} label="District" value={orphanage.district} />
-          <Field icon={FiHome} label="City" value={orphanage.city} />
-          <Field icon={FiHome} label="PIN Code" value={orphanage.pinCode} />
-          <Field icon={FiHome} label="Full Address" value={orphanage.fullAddress} className="xl:col-span-2" />
-        </dl>
-      </Card>
+/* ════════════════════════════════════════════════════════════
+   ORPHANAGE — Full Profile Details
+═══════════════════════════════════════════════════════════ */
+function OrphanageProfileDetails({ orphanage }) {
+  const sections = [
+    {
+      title:  "Orphanage Registration Details",
+      icon:   FiHome,
+      fields: [
+        [FiHome,      "Orphanage Name",         orphanage.name],
+        [FiFileText,  "Registration Number",    orphanage.registrationNumber],
+        [FiShield,    "Govt License Number",    orphanage.governmentLicenseNumber],
+        [FiFileText,  "Date of Establishment",  orphanage.establishmentDate],
+        [FiBriefcase, "Type of Organization",   orphanage.organizationType],
+        [FiUsers,     "Number of Children",     orphanage.numberOfChildren],
+        [FiUsers,     "Capacity",               orphanage.capacity],
+      ],
+      cols: "sm:grid-cols-2 xl:grid-cols-3",
+    },
+    {
+      title:  "Contact Information",
+      icon:   FiMail,
+      fields: [
+        [FiMail,  "Official Email",      orphanage.officialEmail],
+        [FiPhone, "Phone Number",        orphanage.phone],
+        [FiPhone, "Alternative Contact", orphanage.alternativeContact],
+        [FiHome,  "Website",             orphanage.website],
+      ],
+      cols: "sm:grid-cols-2 xl:grid-cols-4",
+    },
+    {
+      title:  "Administrator Details",
+      icon:   FiUserCheck,
+      fields: [
+        [FiUserCheck,  "Administrator Name", orphanage.administrator.name],
+        [FiBriefcase,  "Designation",        orphanage.administrator.designation],
+        [FiPhone,      "Mobile Number",      orphanage.administrator.mobile],
+        [FiMail,       "Email",              orphanage.administrator.email],
+      ],
+      cols: "sm:grid-cols-2 xl:grid-cols-4",
+    },
+    {
+      title:  "Child Information Summary",
+      icon:   FiUsers,
+      fields: [
+        [FiUsers, "Total Boys",              orphanage.childSummary?.totalBoys],
+        [FiUsers, "Total Girls",             orphanage.childSummary?.totalGirls],
+        [FiUsers, "Children Below 5 Years",  orphanage.childSummary?.below5],
+        [FiUsers, "Children 5–12 Years",     orphanage.childSummary?.age5To12],
+        [FiUsers, "Children Above 12 Years", orphanage.childSummary?.above12],
+        [FiUsers, "Special Needs Children",  orphanage.childSummary?.specialNeeds],
+      ],
+      cols: "sm:grid-cols-2 xl:grid-cols-3",
+    },
+    {
+      title:  "Staff Details",
+      icon:   FiBriefcase,
+      fields: [
+        [FiUsers,  "Total Staff",     orphanage.staff?.totalStaff],
+        [FiUsers,  "Caretakers",      orphanage.staff?.caretakers],
+        [FiUsers,  "Teachers",        orphanage.staff?.teachers],
+        [FiUsers,  "Medical Staff",   orphanage.staff?.medicalStaff],
+        [FiShield, "Security Guards", orphanage.staff?.securityGuards],
+        [FiUsers,  "Volunteers",      orphanage.staff?.volunteers],
+      ],
+      cols: "sm:grid-cols-2 xl:grid-cols-3",
+    },
+    {
+      title:  "AI Safety Details",
+      icon:   FiCamera,
+      fields: [
+        [FiCamera, "Face Recognition Enabled",     orphanage.aiSafety?.faceRecognitionEnabled],
+        [FiCamera, "CCTV Cameras Installed",        orphanage.aiSafety?.cctvInstalled],
+        [FiCamera, "Number of Cameras",             String(orphanage.aiSafety?.numberOfCameras ?? "—")],
+        [FiShield, "Visitor Face Verification",     orphanage.aiSafety?.visitorFaceVerificationEnabled],
+        [FiShield, "GPS Tracking",                  orphanage.aiSafety?.gpsTrackingAvailable],
+        [FiShield, "Emergency Alert System",        orphanage.aiSafety?.emergencyAlertSystemEnabled],
+      ],
+      cols: "sm:grid-cols-2 xl:grid-cols-3",
+    },
+  ];
 
-      <Card>
-        <h2 className="text-lg font-extrabold text-slate-950 dark:text-white">Administrator Details</h2>
-        <dl className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <Field icon={FiUserCheck} label="Administrator Name" value={orphanage.administrator.name} />
-          <Field icon={FiBriefcase} label="Designation" value={orphanage.administrator.designation} />
-          <Field icon={FiPhone} label="Mobile Number" value={orphanage.administrator.mobile} />
-          <Field icon={FiMail} label="Email" value={orphanage.administrator.email} />
-          <Field icon={FiFileText} label="Profile Photo" value={orphanage.administrator.profilePhoto} />
-        </dl>
-      </Card>
+  return (
+    <div className="space-y-5">
+      {sections.map((sec) => (
+        <motion.div
+          key={sec.title}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900"
+        >
+          <div className="flex items-center gap-2.5 border-b border-gray-100 px-5 py-4 dark:border-slate-800">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-civic-50 text-civic-600 dark:bg-civic-500/10 dark:text-civic-400">
+              <sec.icon className="h-3.5 w-3.5" />
+            </div>
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white">{sec.title}</h2>
+          </div>
+          <dl className={`grid gap-3 p-5 ${sec.cols}`}>
+            {sec.fields.map(([Icon, label, value]) => (
+              <Field key={label} icon={Icon} label={label} value={value} />
+            ))}
+          </dl>
+        </motion.div>
+      ))}
 
-      <Card>
-        <h2 className="text-lg font-extrabold text-slate-950 dark:text-white">Identity Verification (KYC)</h2>
-        <dl className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <Field icon={FiFileText} label="Registration Certificate" value={orphanage.kyc.registrationCertificate} />
-          <Field icon={FiFileText} label="NGO Certificate" value={orphanage.kyc.ngoCertificate} />
-          <Field icon={FiFileText} label="Government License" value={orphanage.kyc.governmentLicense} />
-          <Field icon={FiFileText} label="Administrator ID Proof" value={orphanage.kyc.administratorIdProof} />
-          <Field icon={FiCreditCard} label="PAN Card" value={orphanage.kyc.panCard} />
-          <Field icon={FiCreditCard} label="GST Number" value={orphanage.kyc.gstNumber} />
-          <Field icon={FiHome} label="Address Proof" value={orphanage.kyc.addressProof} />
-        </dl>
-      </Card>
-
-      <Card>
-        <h2 className="text-lg font-extrabold text-slate-950 dark:text-white">Child Information Summary</h2>
-        <dl className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <Field icon={FiUsers} label="Total Boys" value={orphanage.childSummary.totalBoys} />
-          <Field icon={FiUsers} label="Total Girls" value={orphanage.childSummary.totalGirls} />
-          <Field icon={FiUsers} label="Children Below 5 Years" value={orphanage.childSummary.below5} />
-          <Field icon={FiUsers} label="Children 5-12 Years" value={orphanage.childSummary.age5To12} />
-          <Field icon={FiUsers} label="Children Above 12 Years" value={orphanage.childSummary.above12} />
-          <Field icon={FiUsers} label="Special Needs Children" value={orphanage.childSummary.specialNeeds} />
-        </dl>
-      </Card>
-
-      <Card>
-        <h2 className="text-lg font-extrabold text-slate-950 dark:text-white">Staff Details</h2>
-        <dl className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <Field icon={FiUsers} label="Total Staff" value={orphanage.staff.totalStaff} />
-          <Field icon={FiUsers} label="Caretakers" value={orphanage.staff.caretakers} />
-          <Field icon={FiUsers} label="Teachers" value={orphanage.staff.teachers} />
-          <Field icon={FiUsers} label="Medical Staff" value={orphanage.staff.medicalStaff} />
-          <Field icon={FiShield} label="Security Guards" value={orphanage.staff.securityGuards} />
-          <Field icon={FiUsers} label="Volunteers" value={orphanage.staff.volunteers} />
-        </dl>
-      </Card>
-
-      <Card>
-        <h2 className="text-lg font-extrabold text-slate-950 dark:text-white">Facilities Available</h2>
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-          {orphanage.facilities.map((facility) => (
-            <div key={facility} className="rounded-lg border border-slate-200 bg-white/70 p-3 text-sm font-bold text-slate-700 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-200">
-              {facility}
+      {/* Facilities */}
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900"
+      >
+        <div className="flex items-center gap-2.5 border-b border-gray-100 px-5 py-4 dark:border-slate-800">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400">
+            <FiCheckCircle className="h-3.5 w-3.5" />
+          </div>
+          <h2 className="text-sm font-bold text-slate-900 dark:text-white">Facilities Available</h2>
+        </div>
+        <div className="grid gap-2 p-5 sm:grid-cols-2 xl:grid-cols-5">
+          {(orphanage.facilities ?? ["Not provided"]).map((f) => (
+            <div key={f} className="flex items-center gap-2 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-800">
+              <span className="h-2 w-2 shrink-0 rounded-full bg-green-500" />
+              <span className="text-xs font-medium text-slate-700 dark:text-slate-200">{f}</span>
             </div>
           ))}
         </div>
-      </Card>
-
-      <Card>
-        <h2 className="text-lg font-extrabold text-slate-950 dark:text-white">Emergency Contact</h2>
-        <dl className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Field icon={FiUserCheck} label="Contact Person" value={orphanage.emergencyContact.contactPerson} />
-          <Field icon={FiPhone} label="Mobile Number" value={orphanage.emergencyContact.mobile} />
-          <Field icon={FiMail} label="Email" value={orphanage.emergencyContact.email} />
-          <Field icon={FiBriefcase} label="Relationship/Role" value={orphanage.emergencyContact.relationship} />
-        </dl>
-      </Card>
-
-      <Card>
-        <h2 className="text-lg font-extrabold text-slate-950 dark:text-white">AI Safety Details</h2>
-        <dl className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <Field icon={FiCamera} label="AI Face Recognition Enabled" value={orphanage.aiSafety.faceRecognitionEnabled} />
-          <Field icon={FiCamera} label="CCTV Cameras Installed" value={orphanage.aiSafety.cctvInstalled} />
-          <Field icon={FiCamera} label="Number of Cameras" value={orphanage.aiSafety.numberOfCameras} />
-          <Field icon={FiShield} label="Visitor Face Verification Enabled" value={orphanage.aiSafety.visitorFaceVerificationEnabled} />
-          <Field icon={FiUsers} label="Child Attendance System" value={orphanage.aiSafety.childAttendanceSystem} />
-          <Field icon={FiShield} label="GPS Tracking Available" value={orphanage.aiSafety.gpsTrackingAvailable} />
-          <Field icon={FiShield} label="Emergency Alert System Enabled" value={orphanage.aiSafety.emergencyAlertSystemEnabled} />
-        </dl>
-      </Card>
-
-      <Card>
-        <h2 className="text-lg font-extrabold text-slate-950 dark:text-white">Bank Details</h2>
-        <dl className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Field icon={FiCreditCard} label="Bank Name" value={orphanage.bankDetails.bankName} />
-          <Field icon={FiUserCheck} label="Account Holder Name" value={orphanage.bankDetails.accountHolderName} />
-          <Field icon={FiCreditCard} label="Account Number" value={orphanage.bankDetails.accountNumber} />
-          <Field icon={FiCreditCard} label="IFSC Code" value={orphanage.bankDetails.ifscCode} />
-        </dl>
-      </Card>
+      </motion.div>
     </div>
   );
 }
 
-function LogoutSection({ onLogout, className = "" }) {
+/* ════════════════════════════════════════════════════════════
+   SHARED SUB-COMPONENTS
+═══════════════════════════════════════════════════════════ */
+function SectionCard({ title, icon: Icon, iconBg = "bg-civic-50 text-civic-600 dark:bg-civic-500/10 dark:text-civic-400", children: content }) {
   return (
-    <Card className={className}>
-      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-        <div>
-          <h2 className="text-base font-bold text-slate-950 dark:text-white">Account Actions</h2>
-          <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400">
-            End the current secure dashboard session.
-          </p>
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900"
+    >
+      <div className="flex items-center gap-2.5 border-b border-gray-100 px-5 py-4 dark:border-slate-800">
+        <div className={classNames("flex h-7 w-7 items-center justify-center rounded-lg", iconBg)}>
+          <Icon className="h-3.5 w-3.5" />
         </div>
-        <Button variant="danger" icon={FiLogOut} onClick={onLogout} className="w-full md:w-auto">
-          Logout
-        </Button>
+        <h2 className="text-sm font-bold text-slate-900 dark:text-white">{title}</h2>
       </div>
-    </Card>
+      <div className="p-5">{content}</div>
+    </motion.div>
   );
 }
 
-function Field({ icon: Icon, label, value, className = "" }) {
+function Field({ icon: Icon, label, value, wide = false }) {
   return (
-    <div className={`rounded-lg border border-slate-200 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-950/40 ${className}`}>
-      <dt className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-        {Icon && <Icon className="h-4 w-4" />}
-        {label}
-      </dt>
-      <dd className="mt-2 break-words font-bold text-slate-950 dark:text-white">{value || "Not provided"}</dd>
+    <div className={classNames("field-block min-w-0", wide ? "sm:col-span-2 xl:col-span-3" : "")}>
+      {Icon ? (
+        <div className="flex items-center gap-1.5">
+          <Icon className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+          <span className="field-label">{label}</span>
+        </div>
+      ) : (
+        <span className="field-label">{label}</span>
+      )}
+      <p className="field-value mt-1.5 truncate" title={String(value || "Not provided")}>
+        {value || "Not provided"}
+      </p>
     </div>
+  );
+}
+
+function StatPill({ label, value, color = "default" }) {
+  const colors = {
+    default: "border-gray-100 bg-gray-50 dark:border-slate-700 dark:bg-slate-800",
+    green:   "border-green-100 bg-green-50 dark:border-green-500/20 dark:bg-green-500/10",
+    civic:   "border-civic-100 bg-civic-50 dark:border-civic-500/20 dark:bg-civic-500/10",
+  };
+  const textColors = {
+    default: "text-slate-700 dark:text-slate-200",
+    green:   "text-green-700 dark:text-green-400",
+    civic:   "text-civic-700 dark:text-civic-400",
+  };
+  return (
+    <div className={classNames("rounded-xl border px-3 py-2 text-center", colors[color] ?? colors.default)}>
+      <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">{label}</p>
+      <p className={classNames("mt-0.5 text-sm font-bold", textColors[color] ?? textColors.default)}>{value}</p>
+    </div>
+  );
+}
+
+function AiMetric({ label, value, color = "civic" }) {
+  const colors = {
+    green: "bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400",
+    civic: "bg-civic-50 text-civic-700 dark:bg-civic-500/10 dark:text-civic-400",
+  };
+  return (
+    <div className="field-block">
+      <span className="field-label">{label}</span>
+      <p className={classNames("mt-1.5 inline-block rounded-lg px-2.5 py-1 text-xs font-bold", colors[color] ?? colors.civic)}>
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function HealthBadge({ status }) {
+  const cfg = {
+    Stable:         "bg-green-50 text-green-700 ring-green-200 dark:bg-green-500/10 dark:text-green-400 dark:ring-green-500/20",
+    Observation:    "bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/20",
+    "Needs Review": "bg-red-50 text-red-700 ring-red-200 dark:bg-red-500/10 dark:text-red-400 dark:ring-red-500/20",
+  };
+  return (
+    <span className={classNames("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1", cfg[status] ?? cfg["Observation"])}>
+      {status}
+    </span>
+  );
+}
+
+function LogoutSection({ onLogout }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl border border-red-100 bg-red-50 p-5 dark:border-red-500/20 dark:bg-red-500/5"
+    >
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div>
+          <p className="text-sm font-bold text-red-800 dark:text-red-200">Sign Out</p>
+          <p className="mt-0.5 text-xs text-red-600 dark:text-red-400">End the current secure dashboard session.</p>
+        </div>
+        <Button variant="danger" icon={FiLogOut} onClick={onLogout} className="shrink-0">Sign Out</Button>
+      </div>
+    </motion.div>
   );
 }

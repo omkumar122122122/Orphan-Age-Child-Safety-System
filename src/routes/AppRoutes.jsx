@@ -13,10 +13,11 @@ import OrphanageDetail from "../pages/OrphanageDetail";
 import OrphanageFullProfile from "../pages/OrphanageFullProfile";
 import ManageVisitRequests from "../pages/ManageVisitRequests";
 import AIAttendance from "../pages/AIAttendance";
+import ChildAdoptionManagement from "../pages/ChildAdoptionManagement";
+import HealthMonitoring from "../pages/HealthMonitoring";
 import Orphanages from "../pages/Orphanages";
 import ParentDashboard from "../pages/ParentDashboard";
 import ParentProfile from "../pages/ParentProfile";
-import ParentVerificationCenter from "../pages/ParentVerificationCenter";
 import Profile from "../pages/Profile";
 import RegisterChild from "../pages/RegisterChild";
 import RegisterOrphanage from "../pages/RegisterOrphanage";
@@ -54,6 +55,7 @@ export default function AppRoutes() {
           <Route path="sahayak-ai" element={<SahayakAI />} />
           <Route path="profile" element={<Profile />} />
           <Route path="visit-request" element={<VisitRequest />} />
+          <Route path="child-welfare-follow-up-session" element={<ChildWelfareFollowUpSession />} />
           <Route path="notifications" element={<Alerts />} />
         </Route>
       </Route>
@@ -67,6 +69,8 @@ export default function AppRoutes() {
           <Route path="children/:childId" element={<ChildProfile />} />
           <Route path="parent-profiles/:parentId" element={<ParentProfile />} />
           <Route path="register-child" element={<RegisterChild />} />
+          <Route path="adoption-management" element={<ChildAdoptionManagement />} />
+          <Route path="health-monitoring" element={<HealthMonitoring />} />
           <Route path="reports" element={<Reports />} />
           <Route path="profile" element={<Profile />} />
         </Route>

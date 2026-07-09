@@ -2,28 +2,28 @@ import { Briefcase, Building, Calendar, Hash, Mail, Phone } from "lucide-react";
 
 function InfoField({ icon: Icon, label, value }) {
   return (
-    <div className="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-4 transition hover:shadow-md dark:border-slate-800 dark:bg-slate-950/40">
-      <div className="rounded-md bg-blue-50 p-2 text-blue-600 dark:bg-civic-500/15 dark:text-civic-100">
-        <Icon className="h-5 w-5" />
+    <div className="field-block min-w-0">
+      <div className="flex items-center gap-2">
+        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-civic-50 text-civic-600 dark:bg-civic-500/10 dark:text-civic-400">
+          <Icon className="h-3.5 w-3.5" />
+        </div>
+        <span className="field-label">{label}</span>
       </div>
-      <div className="flex-1">
-        <div className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">{label}</div>
-        <div className="mt-1 font-medium text-slate-800 dark:text-slate-100">{value || "Not provided"}</div>
-      </div>
+      <p className="field-value mt-2 truncate" title={value || "Not provided"}>{value || "Not provided"}</p>
     </div>
   );
 }
 
 export default function ProfileInfoGrid({ user }) {
   return (
-    <div className="mt-5 grid gap-4 sm:grid-cols-2">
-      <InfoField icon={Hash} label="Full Name" value={user.name} />
-      <InfoField icon={Mail} label="Email" value={user.email} />
-      <InfoField icon={Phone} label="Phone" value={user.phone} />
-      <InfoField icon={Hash} label="Employee ID" value={user.employeeId} />
-      <InfoField icon={Building} label="Department" value={user.department} />
-      <InfoField icon={Briefcase} label="Designation" value={user.designation} />
-      <InfoField icon={Calendar} label="Joining Date" value={user.joiningDate} />
+    <div className="grid gap-3 px-5 py-4 sm:grid-cols-2 min-w-0">
+      <InfoField icon={Hash}      label="Full Name"    value={user.name} />
+      <InfoField icon={Mail}      label="Email"        value={user.email} />
+      <InfoField icon={Phone}     label="Phone"        value={user.phone} />
+      <InfoField icon={Hash}      label="Employee ID"  value={user.employeeId} />
+      <InfoField icon={Building}  label="Department"   value={user.department} />
+      <InfoField icon={Briefcase} label="Designation"  value={user.designation} />
+      <InfoField icon={Calendar}  label="Joining Date" value={user.joiningDate} />
     </div>
   );
 }

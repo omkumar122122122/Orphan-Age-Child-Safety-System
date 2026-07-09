@@ -1,13 +1,19 @@
-import { FiMoon, FiSun } from "react-icons/fi";
+import { FiSun, FiMoon } from "react-icons/fi";
 import { useTheme } from "../context/ThemeContext";
-import Button from "./Button";
 
 export default function ThemeToggle() {
   const { isDark, toggleTheme } = useTheme();
 
   return (
-    <Button variant="secondary" icon={isDark ? FiSun : FiMoon} onClick={toggleTheme} aria-label="Toggle theme" className="px-3">
-      <span className="hidden sm:inline">{isDark ? "Light" : "Dark"}</span>
-    </Button>
+    <button
+      onClick={toggleTheme}
+      className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-slate-500 shadow-sm transition hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+    >
+      {isDark
+        ? <FiSun  className="h-4 w-4" />
+        : <FiMoon className="h-4 w-4" />
+      }
+    </button>
   );
 }

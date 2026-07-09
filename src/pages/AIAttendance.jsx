@@ -400,13 +400,15 @@ export default function AIAttendance() {
 
       <div className="grid gap-6 grid-cols-1 xl:grid-cols-[1fr_1fr] items-start">
         <div className="space-y-6 flex flex-col min-w-0">
-          <Card className="overflow-hidden rounded-3xl">
-          <div className="flex items-start justify-between gap-4">
-            <SectionTitle eyebrow="Live Camera" title="AI face recognition feed" subtitle="Scan a face to verify identity and record attendance automatically." />
-            <DetectionDot detected={scanState === "detected"} />
+          <Card className="overflow-hidden rounded-3xl p-0">
+          <div className="p-5">
+            <div className="flex items-start justify-between gap-4">
+              <SectionTitle eyebrow="Live Camera" title="AI face recognition feed" subtitle="Scan a face to verify identity and record attendance automatically." />
+              <DetectionDot detected={scanState === "detected"} />
+            </div>
           </div>
 
-          <div className="mt-5 grid gap-4">
+          <div className="px-5 pb-5 mt-5 grid gap-4">
             <motion.div
               className="relative aspect-video overflow-hidden rounded-3xl border border-slate-200 bg-slate-950 shadow-2xl shadow-slate-900/10 dark:border-slate-800"
               animate={scanState === "scanning" ? { boxShadow: ["0 0 0 rgba(28,116,216,0.00)", "0 0 0 10px rgba(28,116,216,0.08)", "0 0 0 rgba(28,116,216,0.00)"] } : {}}
@@ -536,8 +538,7 @@ export default function AIAttendance() {
           <Card className="rounded-3xl">
             <div className="flex items-start justify-between gap-3">
               <SectionTitle eyebrow="Recognition Result" title="Live AI recognition card" subtitle="This card updates automatically after detection." />
-              <DetectionDot detected={scanState === "detected"} />
-            </div>
+              <DetectionDot detected={scanState === "detected"} />            </div>
 
             <AnimatePresence mode="wait">
               {scanState === "scanning" ? (
@@ -700,8 +701,7 @@ export default function AIAttendance() {
 
         <div className="space-y-6 flex flex-col">
           <Card className="rounded-3xl">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <SectionTitle eyebrow="Recent Attendance" title="Attendance table" subtitle="Search, filter, and paginate through the latest AI face check-ins." />
+          <div className="flex flex-wrap items-end justify-between gap-4">            <SectionTitle eyebrow="Recent Attendance" title="Attendance table" subtitle="Search, filter, and paginate through the latest AI face check-ins." />
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="flex min-h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-white/80 px-3 dark:border-slate-800 dark:bg-slate-950/70">
                 <FiSearch className="h-4 w-4 text-slate-400" />

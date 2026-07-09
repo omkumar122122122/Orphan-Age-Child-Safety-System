@@ -1,102 +1,171 @@
-import { FiArrowLeft, FiFileText, FiHome, FiPhone, FiShield, FiUsers } from "react-icons/fi";
+import { FiArrowLeft, FiFileText, FiHome, FiPhone, FiShield, FiUsers, FiExternalLink } from "react-icons/fi";
 import { useNavigate, useParams } from "react-router-dom";
+import { motion } from "framer-motion";
 import Breadcrumb from "../components/Breadcrumb";
 import Button from "../components/Button";
 import Card from "../components/Card";
 import { children, orphanages } from "../data/dummyData";
-import { percentage } from "../utils/formatters";
+import { percentage, classNames } from "../utils/formatters";
 
 export default function OrphanageDetail() {
   const { orphanageId } = useParams();
   const navigate = useNavigate();
-  const orphanage = orphanages.find((item) => item.id === orphanageId);
+  const orphanage = orphanages.find((o) => o.id === orphanageId);
 
   if (!orphanage) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         <Breadcrumb items={["Admin", "Orphanages", "Details"]} />
         <Card>
-          <h1 className="text-xl font-extrabold text-slate-950 dark:text-white">Orphanage Not Found</h1>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">This orphanage record is not available.</p>
-          <Button icon={FiArrowLeft} onClick={() => navigate(-1)} className="mt-5">
-            Back
-          </Button>
+          <div className="flex flex-col items-center gap-4 px-6 py-12 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 dark:bg-slate-800">
+              <FiHome className="h-6 w-6 text-slate-400" />
+            </div>
+            <div>
+              <h1 className="text-base font-bold text-slate-900 dark:text-white">Orphanage Not Found</h1>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">This orphanage record is not available.</p>
+            </div>
+            <Button icon={FiArrowLeft} onClick={() => navigate(-1)}>Back</Button>
+          </div>
         </Card>
       </div>
     );
   }
 
-  const linkedChildren = children.filter((child) => child.orphanage === orphanage.name);
-  const adoptedChildren = linkedChildren.filter((child) => child.adopted);
-  const currentChildren = orphanage.occupancy ?? linkedChildren.length;
-  const totalAdmissions = orphanage.totalAdmissions ?? currentChildren + adoptedChildren.length;
+  const linkedChildren   = children.filter((c) => c.orphanage === orphanage.name);
+  const adoptedChildren  = linkedChildren.filter((c) => c.adopted);
+  const currentChildren  = orphanage.occupancy ?? linkedChildren.length;
+  const totalAdmissions  = orphanage.totalAdmissions ?? currentChildren + adoptedChildren.length;
+  const occupancyPct     = Math.round((currentChildren / orphanage.capacity) * 100);
+  const complianceColor  = orphanage.compliance >= 90 ? "text-green-600 dark:text-green-400" : orphanage.compliance >= 75 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <Breadcrumb items={["Admin", "Orphanages", orphanage.name]} />
-      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-        <div>
-          <h1 className="text-2xl font-extrabold text-slate-950 dark:text-white">{orphanage.name}</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{orphanage.id} basic orphanage overview</p>
+
+      {/* Page header */}
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+        <div className="flex items-center gap-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-indigo-100 text-xl font-bold text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">
+            {orphanage.name.split(" ").map(w => w[0]).join("").slice(0, 2)}
+          </div>
+          <div>
+            <h1 className="page-title">{orphanage.name}</h1>
+            <p className="page-subtitle">{orphanage.id} · {orphanage.city}</p>
+          </div>
         </div>
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Button icon={FiArrowLeft} variant="secondary" onClick={() => navigate(-1)}>
-            Back
-          </Button>
-          <Button icon={FiFileText} onClick={() => navigate(`/admin/orphanages/${orphanage.id}/profile`)}>
-            Follow Up Profile
+        <div className="flex flex-wrap gap-2">
+          <Button icon={FiArrowLeft} variant="secondary" onClick={() => navigate(-1)}>Back</Button>
+          <Button icon={FiFileText}  onClick={() => navigate(`/admin/orphanages/${orphanage.id}/profile`)}>
+            Full Profile
           </Button>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Metric label="Total Admissions Till Now" value={totalAdmissions} icon={FiUsers} />
-        <Metric label="Total Children Adopted" value={adoptedChildren.length} icon={FiShield} />
-        <Metric label="Currently In Orphanage" value={currentChildren} icon={FiHome} />
-        <Metric label="Occupancy" value={percentage(currentChildren, orphanage.capacity)} icon={FiUsers} />
+      {/* KPI cards */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          { label: "Total Admissions",    value: totalAdmissions,          icon: FiUsers,  color: "blue"  },
+          { label: "Children Adopted",    value: adoptedChildren.length,   icon: FiShield, color: "green" },
+          { label: "Currently in Care",   value: currentChildren,          icon: FiHome,   color: "amber" },
+          { label: "Occupancy Rate",      value: `${occupancyPct}%`,       icon: FiUsers,  color: occupancyPct >= 90 ? "red" : "blue" },
+        ].map((kpi, i) => (
+          <motion.div
+            key={kpi.label}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.05 }}
+            className={classNames(
+              "relative overflow-hidden rounded-2xl border bg-white p-5 shadow-card dark:bg-slate-900",
+              kpi.color === "green" ? "border-green-100 dark:border-green-500/20" :
+              kpi.color === "amber" ? "border-amber-100 dark:border-amber-500/20" :
+              kpi.color === "red"   ? "border-red-100 dark:border-red-500/20" :
+              "border-gray-100 dark:border-slate-800"
+            )}
+          >
+            <div className={classNames(
+              "absolute inset-y-0 left-0 w-1 rounded-l-2xl",
+              kpi.color === "green" ? "bg-green-500" :
+              kpi.color === "amber" ? "bg-amber-500" :
+              kpi.color === "red"   ? "bg-red-500" :
+              "bg-civic-500"
+            )} />
+            <div className="pl-3">
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{kpi.label}</p>
+              <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{kpi.value}</p>
+            </div>
+          </motion.div>
+        ))}
       </div>
 
-      <Card>
-        <h2 className="text-lg font-extrabold text-slate-950 dark:text-white">Basic Details</h2>
-        <dl className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <Field icon={FiHome} label="Orphanage Name" value={orphanage.name} />
-          <Field icon={FiFileText} label="Registration Number" value={orphanage.registrationNumber} />
-          <Field icon={FiShield} label="Government License Number" value={orphanage.governmentLicenseNumber} />
-          <Field icon={FiHome} label="City" value={orphanage.city} />
-          <Field icon={FiUsers} label="Capacity" value={orphanage.capacity} />
-          <Field icon={FiShield} label="Compliance" value={`${orphanage.compliance}%`} />
-          <Field icon={FiPhone} label="Phone Number" value={orphanage.phone} />
-          <Field icon={FiHome} label="Address" value={orphanage.fullAddress} className="xl:col-span-2" />
-        </dl>
-      </Card>
+      {/* Compliance + occupancy visual */}
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Compliance Score</p>
+          <p className={classNames("mt-2 text-4xl font-bold", complianceColor)}>{orphanage.compliance}%</p>
+          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-slate-700">
+            <div
+              className={classNames("h-full rounded-full", orphanage.compliance >= 90 ? "bg-green-500" : orphanage.compliance >= 75 ? "bg-amber-500" : "bg-red-500")}
+              style={{ width: `${orphanage.compliance}%` }}
+            />
+          </div>
+        </div>
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Occupancy</p>
+          <div className="mt-2 flex items-baseline gap-2">
+            <p className="text-4xl font-bold text-slate-900 dark:text-white">{currentChildren}</p>
+            <p className="text-lg text-slate-400">/ {orphanage.capacity}</p>
+          </div>
+          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-slate-700">
+            <div
+              className={classNames("h-full rounded-full", occupancyPct >= 90 ? "bg-red-500" : occupancyPct >= 75 ? "bg-amber-500" : "bg-green-500")}
+              style={{ width: `${occupancyPct}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Basic details */}
+      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
+        <div className="border-b border-gray-100 px-5 py-4 dark:border-slate-800">
+          <h2 className="text-sm font-bold text-slate-900 dark:text-white">Basic Details</h2>
+        </div>
+        <div className="grid gap-3 p-5 sm:grid-cols-2 xl:grid-cols-3">
+          <Field icon={FiHome}     label="Orphanage Name"          value={orphanage.name} />
+          <Field icon={FiFileText} label="Registration Number"     value={orphanage.registrationNumber} />
+          <Field icon={FiShield}   label="Govt License Number"     value={orphanage.governmentLicenseNumber} />
+          <Field icon={FiHome}     label="City"                    value={orphanage.city} />
+          <Field icon={FiUsers}    label="Capacity"                value={orphanage.capacity} />
+          <Field icon={FiShield}   label="Compliance"              value={`${orphanage.compliance}%`} />
+          <Field icon={FiPhone}    label="Phone Number"            value={orphanage.phone} />
+          <Field icon={FiHome}     label="Address"                 value={orphanage.fullAddress} wide />
+        </div>
+      </div>
+
+      {/* View full profile CTA */}
+      <div className="rounded-2xl border border-civic-100 bg-civic-50 p-5 dark:border-civic-500/20 dark:bg-civic-500/5">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-bold text-civic-800 dark:text-civic-200">Complete Registration Profile</p>
+            <p className="mt-0.5 text-xs text-civic-600 dark:text-civic-400">View KYC, staff, facilities, AI safety, and banking details.</p>
+          </div>
+          <Button icon={FiExternalLink} onClick={() => navigate(`/admin/orphanages/${orphanage.id}/profile`)}>
+            View Full Profile
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
 
-function Metric({ label, value, icon: Icon }) {
+function Field({ icon: Icon, label, value, wide = false }) {
   return (
-    <Card>
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{label}</p>
-          <h2 className="mt-2 text-3xl font-extrabold text-slate-950 dark:text-white">{value}</h2>
-        </div>
-        <div className="rounded-lg bg-civic-100 p-3 text-civic-700 dark:bg-civic-500/15 dark:text-civic-100">
-          <Icon className="h-5 w-5" />
-        </div>
+    <div className={classNames("field-block", wide ? "sm:col-span-2" : "")}>
+      <div className="flex items-center gap-1.5">
+        <Icon className="h-3.5 w-3.5 text-slate-400" />
+        <span className="field-label">{label}</span>
       </div>
-    </Card>
-  );
-}
-
-function Field({ icon: Icon, label, value, className = "" }) {
-  return (
-    <div className={`rounded-lg border border-slate-200 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-950/40 ${className}`}>
-      <dt className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-        <Icon className="h-4 w-4" />
-        {label}
-      </dt>
-      <dd className="mt-2 break-words font-bold text-slate-950 dark:text-white">{value || "Not provided"}</dd>
+      <p className="field-value">{value || "Not provided"}</p>
     </div>
   );
 }
