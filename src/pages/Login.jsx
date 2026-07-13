@@ -1,11 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import {
-  FiBriefcase, FiCreditCard, FiFileText, FiHome, FiLock,
-  FiMail, FiPhone, FiShield, FiUserCheck, FiUsers, FiEye, FiEyeOff
-} from "react-icons/fi";
+import { FiBriefcase, FiCreditCard, FiFileText, FiHome, FiLock, FiMail, FiPhone, FiShield, FiUserCheck, FiUsers } from "react-icons/fi";
 import { Navigate, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import Button from "../components/Button";
 import FormInput from "../components/FormInput";
 import ThemeToggle from "../components/ThemeToggle";
@@ -28,10 +24,10 @@ const stats = [
 ];
 
 export default function Login() {
-  const { login, loading, user } = useAuth();
+  const { login, loading } = useAuth();
   const navigate = useNavigate();
-  const [error, setError]           = useState("");
-  const [authMode, setAuthMode]     = useState("login");
+  const [error, setError] = useState("");
+  const [authMode, setAuthMode] = useState("login");
   const [selectedRole, setSelectedRole] = useState("admin");
   const [signupSuccess, setSignupSuccess] = useState("");
   const [showPassword, setShowPassword]   = useState(false);
@@ -39,12 +35,25 @@ export default function Login() {
   const { register, handleSubmit, setValue, formState } = useForm({
     defaultValues: { email: "admin@safety.gov", password: "admin123" },
   });
-  const signupForm = useForm({ defaultValues: { hasAnotherChild: "no", otherChildStatus: "own" } });
+  const signupForm = useForm({
+    defaultValues: {
+      hasAnotherChild: "no",
+      otherChildStatus: "own"
+    }
+  });
 
-  if (user) return <Navigate to={roleHome[user.role]} replace />;
+  if (user) {
+    return <Navigate to={roleHome[user.role]} replace />;
+  }
 
   const onSubmit = async (values) => {
     setError("");
+
+    if (!selectedRole) {
+      setError("Please select a role before logging in.");
+      return;
+    }
+
     try {
       const loggedInUser = await login(values);
       navigate(roleHome[loggedInUser.role], { replace: true });
@@ -123,119 +132,77 @@ export default function Login() {
           <p className="text-xs font-medium text-slate-500">System operational · 24/7 Monitoring active</p>
         </div>
       </section>
+      <section className="relative overflow-hidden flex items-center justify-center px-4 py-10">
+        {/* Decorative background glow circles on the right side */}
+        <div className="absolute right-10 top-1/4 h-72 w-72 rounded-full bg-civic-500/10 dark:bg-civic-500/5 blur-3xl pointer-events-none animate-float" />
+        <div className="absolute left-10 bottom-1/4 h-72 w-72 rounded-full bg-amber-500/5 dark:bg-amber-500/5 blur-3xl pointer-events-none animate-float-reverse" />
 
-      {/* ── Right panel: Form ─────────────────────────────── */}
-      <section className="flex min-h-[60vh] items-center justify-center bg-surface px-4 py-10 dark:bg-slate-950 lg:min-h-screen">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={authMode}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.2 }}
-            className={`w-full rounded-2xl border border-gray-100 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900 ${authMode === "signup" ? "max-w-2xl" : "max-w-sm"}`}
-          >
-            {/* Card header */}
-            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5 dark:border-slate-800">
-              <div>
-                <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                  {authMode === "login" ? "Secure Sign In" : "Parent Registration"}
-                </h2>
-                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                  {authMode === "login" ? "Select a role to access the dashboard." : "Submit details for admin verification."}
-                </p>
-              </div>
-              <ThemeToggle />
+        <div className={`relative z-10 glass-panel w-full rounded-xl p-6 transition-all duration-300 animate-scale-in ${authMode === "signup" ? "max-w-3xl" : "max-w-md"}`}>
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-extrabold text-slate-950 dark:text-white">
+                {authMode === "login" ? "Secure Login" : "Parent Sign Up"}
+              </h2>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                {authMode === "login" ? "Choose a demo role to continue." : "Submit adoption parent details for verification."}
+              </p>
             </div>
-
-            <div className="px-6 py-5">
-              {authMode === "login" ? (
-                <>
-                  {/* Role selector */}
-                  <div className="mb-5 rounded-xl border border-gray-100 bg-gray-50 p-1.5 dark:border-slate-700 dark:bg-slate-800">
-                    <div className="grid grid-cols-3 gap-1">
-                      {users.map((item) => {
-                        const cfg = roleConfig[item.role];
-                        const isSelected = selectedRole === item.role;
-                        return (
-                          <button
-                            key={item.id}
-                            type="button"
-                            onClick={() => {
-                              setSelectedRole(item.role);
-                              setAuthMode("login");
-                              setValue("email", item.email);
-                              setValue("password", item.password);
-                            }}
-                            className={`rounded-lg border px-2 py-2 text-center text-xs font-semibold transition ${
-                              isSelected
-                                ? cfg.light
-                                : "border-transparent text-slate-500 hover:bg-white hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200"
-                            }`}
-                          >
-                            {roleLabels[item.role]}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => { setSelectedRole(null); setAuthMode("signup"); }}
-                      className="mt-1.5 w-full rounded-lg border border-dashed border-gray-300 px-3 py-2 text-xs font-semibold text-slate-500 transition hover:border-civic-400 hover:text-civic-600 dark:border-slate-600 dark:text-slate-400 dark:hover:text-civic-400"
-                    >
-                      Sign up as parent →
-                    </button>
-                  </div>
-
-                  {/* Login form */}
-                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                    <FormInput
-                      label="Email address"
-                      type="email"
-                      icon={FiMail}
-                      error={formState.errors.email?.message}
-                      {...register("email", { required: "Email is required" })}
-                    />
-                    <div className="relative">
-                      <FormInput
-                        label="Password"
-                        type={showPassword ? "text" : "password"}
-                        icon={FiLock}
-                        error={formState.errors.password?.message}
-                        {...register("password", { required: "Password is required" })}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((v) => !v)}
-                        className="absolute bottom-0 right-3 flex h-[38px] items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                        tabIndex={-1}
-                      >
-                        {showPassword ? <FiEyeOff className="h-4 w-4" /> : <FiEye className="h-4 w-4" />}
-                      </button>
-                    </div>
-
-                    {error && (
-                      <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400">
-                        {error}
-                      </div>
-                    )}
-
-                    <Button type="submit" className="w-full" loading={loading}>
-                      {loading ? "Verifying…" : "Sign In"}
-                    </Button>
-                  </form>
-                </>
-              ) : (
-                <ParentSignupForm
-                  form={signupForm}
-                  onSubmit={onSignupSubmit}
-                  success={signupSuccess}
-                  onBack={() => setAuthMode("login")}
-                />
-              )}
+            <ThemeToggle />
+          </div>
+          <div className="mb-5 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div className="flex flex-wrap justify-center sm:justify-between">
+              {users.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedRole(item.role);
+                    setAuthMode("login");
+                    setValue("email", item.email);
+                    setValue("password", item.password);
+                  }}
+                  className={`rounded-lg border px-2.5 py-2.5 text-left transition ${selectedRole === item.role
+                    ? "border-civic-500 bg-civic-50 shadow-sm dark:border-civic-400 dark:bg-civic-500/10"
+                    : "border-slate-200 bg-white hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:hover:bg-slate-800"
+                    }`}
+                >
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">{roleLabels[item.role]}</p>
+                </button>
+              ))}
             </div>
-          </motion.div>
-        </AnimatePresence>
+            <button
+              type="button"
+              onClick={() => setAuthMode("signup")}
+              className="mt-3 w-full rounded-lg border border-civic-200 bg-white px-3 py-2 text-sm font-semibold text-civic-700 transition hover:bg-civic-50 dark:border-civic-500/30 dark:bg-slate-950 dark:text-civic-300 dark:hover:bg-civic-500/10"
+            >
+              Sign up as parent
+            </button>
+          </div>
+          {authMode === "login" ? (
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <FormInput
+                label="Email"
+                type="email"
+                icon={FiMail}
+                error={formState.errors.email?.message}
+                {...register("email", { required: "Email is required" })}
+              />
+              <FormInput
+                label="Password"
+                type="password"
+                icon={FiLock}
+                error={formState.errors.password?.message}
+                {...register("password", { required: "Password is required" })}
+              />
+              {error && <p className="rounded-lg bg-red-50 p-3 text-sm font-semibold text-red-700 dark:bg-red-500/10 dark:text-red-300">{error}</p>}
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Verifying" : "Login"}
+              </Button>
+            </form>
+          ) : (
+            <ParentSignupForm form={signupForm} onSubmit={onSignupSubmit} success={signupSuccess} />
+          )}
+        </div>
       </section>
     </main>
   );

@@ -29,7 +29,7 @@ import ProtectedRoute from "./ProtectedRoute";
 export default function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/" element={<Login />} />
       <Route path="/login" element={<Login />} />
 
       <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
