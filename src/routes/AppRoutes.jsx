@@ -18,12 +18,14 @@ import HealthMonitoring from "../pages/HealthMonitoring";
 import Orphanages from "../pages/Orphanages";
 import ParentDashboard from "../pages/ParentDashboard";
 import ParentProfile from "../pages/ParentProfile";
+import ParentVerificationCenter from "../pages/ParentVerificationCenter";
 import Profile from "../pages/Profile";
 import RegisterChild from "../pages/RegisterChild";
 import RegisterOrphanage from "../pages/RegisterOrphanage";
 import Reports from "../pages/Reports";
 import SahayakAI from "../pages/SahayakAI";
 import VisitRequest from "../pages/VisitRequest";
+import ChildWelfareFollowUpSession from "../pages/ChildWelfareFollowUpSession";
 import ProtectedRoute from "./ProtectedRoute";
 
 export default function AppRoutes() {

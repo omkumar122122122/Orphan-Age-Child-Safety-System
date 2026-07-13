@@ -1,4 +1,18 @@
-import { FiActivity, FiAlertTriangle, FiCamera, FiCalendar, FiHome, FiPlusCircle, FiShield, FiUser, FiUsers } from "react-icons/fi";
+import {
+  FiActivity,
+  FiAlertTriangle,
+  FiCamera,
+  FiCalendar,
+  FiFileText,
+  FiHeart,
+  FiHome,
+  FiMessageCircle,
+  FiPlusCircle,
+  FiShield,
+  FiUser,
+  FiUserCheck,
+  FiUsers
+} from "react-icons/fi";
 
 export const users = [
   {

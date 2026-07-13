@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { classNames } from "../utils/formatters";
 
 function sanitizeInputValue(label, type, value) {
@@ -8,7 +9,7 @@ function sanitizeInputValue(label, type, value) {
   return value;
 }
 
-export default function FormInput({ label, error, icon: Icon, onChange, ...props }) {
+const FormInput = forwardRef(function FormInput({ label, error, icon: Icon, onChange, ...props }, ref) {
   const isFile   = props.type === "file";
   const isNumber = props.type === "number";
   const isTel    = props.type === "tel";
@@ -34,6 +35,7 @@ export default function FormInput({ label, error, icon: Icon, onChange, ...props
       >
         {Icon && <Icon className="mr-2.5 h-4 w-4 shrink-0 text-slate-400" />}
         <input
+          ref={ref}
           className={classNames(
             "w-full border-0 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400 dark:text-white",
             isFile
@@ -56,4 +58,6 @@ export default function FormInput({ label, error, icon: Icon, onChange, ...props
       )}
     </label>
   );
-}
+});
+
+export default FormInput;

@@ -1,4 +1,9 @@
-import { Briefcase, Camera, CreditCard, FileText, Home, LogOut, Mail, Phone, Shield, UserCheck, Users } from 'lucide-react'
+import {
+  FiBriefcase, FiCamera, FiCreditCard, FiFileText,
+  FiHome, FiLogOut, FiMail, FiPhone, FiShield,
+  FiUserCheck, FiUsers, FiHeart, FiCheckCircle, FiUser
+} from "react-icons/fi";
+import { motion } from "framer-motion";
 import Breadcrumb from "../components/Breadcrumb";
 import Button from "../components/Button";
 import ProfileActions from "../components/ProfileActions";
@@ -25,10 +30,11 @@ const roleBadge = {
 ═══════════════════════════════════════════════════════════ */
 export default function Profile() {
   const { user, logout } = useAuth();
-  const child = children[1];
-  const isParent = user?.role === "parent";
+  const isAdmin     = user?.role === "admin";
+  const isParent    = user?.role === "parent";
   const isOrphanage = user?.role === "orphanage";
-  const orphanage = orphanages.find((item) => item.name === user.department);
+  const orphanage   = orphanages.find((o) => o.name === user.department);
+  const child       = children[1]; // linked child for parent demo
 
   return (
     <div className="space-y-5">
@@ -115,6 +121,8 @@ export default function Profile() {
       {/* ── Role-specific details ─────────────────────────────── */}
       {isParent && <ParentDetails child={child} />}
       {isOrphanage && orphanage && <OrphanageProfileDetails orphanage={orphanage} />}
+
+      {/* ── Sign out ──────────────────────────────────────────── */}
       <LogoutSection onLogout={logout} />
     </div>
   );
