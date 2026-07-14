@@ -1,117 +1,95 @@
 import { apiClient } from './apiClient';
 
+// Helper: unwrap the TransformInterceptor envelope
+// Backend wraps all responses as: { success, statusCode, data: <payload>, timestamp }
+function unwrap(response) {
+  if (response && typeof response === 'object' && 'data' in response && 'success' in response) {
+    return response.data;
+  }
+  return response;
+}
+
 /**
- * Parents Service
- * Handles all parent-related API calls
+ * Parents Service — handles all parent-related API calls
  */
 class ParentsService {
-  /**
-   * Create a new parent profile
-   * @param {Object} parentData - Parent profile data
-   * @returns {Promise<Object>} Created parent profile
-   */
+  /** Create a new parent profile */
   async createParent(parentData) {
-    return apiClient.post('/parents', parentData);
+    const response = await apiClient.post('/parents', parentData);
+    return unwrap(response);
   }
 
-  /**
-   * Get all parents with filters and pagination
-   * @param {Object} params - Query parameters (page, limit, search, verificationStatus, kycStatus, minTrustScore, maxTrustScore)
-   * @returns {Promise<Object>} Paginated parents list
-   */
+  /** Get all parents with filters and pagination */
   async getAllParents(params = {}) {
-    return apiClient.get('/parents', params);
+    const response = await apiClient.get('/parents', params);
+    return unwrap(response);
   }
 
-  /**
-   * Get parent profile by ID
-   * @param {string} id - Parent ID
-   * @returns {Promise<Object>} Parent profile
-   */
+  /** Get parent profile by ID */
   async getParentById(id) {
-    return apiClient.get(`/parents/${id}`);
+    const response = await apiClient.get(`/parents/${id}`);
+    return unwrap(response);
   }
 
-  /**
-   * Update parent profile
-   * @param {string} id - Parent ID
-   * @param {Object} updates - Fields to update
-   * @returns {Promise<Object>} Success message
-   */
+  /** Update parent profile */
   async updateParent(id, updates) {
-    return apiClient.patch(`/parents/${id}`, updates);
+    const response = await apiClient.patch(`/parents/${id}`, updates);
+    return unwrap(response);
   }
 
-  /**
-   * Delete parent profile (soft delete)
-   * @param {string} id - Parent ID
-   * @returns {Promise<Object>} Success message
-   */
+  /** Delete parent profile (soft delete) */
   async deleteParent(id) {
-    return apiClient.delete(`/parents/${id}`);
+    const response = await apiClient.delete(`/parents/${id}`);
+    return unwrap(response);
   }
 
   /**
    * Get parent dashboard data (for logged-in parent)
-   * @returns {Promise<Object>} Dashboard data
+   * Backend: GET /parents/dashboard
+   * Returns: { parent, verification, linkedChild, adoptionJourney }
    */
   async getDashboard() {
-    return apiClient.get('/parents/dashboard');
+    const response = await apiClient.get('/parents/dashboard');
+    return unwrap(response);
   }
 
-  /**
-   * Get parent KYC status (for logged-in parent)
-   * @returns {Promise<Object>} KYC status
-   */
+  /** Get parent KYC status */
   async getKycStatus() {
-    return apiClient.get('/parents/kyc');
+    const response = await apiClient.get('/parents/kyc');
+    return unwrap(response);
   }
 
-  /**
-   * Update parent verification status (Admin only)
-   * @param {string} id - Parent ID
-   * @param {Object} statusData - { verificationStatus, verificationNotes }
-   * @returns {Promise<Object>} Success message
-   */
+  /** Update parent verification status (Admin only) */
   async updateVerificationStatus(id, statusData) {
-    return apiClient.patch(`/parents/${id}/verification-status`, statusData);
+    const response = await apiClient.patch(`/parents/${id}/verification-status`, statusData);
+    return unwrap(response);
   }
 
-  /**
-   * Approve parent application (Admin only)
-   * @param {string} id - Parent ID
-   * @returns {Promise<Object>} Success message
-   */
+  /** Approve parent application (Admin only) */
   async approveParent(id) {
-    return apiClient.post(`/parents/${id}/approve`);
+    const response = await apiClient.post(`/parents/${id}/approve`);
+    return unwrap(response);
   }
 
-  /**
-   * Reject parent application (Admin only)
-   * @param {string} id - Parent ID
-   * @param {string} reason - Rejection reason
-   * @returns {Promise<Object>} Success message
-   */
+  /** Reject parent application (Admin only) */
   async rejectParent(id, reason) {
-    return apiClient.post(`/parents/${id}/reject`, { reason });
+    const response = await apiClient.post(`/parents/${id}/reject`, { reason });
+    return unwrap(response);
   }
 
   /**
    * Get verification queue (Admin only)
-   * @param {Object} params - Query parameters
-   * @returns {Promise<Object>} Verification queue with stats
+   * Backend: GET /admin/parents/verification/queue
    */
   async getVerificationQueue(params = {}) {
-    return apiClient.get('/admin/parents/verification/queue', params);
+    const response = await apiClient.get('/admin/parents/verification/queue', params);
+    return unwrap(response);
   }
 
-  /**
-   * Get full parent verification details (Admin only)
-   * @param {string} id - Parent ID
-   * @returns {Promise<Object>} Full parent profile with all details
-   */
+  /** Get full parent verification details (Admin only) */
   async getVerificationDetails(id) {
-    return apiClient.get(`/admin/parents/${id}/verification-details`);
+    const response = await apiClient.get(`/admin/parents/${id}/verification-details`);
+    return unwrap(response);
   }
 }
 

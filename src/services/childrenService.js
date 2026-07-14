@@ -1,90 +1,97 @@
 import { apiClient } from './apiClient';
 
+// Helper: unwrap the TransformInterceptor envelope
+// Backend always wraps responses as: { success, statusCode, data: <payload>, timestamp }
+// We extract .data so callers receive the actual payload directly.
+function unwrap(response) {
+  if (response && typeof response === 'object' && 'data' in response && 'success' in response) {
+    return response.data;
+  }
+  return response;
+}
+
 export const childrenService = {
   /**
    * Get all children with filters and pagination
-   * @param {Object} params - Query parameters
-   * @param {string} params.search - Search query
-   * @param {string} params.orphanageId - Filter by orphanage
-   * @param {string} params.risk - Filter by risk level
-   * @param {string} params.status - Filter by status
-   * @param {number} params.page - Page number
-   * @param {number} params.limit - Items per page
-   * @returns {Promise<Object>} - { data, pagination, summary }
+   * @returns {Promise<{ data: Array, pagination: Object, summary: Object }>}
    */
   async getAll(params = {}) {
     const cleanParams = Object.entries(params)
       .filter(([_, value]) => value !== undefined && value !== '')
       .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
 
-    return apiClient.get('/children', cleanParams);
+    const response = await apiClient.get('/children', cleanParams);
+    return unwrap(response);
   },
 
   /**
    * Get child profile by ID
-   * @param {string} id - Child ID
-   * @returns {Promise<Object>} - Child profile data
+   * @param {string} id
+   * @returns {Promise<Object>} Child profile data
    */
   async getById(id) {
-    return apiClient.get(`/children/${id}`);
+    const response = await apiClient.get(`/children/${id}`);
+    return unwrap(response);
   },
 
   /**
    * Get recently registered children
-   * @param {number} limit - Number of children to return
-   * @returns {Promise<Array>} - Array of child objects
+   * @param {number} limit
+   * @returns {Promise<Array>}
    */
   async getRecent(limit = 5) {
-    return apiClient.get('/children/recent', { limit });
+    const response = await apiClient.get('/children/recent', { limit });
+    return unwrap(response);
   },
 
   /**
    * Register a new child
-   * @param {Object} childData - Child data
-   * @param {File} photoFile - Child photo file
-   * @returns {Promise<Object>} - Created child response
+   * @param {Object} childData
+   * @param {File} photoFile
+   * @returns {Promise<Object>} Created child response
    */
   async create(childData, photoFile) {
     const formData = new FormData();
 
-    // Append all child data fields
     Object.entries(childData).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
         formData.append(key, value);
       }
     });
 
-    // Append photo if provided
     if (photoFile) {
       formData.append('photo', photoFile);
     }
 
-    return apiClient.post('/children', formData);
+    const response = await apiClient.post('/children', formData);
+    return unwrap(response);
   },
 
   /**
    * Update child information
-   * @param {string} id - Child ID
-   * @param {Object} updates - Fields to update
+   * @param {string} id
+   * @param {Object} updates
    * @returns {Promise<void>}
    */
   async update(id, updates) {
-    return apiClient.patch(`/children/${id}`, updates);
+    const response = await apiClient.patch(`/children/${id}`, updates);
+    return unwrap(response);
   },
 
   /**
    * Delete a child record (soft delete)
-   * @param {string} id - Child ID
+   * @param {string} id
    * @returns {Promise<void>}
    */
   async delete(id) {
-    return apiClient.delete(`/children/${id}`);
+    const response = await apiClient.delete(`/children/${id}`);
+    return unwrap(response);
   },
 
   /**
    * Download medical file for a child
-   * @param {string} id - Child ID
-   * @returns {Promise<Blob>} - File blob
+   * @param {string} id
+   * @returns {Promise<Blob>}
    */
   async downloadMedicalFile(id) {
     const token = apiClient.getAuthToken();

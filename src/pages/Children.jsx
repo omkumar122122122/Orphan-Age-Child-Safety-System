@@ -29,7 +29,7 @@ export default function Children() {
   const { user } = useAuth();
   const { toasts, error: showError, removeToast } = useToast();
 
-  const basePath = user?.role === "admin" ? "/admin" : "/orphanage";
+  const basePath = user?.role === "ADMIN" ? "/admin" : "/orphanage";
 
   const loadChildren = async (page = 1, searchQuery = query) => {
     try {
@@ -40,9 +40,12 @@ export default function Children() {
         limit: 8,
       });
       
-      setData(response.data);
-      setPagination(response.pagination);
-      setSummary(response.summary);
+      // apiClient returns full envelope: { success, data: { data, pagination, summary }, timestamp }
+      // We must unwrap .data to get the actual payload
+      const payload = response.data ?? response;
+      setData(Array.isArray(payload.data) ? payload.data : []);
+      setPagination(payload.pagination ?? { page: 1, limit: 8, total: 0, totalPages: 0 });
+      setSummary(payload.summary ?? { total: 0, highRisk: 0, adopted: 0, needsReview: 0 });
     } catch (err) {
       showError(err.message || "Failed to load children");
       console.error("Error loading children:", err);

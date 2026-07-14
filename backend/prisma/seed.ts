@@ -60,6 +60,19 @@ async function main() {
     },
   });
 
+  // Create Parent profile record (required for /parents/dashboard)
+  await prisma.parent.upsert({
+    where: { userId: parent.id },
+    update: {},
+    create: {
+      userId: parent.id,
+      nationality: 'Indian',
+      trustScore: 0,
+      isProfileComplete: false,
+    },
+  });
+
+
   console.log('✅ Seed complete — test accounts created:');
   console.log(`  🛡️  Admin     → ${admin.email}      / Admin@1234!`);
   console.log(`  🏠 Orphanage → ${orphanage.email}  / Orphanage@1234!`);

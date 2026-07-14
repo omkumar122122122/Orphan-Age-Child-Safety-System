@@ -49,7 +49,7 @@ export default function AdminDashboard() {
             <div>
               <p className="section-eyebrow">Government Child Welfare Directorate</p>
               <h1 className="mt-1 text-xl font-bold text-slate-900 dark:text-white">
-                Welcome back, {user?.name?.split(" ")[0]} 👋
+                Welcome back, {user?.firstName ?? user?.name?.split(" ")[0] ?? "Admin"} 👋
               </h1>
               <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
                 National child safety monitoring · {new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })}

@@ -9,7 +9,6 @@ import Breadcrumb from "../components/Breadcrumb";
 import NotificationPanel from "../components/NotificationPanel";
 import Chatbot from "../components/Chatbot/Chatbot";
 import { useAuth } from "../context/AuthContext";
-import { notifications } from "../data/dummyData";
 import { classNames } from "../utils/formatters";
 import { parentsService } from "../services/parentsService";
 import { useToast } from "../hooks/useToast";
@@ -77,19 +76,27 @@ export default function ParentDashboard() {
   }
 
   // Extract data from dashboard
+  // Backend returns: { parent, verification, linkedChild, adoptionJourney }
+  // Safely destructure with defaults so no access crashes if fields are missing
+  const parentInfo   = dashboard.parent      ?? {};
+  const verification = dashboard.verification ?? {};
+  const adoptionJourney = dashboard.adoptionJourney ?? { currentStep: 1, steps: [] };
+
+  const parentName = `${parentInfo.firstName ?? ''} ${parentInfo.lastName ?? ''}`.trim() || 'Parent';
+
   const trustBadges = [
-    { label: "KYC", value: dashboard.kycStatus || "Pending", color: dashboard.kycStatus === "APPROVED" ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400" },
-    { label: "Verification", value: dashboard.verificationStatus || "Pending", color: dashboard.verificationStatus === "APPROVED" ? "text-civic-600 dark:text-civic-400" : "text-amber-600 dark:text-amber-400" },
-    { label: "Trust Score", value: `${dashboard.trustScore || 0}/100`, color: "text-indigo-600 dark:text-indigo-400" },
-    { label: "Profile", value: `${dashboard.profileCompletion || 0}% Complete`, color: "text-emerald-600 dark:text-emerald-400" },
+    { label: "KYC",         value: verification.kycStatus          ?? "Pending",   color: verification.kycStatus === "APPROVED"          ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400" },
+    { label: "Verification",value: verification.verificationStatus ?? "Pending",   color: verification.verificationStatus === "APPROVED" ? "text-civic-600 dark:text-civic-400"   : "text-amber-600 dark:text-amber-400" },
+    { label: "Trust Score", value: `${verification.trustScore      ?? 0}/100`,      color: "text-indigo-600 dark:text-indigo-400" },
+    { label: "Profile",     value: `${dashboard.profileCompletion  ?? 0}% Complete`, color: "text-emerald-600 dark:text-emerald-400" },
   ];
 
   const adoptionTimeline = [
-    { step: "Profile Created", done: true },
-    { step: "KYC Submitted", done: dashboard.kycStatus !== "PENDING" },
-    { step: "Identity Verified", done: dashboard.verificationStatus === "APPROVED", current: dashboard.verificationStatus === "IN_REVIEW" },
-    { step: "Background Check", done: dashboard.policeVerificationStatus === "COMPLETED" },
-    { step: "Adoption Process", done: false },
+    { step: "Profile Created",   done: true },
+    { step: "KYC Submitted",     done: verification.kycStatus !== "PENDING" },
+    { step: "Identity Verified", done: verification.verificationStatus === "APPROVED", current: verification.verificationStatus === "IN_REVIEW" },
+    { step: "Background Check",  done: false },
+    { step: "Adoption Process",  done: false },
   ];
 
   return (
@@ -101,12 +108,12 @@ export default function ParentDashboard() {
         <div className="px-6 py-6">
           <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-600 to-civic-600 shadow-md shadow-emerald-600/25 text-sm font-bold text-white">
-              {dashboard.parentName?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'P'}
+              {parentName.split(' ').map(n => n[0]).join('').slice(0, 2) || 'P'}
             </div>
             <div>
               <p className="section-eyebrow">Parent Portal</p>
               <h1 className="mt-0.5 text-xl font-bold text-slate-900 dark:text-white">
-                Welcome back, {dashboard.parentName?.split(" ")[0] || user?.name?.split(" ")[0]} 👋
+                Welcome back, {parentName.split(" ")[0]} 👋
               </h1>
               <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
                 Track your adoption process and stay updated on your child's welfare.
@@ -174,7 +181,7 @@ export default function ParentDashboard() {
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-slate-900 dark:text-white">{dashboard.linkedChild.name}</p>
                   <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                    {dashboard.linkedChild.orphanage || "N/A"} · Age {dashboard.linkedChild.age || "N/A"}
+                    {dashboard.linkedChild.orphanageName || dashboard.linkedChild.orphanage || "N/A"} · Age {dashboard.linkedChild.age || "N/A"}
                   </p>
                 </div>
                 <Link to="/parent/profile" className="text-xs font-semibold text-civic-600 hover:underline dark:text-civic-400">View →</Link>
@@ -192,7 +199,7 @@ export default function ParentDashboard() {
               </div>
               <h2 className="section-card-title">Adoption Journey</h2>
             </div>
-            <span className="badge badge-civic">Step {dashboard.adoptionStep || 1} of 5</span>
+            <span className="badge badge-civic">Step {adoptionJourney.currentStep || 1} of 5</span>
           </div>
           <div className="section-card-body">
             <ol className="space-y-3">
@@ -228,7 +235,7 @@ export default function ParentDashboard() {
 
       {/* Notifications */}
       <motion.div {...fadeUp(0.2)}>
-        <NotificationPanel items={notifications} />
+        <NotificationPanel items={[]} />
       </motion.div>
     </div>
   );
