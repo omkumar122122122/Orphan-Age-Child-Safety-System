@@ -270,6 +270,13 @@ Then open your browser and go to:
 3. Type the email and password from the table above
 4. Click **Sign In** — you will land on that role's dashboard
 
+> ⚠️ **If login fails with "Invalid email or password"** — the test accounts are not in the database yet.
+> Run this command inside the `backend/` folder, then try again:
+> ```bash
+> npm run prisma:seed
+> ```
+> This is safe to run multiple times — it uses `upsert` and won't duplicate accounts.
+
 ---
 
 
