@@ -2,11 +2,15 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   FiCalendar, FiBell, FiUser, FiHeart, FiCheckCircle,
-  FiClock, FiShield, FiArrowRight, FiZap, FiActivity
+  FiClock, FiShield, FiArrowRight, FiZap, FiActivity,
+  FiMessageSquare, FiCpu
 } from "react-icons/fi";
+import { useState } from "react";
 import Breadcrumb from "../components/Breadcrumb";
 import NotificationPanel from "../components/NotificationPanel";
 import Chatbot from "../components/Chatbot/Chatbot";
+import ChatWindow from "../components/Chatbot/ChatWindow";
+import { useChat } from "../hooks/useChat";
 import { useAuth } from "../context/AuthContext";
 import { children, notifications } from "../data/dummyData";
 import { classNames } from "../utils/formatters";
@@ -194,6 +198,106 @@ export default function ParentDashboard() {
       <motion.div {...fadeUp(0.2)}>
         <NotificationPanel items={notifications} />
       </motion.div>
+
+      {/* ── Sahayak AI — Inline chat section ──────────────── */}
+      <motion.div {...fadeUp(0.25)}>
+        <SahayakSection parentId="PAR-2026-0148" childId={child.id} />
+      </motion.div>
+
+      {/* ── Floating chatbot button (always visible on parent dashboard) */}
+      <Chatbot parentId="PAR-2026-0148" childId={child.id} />
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════
+   Sahayak AI — Inline chat section on the Parent Dashboard
+   Uses the same useChat hook and ChatWindow as the floating bot.
+   Renders as a full-width dashboard card so the parent can chat
+   without opening the floating panel.
+═══════════════════════════════════════════════════════════ */
+function SahayakSection({ parentId, childId }) {
+  const { messages, isLoading, error, send, retry, clearConversation } = useChat({ parentId, childId });
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
+      {/* ── Header ─────────────────────────────────────────── */}
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="flex w-full items-center justify-between px-5 py-4 text-left transition hover:bg-slate-50/60 dark:hover:bg-slate-800/40"
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-civic-600 to-indigo-600 shadow-sm">
+            <FiCpu className="h-4 w-4 text-white" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Sahayak AI</h2>
+              <span className="flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-600 ring-1 ring-green-200 dark:bg-green-500/10 dark:text-green-400 dark:ring-green-500/20">
+                <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                Online
+              </span>
+            </div>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              Your AI welfare assistant — health, KYC, adoption guidance
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {messages.length > 0 && (
+            <span className="rounded-full bg-civic-50 px-2 py-0.5 text-[11px] font-bold text-civic-700 dark:bg-civic-500/10 dark:text-civic-300">
+              {messages.length} msgs
+            </span>
+          )}
+          <div className={classNames(
+            "flex h-7 w-7 items-center justify-center rounded-lg border transition",
+            expanded
+              ? "border-civic-200 bg-civic-50 text-civic-600 dark:border-civic-500/30 dark:bg-civic-500/10 dark:text-civic-400"
+              : "border-slate-200 bg-slate-50 text-slate-400 dark:border-slate-700 dark:bg-slate-800"
+          )}>
+            <FiMessageSquare className="h-3.5 w-3.5" />
+          </div>
+        </div>
+      </button>
+
+      {/* ── Collapsible chat window ─────────────────────────── */}
+      {expanded && (
+        <div className="border-t border-slate-100 dark:border-slate-800">
+          {/* Capability chips strip */}
+          <div className="flex flex-wrap gap-2 border-b border-slate-100 bg-slate-50/60 px-5 py-3 dark:border-slate-800 dark:bg-slate-800/30">
+            {[
+              { icon: "🩺", label: "Health Reports" },
+              { icon: "💉", label: "Vaccinations"   },
+              { icon: "🔐", label: "KYC Status"     },
+              { icon: "📅", label: "Appointments"   },
+              { icon: "🚨", label: "Emergency"      },
+              { icon: "📜", label: "Adoption Policy"},
+            ].map((cap) => (
+              <span
+                key={cap.label}
+                className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              >
+                {cap.icon} {cap.label}
+              </span>
+            ))}
+          </div>
+
+          {/* The shared ChatWindow — reuses all existing chat logic */}
+          <ChatWindow
+            messages={messages}
+            isLoading={isLoading}
+            error={error}
+            onSend={send}
+            onRetry={retry}
+            onClear={clearConversation}
+            onClose={() => setExpanded(false)}
+            inline
+          />
+        </div>
+      )}
     </div>
   );
 }
