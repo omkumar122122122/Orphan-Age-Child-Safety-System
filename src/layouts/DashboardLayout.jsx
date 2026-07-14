@@ -10,15 +10,14 @@ export default function DashboardLayout({ navItems, role, title }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-surface dark:bg-slate-950">
+    <div className="flex min-h-screen bg-surface dark:bg-[#080E1A]">
       {/* Desktop sidebar */}
       <Sidebar navItems={navItems} roleLabel={roleLabels[role]} />
 
-      {/* Mobile sidebar overlay */}
+      {/* Mobile overlay + drawer */}
       <AnimatePresence>
         {mobileOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm lg:hidden"
               initial={{ opacity: 0 }}
@@ -26,7 +25,6 @@ export default function DashboardLayout({ navItems, role, title }) {
               exit={{ opacity: 0 }}
               onClick={() => setMobileOpen(false)}
             />
-            {/* Drawer */}
             <motion.div
               className="fixed inset-y-0 left-0 z-50 w-72 bg-sidebar shadow-sidebar lg:hidden"
               initial={{ x: -288 }}
@@ -34,10 +32,10 @@ export default function DashboardLayout({ navItems, role, title }) {
               exit={{ x: -288 }}
               transition={{ type: "spring", damping: 28, stiffness: 280 }}
             >
-              <div className="flex items-center justify-end px-4 pt-4">
+              <div className="flex items-center justify-end px-3 pt-3">
                 <button
                   onClick={() => setMobileOpen(false)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white/10 hover:text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition hover:bg-white/10 hover:text-white"
                   aria-label="Close navigation"
                 >
                   <FiX className="h-4 w-4" />
@@ -49,10 +47,10 @@ export default function DashboardLayout({ navItems, role, title }) {
         )}
       </AnimatePresence>
 
-      {/* Main content column */}
+      {/* Main content */}
       <div className="flex min-w-0 flex-1 flex-col">
         <Navbar title={title} onMenuClick={() => setMobileOpen(true)} />
-        <main className="flex-1 px-4 py-6 lg:px-8">
+        <main className="flex-1 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8 max-w-[1400px] w-full mx-auto">
           <Outlet />
         </main>
       </div>
