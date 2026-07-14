@@ -34,7 +34,7 @@ export default function AppRoutes() {
       <Route path="/" element={<Login />} />
       <Route path="/login" element={<Login />} />
 
-      <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+      <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
           <Route path="children" element={<Children />} />
@@ -51,7 +51,7 @@ export default function AppRoutes() {
         </Route>
       </Route>
 
-      <Route element={<ProtectedRoute allowedRoles={["parent"]} />}>
+      <Route element={<ProtectedRoute allowedRoles={["PARENT"]} />}>
         <Route path="/parent" element={<ParentLayout />}>
           <Route index element={<ParentDashboard />} />
           <Route path="sahayak-ai" element={<SahayakAI />} />
@@ -62,7 +62,7 @@ export default function AppRoutes() {
         </Route>
       </Route>
 
-      <Route element={<ProtectedRoute allowedRoles={["orphanage"]} />}>
+      <Route element={<ProtectedRoute allowedRoles={["ORPHANAGE"]} />}>
         <Route path="/orphanage" element={<OrphanageLayout />}>
           <Route index element={<OrphanageDashboard />} />
           <Route path="ai-attendance" element={<AIAttendance />} />

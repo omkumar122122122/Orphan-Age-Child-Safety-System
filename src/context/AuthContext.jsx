@@ -1,9 +1,10 @@
 import { createContext, useContext, useMemo, useState } from "react";
-import { fakeLogin } from "../services/authService";
+import * as authService from "../services/authService";
 
 const AuthContext = createContext(null);
 const USER_STORAGE_KEY = "child_safety_user";
 const TOKEN_STORAGE_KEY = "child_safety_token";
+const REFRESH_TOKEN_KEY = "child_safety_refresh_token";
 
 function readStoredAuth() {
   const storages = [localStorage, sessionStorage];
@@ -12,36 +13,42 @@ function readStoredAuth() {
     try {
       const savedUser = storage.getItem(USER_STORAGE_KEY);
       const savedToken = storage.getItem(TOKEN_STORAGE_KEY);
+      const savedRefreshToken = storage.getItem(REFRESH_TOKEN_KEY);
 
       if (savedUser && savedToken) {
         return {
           user: JSON.parse(savedUser),
-          token: savedToken
+          token: savedToken,
+          refreshToken: savedRefreshToken
         };
       }
     } catch {
       storage.removeItem(USER_STORAGE_KEY);
       storage.removeItem(TOKEN_STORAGE_KEY);
+      storage.removeItem(REFRESH_TOKEN_KEY);
     }
   }
 
-  return { user: null, token: null };
+  return { user: null, token: null, refreshToken: null };
 }
 
-function persistAuth(user, token) {
+function persistAuth(user, accessToken, refreshToken) {
   const serializedUser = JSON.stringify(user);
-  const serializedToken = token || `jwt-${user.role}-${Date.now()}`;
 
   localStorage.setItem(USER_STORAGE_KEY, serializedUser);
-  localStorage.setItem(TOKEN_STORAGE_KEY, serializedToken);
+  localStorage.setItem(TOKEN_STORAGE_KEY, accessToken);
+  localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+
   sessionStorage.setItem(USER_STORAGE_KEY, serializedUser);
-  sessionStorage.setItem(TOKEN_STORAGE_KEY, serializedToken);
+  sessionStorage.setItem(TOKEN_STORAGE_KEY, accessToken);
+  sessionStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
 }
 
 function clearStoredAuth() {
   [localStorage, sessionStorage].forEach((storage) => {
     storage.removeItem(USER_STORAGE_KEY);
     storage.removeItem(TOKEN_STORAGE_KEY);
+    storage.removeItem(REFRESH_TOKEN_KEY);
   });
 }
 
@@ -52,29 +59,76 @@ export function AuthProvider({ children }) {
   const login = async (credentials) => {
     setLoading(true);
     try {
-      const loggedInUser = await fakeLogin(credentials);
-      const token = `jwt-${loggedInUser.role}-${Date.now()}`;
-      setAuthState({ user: loggedInUser, token });
-      persistAuth(loggedInUser, token);
-      return loggedInUser;
+      // Backend returns: { user, tokens: { accessToken, refreshToken }, message }
+      const response = await authService.login(credentials);
+      const { user, tokens } = response;
+
+      setAuthState({
+        user,
+        token: tokens.accessToken,
+        refreshToken: tokens.refreshToken
+      });
+
+      persistAuth(user, tokens.accessToken, tokens.refreshToken);
+      return user;
+    } catch (error) {
+      // Extract error message from backend response
+      const message = error.data?.message || error.message || 'Login failed';
+      throw new Error(message);
     } finally {
       setLoading(false);
     }
   };
 
-  const logout = () => {
-    setAuthState({ user: null, token: null });
-    clearStoredAuth();
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setAuthState({ user: null, token: null, refreshToken: null });
+      clearStoredAuth();
+    }
+  };
+
+  const refreshAccessToken = async () => {
+    try {
+      if (!authState.refreshToken) {
+        throw new Error('No refresh token available');
+      }
+
+      const response = await authService.refreshTokens(authState.refreshToken);
+      const { accessToken, refreshToken } = response;
+
+      setAuthState(prev => ({
+        ...prev,
+        token: accessToken,
+        refreshToken: refreshToken
+      }));
+
+      if (authState.user) {
+        persistAuth(authState.user, accessToken, refreshToken);
+      }
+
+      return accessToken;
+    } catch (error) {
+      // If refresh fails, logout user
+      setAuthState({ user: null, token: null, refreshToken: null });
+      clearStoredAuth();
+      throw error;
+    }
   };
 
   const value = useMemo(() => ({
     user: authState.user,
     token: authState.token,
+    refreshToken: authState.refreshToken,
     loading,
     login,
     logout,
+    refreshAccessToken,
     isAuthenticated: Boolean(authState.user && authState.token)
-  }), [authState.user, authState.token, loading]);
+  }), [authState.user, authState.token, authState.refreshToken, loading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

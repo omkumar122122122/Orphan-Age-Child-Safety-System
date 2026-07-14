@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
 
 class ApiClient {
   constructor() {
@@ -64,6 +64,13 @@ class ApiClient {
     return this.request(endpoint, {
       method: 'POST',
       body: body instanceof FormData ? body : JSON.stringify(body),
+    });
+  }
+
+  put(endpoint, body) {
+    return this.request(endpoint, {
+      method: 'PUT',
+      body: JSON.stringify(body),
     });
   }
 
