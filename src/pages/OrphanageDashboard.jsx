@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { FiCamera, FiCalendar, FiUserPlus, FiBarChart2, FiArrowRight, FiShield, FiUsers, FiHeart, FiActivity } from "react-icons/fi";
@@ -7,7 +8,8 @@ import DataTable from "../components/DataTable";
 import { StatCard } from "../components/Card";
 import NotificationPanel from "../components/NotificationPanel";
 import { useAuth } from "../context/AuthContext";
-import { children, monthlySafety, notifications, stats } from "../data/dummyData";
+import { orphanagesService } from "../services/orphanagesService";
+import { notifications } from "../data/dummyData";
 
 const quickActions = [
   { label: "AI Attendance",   to: "/orphanage/ai-attendance",  icon: FiCamera,   color: "bg-violet-600",  ring: "ring-violet-500/20",  desc: "Face recognition check-in" },
@@ -24,8 +26,54 @@ const fadeUp = (delay = 0) => ({
 
 export default function OrphanageDashboard() {
   const { user } = useAuth();
-  const myChildren = children.filter((c) => c.orphanage === user.department);
-  const atRisk = myChildren.filter((c) => c.risk === "High" || c.risk === "Medium").length;
+  const [dashboardData, setDashboardData] = useState(null);
+  const [children, setChildren] = useState([]);
+  const [chartData, setChartData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  async function loadDashboardData() {
+    try {
+      setLoading(true);
+      const [stats, childrenData, safetyChart] = await Promise.all([
+        orphanagesService.getDashboardStats(),
+        orphanagesService.getMyChildren(10),
+        orphanagesService.getSafetyChart(),
+      ]);
+      setDashboardData(stats);
+      setChildren(childrenData.data || []);
+      setChartData(safetyChart);
+    } catch (error) {
+      console.error('Failed to load dashboard:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-civic-500 mx-auto"></div>
+          <p className="mt-4 text-slate-600 dark:text-slate-400">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const inCare = dashboardData?.inCare || 0;
+  const atRisk = dashboardData?.atRisk || 0;
+  const aiStatus = dashboardData?.aiStatus || 'Active';
+
+  const stats = [
+    { label: "Registered Children", value: dashboardData?.registeredChildren || 0, icon: FiUsers, color: "blue", trend: "+12% this month" },
+    { label: "Safe Zones Online", value: dashboardData?.safeZonesOnline || 0, icon: FiShield, color: "green", trend: "All monitored" },
+    { label: "Active Orphanages", value: dashboardData?.activeOrphanages || 0, icon: FiHeart, color: "amber", trend: "System-wide" },
+    { label: "Critical Alerts", value: dashboardData?.criticalAlerts || 0, icon: FiActivity, color: "red", trend: "Require attention" },
+  ];
 
   return (
     <div className="space-y-7">
@@ -51,7 +99,7 @@ export default function OrphanageDashboard() {
               <FiUsers className="h-4 w-4 text-civic-600 dark:text-civic-400" />
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-civic-600 dark:text-civic-400">In Care</p>
-                <p className="text-lg font-bold tabular-nums text-civic-700 dark:text-civic-300">{myChildren.length}</p>
+                <p className="text-lg font-bold tabular-nums text-civic-700 dark:text-civic-300">{inCare}</p>
               </div>
             </div>
             <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 dark:border-amber-500/20 dark:bg-amber-500/10">
@@ -65,7 +113,7 @@ export default function OrphanageDashboard() {
               <span className="flex h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.8)]" />
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">AI Status</p>
-                <p className="text-xs font-bold text-emerald-700 dark:text-emerald-300">Active</p>
+                <p className="text-xs font-bold text-emerald-700 dark:text-emerald-300">{aiStatus}</p>
               </div>
             </div>
           </div>
@@ -107,7 +155,11 @@ export default function OrphanageDashboard() {
 
       {/* Chart */}
       <motion.div {...fadeUp(0.2)}>
-        <LineChartCard title="Care Home Safety Performance" subtitle="Monthly welfare and compliance trend" data={monthlySafety} />
+        <LineChartCard 
+          title="Care Home Safety Performance" 
+          subtitle="Monthly welfare and compliance trend" 
+          data={chartData || { labels: [], datasets: [] }} 
+        />
       </motion.div>
 
       {/* Children + notifications */}
@@ -119,7 +171,7 @@ export default function OrphanageDashboard() {
                 <FiUsers className="h-3.5 w-3.5" />
               </div>
               <h2 className="section-card-title">Children in Your Care</h2>
-              <span className="badge badge-civic">{myChildren.length} children</span>
+              <span className="badge badge-civic">{children.length} children</span>
             </div>
             <Link to="/orphanage/children" className="flex items-center gap-1 text-xs font-semibold text-civic-600 hover:underline dark:text-civic-400">
               View all <FiArrowRight className="h-3 w-3" />
@@ -127,13 +179,13 @@ export default function OrphanageDashboard() {
           </div>
           <DataTable
             columns={[
-              { key: "id",     label: "Child ID" },
-              { key: "name",   label: "Name" },
-              { key: "age",    label: "Age" },
-              { key: "risk",   label: "Risk" },
-              { key: "health", label: "Health" },
+              { key: "childCode", label: "Child ID" },
+              { key: "name",      label: "Name" },
+              { key: "age",       label: "Age" },
+              { key: "risk",      label: "Risk" },
+              { key: "health",    label: "Health" },
             ]}
-            rows={myChildren}
+            rows={children}
           />
         </div>
         <NotificationPanel items={notifications} />

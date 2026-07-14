@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   FiArrowLeft, FiBriefcase, FiCamera, FiCreditCard,
   FiFileText, FiHome, FiMail, FiPhone, FiShield, FiUserCheck, FiUsers
@@ -6,21 +7,52 @@ import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import Breadcrumb from "../components/Breadcrumb";
 import Button from "../components/Button";
-import { orphanages } from "../data/dummyData";
+import { orphanagesService } from "../services/orphanagesService";
 import { classNames } from "../utils/formatters";
 
 export default function OrphanageFullProfile() {
   const { orphanageId } = useParams();
   const navigate = useNavigate();
-  const orphanage = orphanages.find((o) => o.id === orphanageId);
+  const [orphanage, setOrphanage] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  if (!orphanage) {
+  useEffect(() => {
+    loadProfile();
+  }, [orphanageId]);
+
+  async function loadProfile() {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await orphanagesService.getProfile(orphanageId);
+      setOrphanage(data);
+    } catch (err) {
+      console.error('Failed to load profile:', err);
+      setError(err.message || 'Failed to load profile');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-civic-500 mx-auto"></div>
+          <p className="mt-4 text-slate-600 dark:text-slate-400">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !orphanage) {
     return (
       <div className="space-y-5">
         <Breadcrumb items={["Admin", "Orphanages", "Full Profile"]} />
         <div className="flex flex-col items-center gap-4 rounded-2xl border border-gray-100 bg-white px-6 py-12 text-center shadow-card dark:border-slate-800 dark:bg-slate-900">
           <h1 className="text-base font-bold text-slate-900 dark:text-white">Orphanage Profile Not Found</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">This detailed orphanage profile is not available.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{error || 'This detailed orphanage profile is not available.'}</p>
           <Button icon={FiArrowLeft} onClick={() => navigate(-1)}>Back</Button>
         </div>
       </div>
@@ -55,7 +87,7 @@ export default function OrphanageFullProfile() {
             <Field icon={FiShield}    label="Govt License Number"    value={orphanage.governmentLicenseNumber} />
             <Field icon={FiFileText}  label="Date of Establishment"  value={orphanage.establishmentDate} />
             <Field icon={FiBriefcase} label="Type of Organization"   value={orphanage.organizationType} />
-            <Field icon={FiUsers}     label="Number of Children"     value={orphanage.numberOfChildren ?? orphanage.occupancy} />
+            <Field icon={FiUsers}     label="Number of Children"     value={orphanage.numberOfChildren} />
             <Field icon={FiUsers}     label="Capacity"               value={orphanage.capacity} />
           </Section>
 
@@ -115,8 +147,8 @@ export default function OrphanageFullProfile() {
           <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
             <SectionHeader title="Facilities Available" />
             <div className="grid gap-2 p-5 sm:grid-cols-2 xl:grid-cols-5">
-              {(orphanage.facilities?.length ? orphanage.facilities : ["Not provided"]).map((f) => (
-                <div key={f} className="flex items-center gap-2 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-800">
+              {(orphanage.facilities?.length ? orphanage.facilities : ["Not provided"]).map((f, idx) => (
+                <div key={idx} className="flex items-center gap-2 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-800">
                   <div className="h-2 w-2 rounded-full bg-green-500" />
                   <span className="text-xs font-medium text-slate-700 dark:text-slate-200">{f}</span>
                 </div>
@@ -153,7 +185,7 @@ export default function OrphanageFullProfile() {
         <div className="space-y-4 xl:sticky xl:top-20">
           <SnapshotCard title="Quick Overview">
             <Field icon={FiHome}   label="Name"                value={orphanage.name} />
-            <Field icon={FiUsers}  label="Children / Capacity" value={`${orphanage.numberOfChildren ?? orphanage.occupancy} / ${orphanage.capacity}`} />
+            <Field icon={FiUsers}  label="Children / Capacity" value={`${orphanage.numberOfChildren} / ${orphanage.capacity}`} />
             <Field icon={FiShield} label="Compliance"          value={`${orphanage.compliance}%`} />
             <Field icon={FiBriefcase} label="Org Type"         value={orphanage.organizationType} />
           </SnapshotCard>

@@ -1,18 +1,55 @@
+import { useState, useEffect } from "react";
 import { FiArrowLeft, FiFileText, FiHome, FiPhone, FiShield, FiUsers, FiExternalLink } from "react-icons/fi";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import Breadcrumb from "../components/Breadcrumb";
 import Button from "../components/Button";
 import Card from "../components/Card";
-import { children, orphanages } from "../data/dummyData";
-import { percentage, classNames } from "../utils/formatters";
+import { orphanagesService } from "../services/orphanagesService";
+import { classNames } from "../utils/formatters";
 
 export default function OrphanageDetail() {
   const { orphanageId } = useParams();
   const navigate = useNavigate();
-  const orphanage = orphanages.find((o) => o.id === orphanageId);
+  const [orphanage, setOrphanage] = useState(null);
+  const [statistics, setStatistics] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  if (!orphanage) {
+  useEffect(() => {
+    loadData();
+  }, [orphanageId]);
+
+  async function loadData() {
+    try {
+      setLoading(true);
+      setError(null);
+      const [orphanageData, statsData] = await Promise.all([
+        orphanagesService.getById(orphanageId),
+        orphanagesService.getStatistics(orphanageId),
+      ]);
+      setOrphanage(orphanageData);
+      setStatistics(statsData);
+    } catch (err) {
+      console.error('Failed to load orphanage:', err);
+      setError(err.message || 'Failed to load orphanage');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-civic-500 mx-auto"></div>
+          <p className="mt-4 text-slate-600 dark:text-slate-400">Loading orphanage...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !orphanage) {
     return (
       <div className="space-y-5">
         <Breadcrumb items={["Admin", "Orphanages", "Details"]} />
@@ -23,7 +60,7 @@ export default function OrphanageDetail() {
             </div>
             <div>
               <h1 className="text-base font-bold text-slate-900 dark:text-white">Orphanage Not Found</h1>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">This orphanage record is not available.</p>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{error || 'This orphanage record is not available.'}</p>
             </div>
             <Button icon={FiArrowLeft} onClick={() => navigate(-1)}>Back</Button>
           </div>
@@ -32,12 +69,11 @@ export default function OrphanageDetail() {
     );
   }
 
-  const linkedChildren   = children.filter((c) => c.orphanage === orphanage.name);
-  const adoptedChildren  = linkedChildren.filter((c) => c.adopted);
-  const currentChildren  = orphanage.occupancy ?? linkedChildren.length;
-  const totalAdmissions  = orphanage.totalAdmissions ?? currentChildren + adoptedChildren.length;
-  const occupancyPct     = Math.round((currentChildren / orphanage.capacity) * 100);
-  const complianceColor  = orphanage.compliance >= 90 ? "text-green-600 dark:text-green-400" : orphanage.compliance >= 75 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400";
+  const totalAdmissions = statistics?.totalAdmissions || 0;
+  const adoptedChildren = statistics?.adoptedChildrenCount || 0;
+  const currentChildren = statistics?.currentChildrenCount || orphanage.occupancy;
+  const occupancyPct = statistics?.occupancyPercentage || 0;
+  const complianceColor = orphanage.compliance >= 90 ? "text-green-600 dark:text-green-400" : orphanage.compliance >= 75 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400";
 
   return (
     <div className="space-y-5">
@@ -51,12 +87,12 @@ export default function OrphanageDetail() {
           </div>
           <div>
             <h1 className="page-title">{orphanage.name}</h1>
-            <p className="page-subtitle">{orphanage.id} · {orphanage.city}</p>
+            <p className="page-subtitle">{orphanage.code} · {orphanage.city}</p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button icon={FiArrowLeft} variant="secondary" onClick={() => navigate(-1)}>Back</Button>
-          <Button icon={FiFileText}  onClick={() => navigate(`/admin/orphanages/${orphanage.id}/profile`)}>
+          <Button icon={FiFileText}  onClick={() => navigate(`/admin/orphanages/${orphanageId}/profile`)}>
             Full Profile
           </Button>
         </div>
@@ -65,10 +101,10 @@ export default function OrphanageDetail() {
       {/* KPI cards */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
-          { label: "Total Admissions",    value: totalAdmissions,          icon: FiUsers,  color: "blue"  },
-          { label: "Children Adopted",    value: adoptedChildren.length,   icon: FiShield, color: "green" },
-          { label: "Currently in Care",   value: currentChildren,          icon: FiHome,   color: "amber" },
-          { label: "Occupancy Rate",      value: `${occupancyPct}%`,       icon: FiUsers,  color: occupancyPct >= 90 ? "red" : "blue" },
+          { label: "Total Admissions",    value: totalAdmissions,    icon: FiUsers,  color: "blue"  },
+          { label: "Children Adopted",    value: adoptedChildren,    icon: FiShield, color: "green" },
+          { label: "Currently in Care",   value: currentChildren,    icon: FiHome,   color: "amber" },
+          { label: "Occupancy Rate",      value: `${occupancyPct}%`, icon: FiUsers,  color: occupancyPct >= 90 ? "red" : "blue" },
         ].map((kpi, i) => (
           <motion.div
             key={kpi.label}
@@ -149,7 +185,7 @@ export default function OrphanageDetail() {
             <p className="text-sm font-bold text-civic-800 dark:text-civic-200">Complete Registration Profile</p>
             <p className="mt-0.5 text-xs text-civic-600 dark:text-civic-400">View KYC, staff, facilities, AI safety, and banking details.</p>
           </div>
-          <Button icon={FiExternalLink} onClick={() => navigate(`/admin/orphanages/${orphanage.id}/profile`)}>
+          <Button icon={FiExternalLink} onClick={() => navigate(`/admin/orphanages/${orphanageId}/profile`)}>
             View Full Profile
           </Button>
         </div>
