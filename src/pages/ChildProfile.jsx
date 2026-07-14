@@ -1,18 +1,28 @@
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  FiArrowLeft, FiCalendar, FiDownload, FiFileText,
+  FiArrowLeft, FiCalendar, FiDownload, FiFileText, FiLoader,
   FiHeart, FiHome, FiMail, FiPhone, FiShield, FiUserCheck, FiUsers
 } from "react-icons/fi";
 import Breadcrumb from "../components/Breadcrumb";
 import Button from "../components/Button";
+import ToastContainer from "../components/Toast";
 import { useAuth } from "../context/AuthContext";
-import { children } from "../data/dummyData";
+import { useToast } from "../hooks/useToast";
+import { childrenService } from "../services/childrenService";
 import { roleLabels } from "../utils/constants";
 import { classNames } from "../utils/formatters";
 
 const riskBadge = { Low: "badge-success", Medium: "badge-warning", High: "badge-danger" };
-const healthBadge = { Stable: "badge-success", Observation: "badge-warning", "Needs Review": "badge-danger" };
+const healthBadge = { 
+  HEALTHY: "badge-success", 
+  Stable: "badge-success", 
+  UNDER_TREATMENT: "badge-warning",
+  Observation: "badge-warning", 
+  CRITICAL: "badge-danger",
+  "Needs Review": "badge-danger" 
+};
 
 const riskBar = {
   Low:    { bar: "bg-emerald-500", w: "w-1/4",  label: "text-emerald-600 dark:text-emerald-400" },
@@ -22,23 +32,52 @@ const riskBar = {
 
 export default function ChildProfile() {
   const { childId } = useParams();
-  const navigate    = useNavigate();
-  const { user }    = useAuth();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toasts, error: showError, removeToast } = useToast();
+  const [child, setChild] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const allowedChildren = user?.role === "orphanage"
-    ? children.filter((c) => c.orphanage === user.department)
-    : children;
-  const child = allowedChildren.find((c) => c.id === childId);
+  useEffect(() => {
+    const loadChild = async () => {
+      try {
+        setLoading(true);
+        const data = await childrenService.getById(childId);
+        setChild(data);
+      } catch (err) {
+        showError(err.message || "Failed to load child profile");
+        console.error("Error loading child:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadChild();
+  }, [childId]);
+
+  if (loading) {
+    return (
+      <div className="space-y-5">
+        <Breadcrumb items={[roleLabels[user.role], "Children", "Profile"]} />
+        <div className="section-card">
+          <div className="flex items-center justify-center py-20">
+            <FiLoader className="h-8 w-8 animate-spin text-civic-600" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!child) {
     return (
       <div className="space-y-5">
+        <ToastContainer toasts={toasts} onRemove={removeToast} />
         <Breadcrumb items={[roleLabels[user.role], "Children", "Profile"]} />
         <div className="section-card">
           <div className="empty-state py-16">
             <div className="empty-state-icon"><FiUsers className="h-6 w-6 text-slate-400" /></div>
             <p className="empty-state-title">Child Profile Not Found</p>
-            <p className="empty-state-desc">This child record couldn't be found for your dashboard access level.</p>
+            <p className="empty-state-desc">This child record couldn't be found or you don't have access.</p>
             <Button icon={FiArrowLeft} variant="secondary" className="mt-4" onClick={() => navigate(-1)}>Go Back</Button>
           </div>
         </div>
@@ -48,10 +87,12 @@ export default function ChildProfile() {
 
   const dashboardBase = user?.role === "admin" ? "/admin" : "/orphanage";
   const riskCfg = riskBar[child.risk] ?? riskBar.Low;
-  const initials = child.name.split(" ").map((n) => n[0]).join("");
+  const initials = child.name.split(" ").map((n) => n[0]).join("").substring(0, 2);
 
   return (
     <div className="space-y-6">
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
+      
       <Breadcrumb items={[roleLabels[user.role], "Children", child.name]} />
 
       {/* Profile hero */}
@@ -60,23 +101,26 @@ export default function ChildProfile() {
         animate={{ opacity: 1, y: 0 }}
         className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900"
       >
-        {/* Top gradient bar */}
         <div className="h-2 w-full bg-gradient-to-r from-civic-600 to-indigo-600" />
         <div className="flex flex-col justify-between gap-5 px-6 py-6 sm:flex-row sm:items-start">
           <div className="flex items-start gap-4">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-indigo-100 text-xl font-bold text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300 shadow-sm">
-              {initials}
-            </div>
+            {child.photo ? (
+              <img src={child.photo} alt={child.name} className="h-16 w-16 shrink-0 rounded-2xl object-cover shadow-sm" />
+            ) : (
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-indigo-100 text-xl font-bold text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300 shadow-sm">
+                {initials}
+              </div>
+            )}
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{child.name}</h1>
-                <span className="badge badge-neutral text-[11px]">{child.id}</span>
+                <span className="badge badge-neutral text-[11px]">{child.childCode}</span>
               </div>
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span className={classNames("badge", riskBadge[child.risk])}>{child.risk} Risk</span>
-                <span className={classNames("badge", healthBadge[child.health] ?? "badge-neutral")}>{child.health}</span>
+                <span className={classNames("badge", riskBadge[child.risk] || "badge-neutral")}>{child.risk} Risk</span>
+                <span className={classNames("badge", healthBadge[child.health] || "badge-neutral")}>{child.health}</span>
                 {child.adopted && <span className="badge badge-blue">Adopted</span>}
-                <span className="text-sm text-slate-500 dark:text-slate-400">{child.orphanage} · Age {child.age}</span>
+                <span className="text-sm text-slate-500 dark:text-slate-400">{child.orphanage.name} · Age {child.age}</span>
               </div>
             </div>
           </div>
@@ -104,12 +148,12 @@ export default function ChildProfile() {
       <div className="grid gap-5 xl:grid-cols-2">
         <ProfileSection title="Basic Details" icon={FiUserCheck} iconBg="bg-civic-50 text-civic-600 dark:bg-civic-500/10 dark:text-civic-400">
           <FieldGrid>
-            <Field icon={FiUserCheck} label="Child ID"       value={child.id} />
+            <Field icon={FiUserCheck} label="Child ID"       value={child.childCode} />
             <Field icon={FiUserCheck} label="Full Name"      value={child.name} />
             <Field icon={FiUserCheck} label="Age"            value={`${child.age} years`} />
             <Field icon={FiUserCheck} label="Gender"         value={child.gender} />
-            <Field icon={FiHome}      label="Orphanage"      value={child.orphanage} />
-            <Field icon={FiCalendar}  label="Admission Date" value={child.admissionDate} />
+            <Field icon={FiHome}      label="Orphanage"      value={child.orphanage.name} />
+            <Field icon={FiCalendar}  label="Admission Date" value={new Date(child.admissionDate).toLocaleDateString()} />
             <Field icon={FiUsers}     label="Case Worker"    value={child.caseWorker} />
             <Field icon={FiFileText}  label="Education"      value={child.educationLevel} />
           </FieldGrid>
@@ -123,16 +167,18 @@ export default function ChildProfile() {
             <Field icon={FiShield}   label="Allergies"       value={child.allergies} />
             <Field icon={FiFileText} label="Medical History" value={child.medicalHistory} wide />
           </FieldGrid>
-          <div className="mt-3 flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/40">
-            <div className="flex items-center gap-2">
-              <FiFileText className="h-4 w-4 text-slate-400" />
-              <div>
-                <p className="field-label">Medical History File</p>
-                <p className="field-value text-xs">{child.medicalHistoryFile}</p>
+          {child.medicalHistoryFile && (
+            <div className="mt-3 flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/40">
+              <div className="flex items-center gap-2">
+                <FiFileText className="h-4 w-4 text-slate-400" />
+                <div>
+                  <p className="field-label">Medical History File</p>
+                  <p className="field-value text-xs">Available for download</p>
+                </div>
               </div>
+              <Button icon={FiDownload} variant="secondary" size="sm">View</Button>
             </div>
-            <Button icon={FiDownload} variant="secondary" size="sm">View</Button>
-          </div>
+          )}
         </ProfileSection>
       </div>
 
@@ -141,7 +187,9 @@ export default function ChildProfile() {
         <FieldGrid>
           <Field icon={FiUsers} label="Adopted"            value={child.adopted ? "Yes" : "No"} />
           <Field icon={FiPhone} label="Emergency Contact"  value={child.emergencyContact} wide />
-          {child.adopted && <Field icon={FiCalendar} label="Adoption Date" value={child.adoptionDate} />}
+          {child.adopted && child.adoptionDate && (
+            <Field icon={FiCalendar} label="Adoption Date" value={new Date(child.adoptionDate).toLocaleDateString()} />
+          )}
         </FieldGrid>
       </ProfileSection>
 

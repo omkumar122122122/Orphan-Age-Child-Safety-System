@@ -8,7 +8,10 @@ import Breadcrumb from "../components/Breadcrumb";
 import Button from "../components/Button";
 import FormInput from "../components/FormInput";
 import Modal from "../components/Modal";
+import ToastContainer from "../components/Toast";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../hooks/useToast";
+import { childrenService } from "../services/childrenService";
 import { orphanages } from "../data/dummyData";
 import { roleLabels } from "../utils/constants";
 import { classNames } from "../utils/formatters";
@@ -21,8 +24,11 @@ const textareaCls = "mt-1.5 w-full rounded-xl border border-slate-200 bg-white p
 
 export default function RegisterChild() {
   const { user } = useAuth();
+  const { toasts, success: showSuccess, error: showError, removeToast } = useToast();
   const [photoPreview, setPhotoPreview] = useState("");
   const [savedRecord,  setSavedRecord]  = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  
   const { register, handleSubmit, reset, formState, watch } = useForm({
     defaultValues: {
       orphanage:      user.role === "orphanage" ? user.department : orphanages[0].name,
@@ -40,17 +46,68 @@ export default function RegisterChild() {
     setPhotoPreview(file ? URL.createObjectURL(file) : "");
   };
 
-  const onSubmit = (values) => {
-    const record = { id: recordId, ...values, photoName: values.photo?.[0]?.name || "No photo", registeredBy: user.name, createdAt: new Date().toISOString() };
-    const existing = JSON.parse(localStorage.getItem("registered_children") || "[]");
-    localStorage.setItem("registered_children", JSON.stringify([record, ...existing]));
-    setSavedRecord(record);
-    reset({ orphanage: user.role === "orphanage" ? user.department : orphanages[0].name, risk: "Low", foundCondition: foundConditions[0] });
-    setPhotoPreview("");
+  const onSubmit = async (values) => {
+    try {
+      setSubmitting(true);
+
+      // Map form values to API format
+      const childData = {
+        firstName: values.name.split(' ')[0],
+        lastName: values.name.split(' ').slice(1).join(' '),
+        approximateAge: parseInt(values.age),
+        gender: values.gender.toUpperCase(),
+        bloodGroup: values.bloodGroup.replace('+', '_POSITIVE').replace('-', '_NEGATIVE'),
+        admissionDate: values.admissionDate,
+        foundLocation: values.foundLocation,
+        entrySource: values.foundCondition,
+        admissionReason: values.notes,
+        distinguishingMarks: values.identificationMarks,
+        healthStatus: 'UNKNOWN',
+        specialNotes: values.medicalCondition,
+      };
+
+      // Get orphanage ID if admin is assigning
+      if (user.role === 'admin' && values.orphanage) {
+        const orphanage = orphanages.find(o => o.name === values.orphanage);
+        if (orphanage) {
+          childData.orphanageId = orphanage.id;
+        }
+      }
+
+      // Get photo file
+      const photoFile = values.photo?.[0];
+
+      // Call API
+      const response = await childrenService.create(childData, photoFile);
+
+      // Show success
+      setSavedRecord({
+        id: response.childCode,
+        name: response.name,
+        registeredBy: response.registeredBy,
+      });
+      
+      showSuccess("Child registered successfully!");
+
+      // Reset form
+      reset({ 
+        orphanage: user.role === "orphanage" ? user.department : orphanages[0].name, 
+        risk: "Low", 
+        foundCondition: foundConditions[0] 
+      });
+      setPhotoPreview("");
+    } catch (err) {
+      showError(err.message || "Failed to register child");
+      console.error("Error registering child:", err);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <div className="space-y-6">
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
+      
       <Breadcrumb items={[roleLabels[user.role], "Register Child"]} />
 
       {/* Page header */}
@@ -158,8 +215,8 @@ export default function RegisterChild() {
 
         {/* Actions */}
         <div className="flex justify-end gap-3 pt-2">
-          <Button type="button" variant="secondary" onClick={() => reset()}>Clear Form</Button>
-          <Button type="submit" icon={FiSave} loading={formState.isSubmitting}>Register Child</Button>
+          <Button type="button" variant="secondary" onClick={() => reset()} disabled={submitting}>Clear Form</Button>
+          <Button type="submit" icon={FiSave} loading={submitting}>Register Child</Button>
         </div>
       </form>
 
