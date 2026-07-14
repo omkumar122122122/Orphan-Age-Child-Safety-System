@@ -3,6 +3,7 @@ import { FiCalendar, FiBell, FiUser, FiHeart, FiCheckCircle, FiClock } from "rea
 import Breadcrumb from "../components/Breadcrumb";
 import Card from "../components/Card";
 import NotificationPanel from "../components/NotificationPanel";
+import Chatbot from "../components/Chatbot/Chatbot";
 import { useAuth } from "../context/AuthContext";
 import { children, notifications } from "../data/dummyData";
 
@@ -148,6 +149,9 @@ export default function ParentDashboard() {
 
       {/* Notifications */}
       <NotificationPanel items={notifications} />
+
+      {/* AI Chatbot — fixed floating button + window */}
+      <Chatbot parentId="PAR-2026-0148" childId={child.id} />
     </div>
   );
 }
