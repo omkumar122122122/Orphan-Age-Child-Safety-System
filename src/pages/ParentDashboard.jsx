@@ -7,6 +7,7 @@ import {
 } from "react-icons/fi";
 import Breadcrumb from "../components/Breadcrumb";
 import NotificationPanel from "../components/NotificationPanel";
+import Chatbot from "../components/Chatbot/Chatbot";
 import { useAuth } from "../context/AuthContext";
 import { notifications } from "../data/dummyData";
 import { classNames } from "../utils/formatters";
