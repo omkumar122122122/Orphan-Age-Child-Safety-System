@@ -418,6 +418,7 @@ enum VisitRequestStatus {
   CANCELLED
   COMPLETED
   NO_SHOW
+  RESCHEDULED
 }
 
 enum VisitType {
@@ -1786,50 +1787,116 @@ model CaseAssignment {
 // ═══════════════════════════════════════════════════════════
 
 model VisitRequest {
-  id String @id @default(uuid())
+  id        String @id @default(uuid())
+  requestId String @unique // e.g. "VR-2401" (auto-generated)
 
-  parentId String?
-  parent   Parent? @relation(fields: [parentId], references: [id], onDelete: SetNull)
+  // Relations
+  parentId String
+  parent   Parent @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+  orphanageId String
+  orphanage   Orphanage @relation(fields: [orphanageId], references: [id], onDelete: Cascade)
 
   childId String?
   child   Child?  @relation(fields: [childId], references: [id], onDelete: SetNull)
 
-  orphanageId String?
-  orphanage   Orphanage? @relation(fields: [orphanageId], references: [id], onDelete: SetNull)
+  // Visit Details
+  visitDate            DateTime  @db.Date
+  visitTime            String // HH:mm format
+  purpose              String // Adoption Inquiry, Meet Child, Document Verification, Counselling, General Visit
+  reason               String?   @db.Text // Long description from parent
+  adoptionTimeline     String? // e.g. "3 to 6 months"
+  visitorsCount        Int       @default(1)
+  relationshipOfVisitors String?
+  specialRequirements  String?   @db.Text
+  familyBackground     String?   @db.Text
 
-  visitType VisitType          @default(REGULAR_VISIT)
+  // Status & Type
   status    VisitRequestStatus @default(PENDING)
+  visitType VisitType          @default(REGULAR_VISIT)
 
-  requestedDate DateTime
-  requestedTime String?
-  confirmedDate DateTime?
-  confirmedTime String?
-  duration      Int?
+  // Risk Assessment
+  riskLevel RiskLevel @default(LOW)
 
-  adoptionRecordId String?
+  // AI Analysis & Trust Scores
+  trustScore           Int     @default(0) // 0-100
+  faceMatch            Int     @default(0) // 0-100
+  documentAuthenticity String?
+  behaviourPrediction  String?
+  adoptionReadiness    String? // Low, Medium, High
+  recommendation       String?
 
+  // Verification Status (stored as JSON)
+  verification Json? // {kyc, police, face, background, documents}
+
+  // Orphanage Assignment
+  meetingRoom   String?
+  assignedStaff String? // Staff member name (could be FK in future)
+
+  // QR Code & Check-in
+  qrStatus          String    @default("Pending") // Pending, Generated, Completed, Blocked
+  qrCode            String? // Generated QR code data
+  checkInTime       DateTime?
+  checkOutTime      DateTime?
+  expectedArrivalTime String? // HH:mm
+
+  // Documents Tracking
+  uploadedDocuments String[] // Array of document types
+  missingDocuments  String[] // Array of missing document types
+
+  // Approval/Rejection
   reviewedById    String?
-  reviewedBy      User?   @relation("VisitRequestReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
-  approvalNotes   String?
+  reviewedBy      User?     @relation("VisitRequestReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt      DateTime?
+  approvalNotes   String?   @db.Text
   rejectionReason String?
+  rejectionComments String? @db.Text
 
+  // Reschedule Tracking
+  originalVisitDate DateTime? @db.Date
+  originalVisitTime String?
+  rescheduleReason  String?
+  rescheduleCount   Int       @default(0)
+
+  // Visit Completion
   visitSupervisorId String?
   visitSupervisor   User?     @relation("VisitRequestSupervisor", fields: [visitSupervisorId], references: [id], onDelete: SetNull)
-  visitNotes        String?
   completedAt       DateTime?
   noShowReason      String?
 
+  // Post-Visit Feedback (stored as JSON)
+  postVisitFeedback Json? // {parentBehaviour, childComfort, meetingOutcome, recommendation, staffNotes}
+
+  // Notification Tracking
+  parentNotified Boolean   @default(false)
+  notifiedAt     DateTime?
+
+  // Instructions for approved visits
+  instructions String? @db.Text
+
+  // Adoption Record Link (if applicable)
+  adoptionRecordId String?
+
+  // Agreement
+  agreedToRules Boolean @default(false)
+
+  // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Relations
   welfareSessions WelfareSession[]
 
   @@index([parentId])
-  @@index([childId])
   @@index([orphanageId])
+  @@index([childId])
   @@index([status])
-  @@index([requestedDate])
-  @@index([orphanageId, confirmedDate])
+  @@index([riskLevel])
+  @@index([visitDate])
+  @@index([createdAt])
+  @@index([requestId])
+  @@index([orphanageId, status])
+  @@index([orphanageId, visitDate])
   @@index([parentId, status])
   @@map("visit_requests")
 }
