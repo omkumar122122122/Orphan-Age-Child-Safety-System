@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
@@ -12,12 +12,12 @@ import ChatWindow from "../components/Chatbot/ChatWindow";
 import Chatbot from "../components/Chatbot/Chatbot";
 import { useChat } from "../hooks/useChat";
 import { useAuth } from "../context/AuthContext";
-import { children, notifications } from "../data/dummyData";
+import { notifications } from "../data/dummyData";
+import { parentsService } from "../services/parentsService";
 import { classNames } from "../utils/formatters";
 
 /* ── Linked child for the demo parent (Meera Nair → Anaya Das) */
-const PARENT_ID = "PAR-2026-0148";
-const linkedChild = children.find((c) => c.id === "CH-1034") ?? children[1];
+let linkedChild = null;
 
 /* ── Quick navigation links ─────────────────────────────────── */
 const quickLinks = [
@@ -34,13 +34,7 @@ const fadeUp = (delay = 0) => ({
 });
 
 /* ── Adoption journey steps (derived from dummy data) ──────── */
-const adoptionTimeline = [
-  { step: "KYC Submitted",     done: true                    },
-  { step: "Identity Verified", done: true                    },
-  { step: "Background Check",  done: false, current: true    },
-  { step: "Visit Approved",    done: false                   },
-  { step: "Adoption Complete", done: false                   },
-];
+let adoptionTimeline = [];
 
 /* ── Trust badge strip data ─────────────────────────────────── */
 const trustBadges = [
@@ -61,6 +55,20 @@ const childStatusColor = {
 ═══════════════════════════════════════════════════════════ */
 export default function ParentDashboard() {
   const { user } = useAuth();
+  const [, setDashboardVersion] = useState(0);
+
+  useEffect(() => {
+    parentsService.getDashboard().then((dashboard) => {
+      linkedChild = dashboard.linkedChild ? {
+        ...dashboard.linkedChild,
+        orphanage: dashboard.linkedChild.orphanageName,
+        health: dashboard.linkedChild.healthStatus,
+        attendance: '—', educationLevel: 'Not provided', risk: 'Not available',
+      } : null;
+      adoptionTimeline = (dashboard.adoptionJourney?.steps || []).map((step) => ({ step: step.name, done: step.completed, current: step.isCurrent }));
+      setDashboardVersion((value) => value + 1);
+    }).catch(() => { linkedChild = null; adoptionTimeline = []; setDashboardVersion((value) => value + 1); });
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -141,11 +149,11 @@ export default function ParentDashboard() {
               </div>
               <h2 className="text-sm font-bold text-slate-900 dark:text-white">Linked Child Overview</h2>
             </div>
-            <span className="badge badge-success">Linked</span>
+            <span className="badge badge-success">{linkedChild ? 'Linked' : 'Not linked'}</span>
           </div>
           <div className="p-5">
             {/* Child avatar row */}
-            <div className="mb-4 flex items-center gap-4 rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+            {linkedChild ? <div className="mb-4 flex items-center gap-4 rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-sm font-bold text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">
                 {linkedChild.name.split(" ").map((n) => n[0]).join("")}
               </div>
@@ -158,9 +166,9 @@ export default function ParentDashboard() {
               <span className={classNames("badge", childStatusColor[linkedChild.health] ?? "badge-neutral")}>
                 {linkedChild.health}
               </span>
-            </div>
+            </div> : <p className="text-sm text-slate-500 dark:text-slate-400">Your adopted child will appear here once the adoption is approved.</p>}
             {/* Stats grid */}
-            <div className="grid grid-cols-3 gap-3">
+            {linkedChild && <div className="grid grid-cols-3 gap-3">
               {[
                 { label: "Attendance",  value: `${linkedChild.attendance}%` },
                 { label: "Education",   value: linkedChild.educationLevel    },
@@ -171,7 +179,7 @@ export default function ParentDashboard() {
                   <p className="field-value mt-1">{info.value}</p>
                 </div>
               ))}
-            </div>
+            </div>}
           </div>
         </div>
 
@@ -222,11 +230,11 @@ export default function ParentDashboard() {
 
       {/* ── Sahayak AI — inline chat section ─────────────────── */}
       <motion.div {...fadeUp(0.2)}>
-        <SahayakAI parentId={PARENT_ID} childId={linkedChild.id} />
+        <SahayakAI parentId={user?.parentId} childId={linkedChild?.id} />
       </motion.div>
 
       {/* ── Floating chat button (always visible) ────────────── */}
-      <Chatbot parentId={PARENT_ID} childId={linkedChild.id} />
+      <Chatbot parentId={user?.parentId} childId={linkedChild?.id} />
     </div>
   );
 }

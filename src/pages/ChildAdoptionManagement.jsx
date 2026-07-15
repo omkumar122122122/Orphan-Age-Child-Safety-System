@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import {
@@ -25,53 +25,11 @@ import {
 } from "react-icons/fi";
 import Button from "../components/Button";
 import Breadcrumb from "../components/Breadcrumb";
+import { adoptionsService } from "../services/adoptionsService";
+import { useAuth } from "../context/AuthContext";
 
-const parentRecord = {
-  photo: "RS",
-  name: "Raghav Sharma",
-  id: "PAR-2026-014",
-  age: 39,
-  gender: "Male",
-  email: "raghav.sharma@example.in",
-  phone: "+91 98765 34014",
-  address: "47 Civil Services Enclave, New Delhi",
-  occupation: "Senior Accounts Officer",
-  annualIncome: "INR 14,80,000",
-  familyMembers: "4 verified household members",
-  kycStatus: "Completed",
-  aiTrustScore: "96 / 100",
-  backgroundVerification: "Police and residence verification cleared",
-  visitHistory: "6 supervised visits completed",
-  adoptionEligibility: "Eligible for final adoption",
-  verificationBadge: "Government Verified Parent",
-};
-
-const childRecord = {
-  photo: "IR",
-  name: "Ishaan Roy",
-  id: "CH-1021",
-  age: 9,
-  gender: "Male",
-  bloodGroup: "B+",
-  education: "Class 4",
-  medicalInformation: "Seasonal asthma, stable under medical guidance",
-  currentOrphanage: "Sunrise Care Home",
-  healthStatus: "Medically cleared",
-  adoptionStatus: "Available",
-  aiWelfareScore: "94 / 100",
-  assignedWelfareOfficer: "Neha Kapoor",
-};
-
-const eligibilityItems = [
-  "Parent Verified",
-  "Child Available for Adoption",
-  "KYC Completed",
-  "Visit Completed",
-  "Legal Approval Received",
-  "AI Risk Check Passed",
-  "Medical Clearance",
-  "Adoption Committee Approved",
-];
+let parentRecord = {};
+let childRecord = {};
 
 const documentTemplates = [
   "Adoption Agreement",
@@ -84,24 +42,7 @@ const documentTemplates = [
   "Additional Documents",
 ];
 
-const initialHistory = [
-  {
-    id: "ADP-2026-031",
-    child: "Anaya Das",
-    parent: "Sourav Das",
-    date: "18 Feb 2026",
-    status: "Completed",
-    nextCheck: "18 Aug 2026",
-  },
-  {
-    id: "ADP-2025-118",
-    child: "Vihaan Sen",
-    parent: "Arjun Sen",
-    date: "06 Dec 2025",
-    status: "Monitoring Active",
-    nextCheck: "06 Sep 2026",
-  },
-];
+const initialHistory = [];
 
 const container = {
   hidden: { opacity: 0 },
@@ -113,17 +54,14 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.35 } },
 };
 
-function todayLabel() {
+function todayLabel(date = new Date()) {
   return new Intl.DateTimeFormat("en-IN", {
     day: "2-digit",
     month: "short",
     year: "numeric",
-  }).format(new Date());
+  }).format(date);
 }
 
-function makeAdoptionId() {
-  return `ADP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-}
 
 function StatusBadge({ children, tone = "success" }) {
   const tones = {
@@ -182,7 +120,7 @@ function DetailGrid({ data }) {
   );
 }
 
-function ProfilePanel({ type, record, adopted }) {
+function ProfilePanel({ type, record, adopted, linkedParentName }) {
   const isParent = type === "parent";
   const fields = isParent
     ? [
@@ -234,7 +172,7 @@ function ProfilePanel({ type, record, adopted }) {
         </div>
         {!isParent && adopted && (
           <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-700 dark:border-green-500/20 dark:bg-green-500/10 dark:text-green-300">
-            Linked to {parentRecord.name}
+            Linked to {linkedParentName}
           </div>
         )}
       </div>
@@ -297,7 +235,7 @@ function ToastStack({ toasts }) {
   );
 }
 
-function SuccessModal({ open, adoptionId, onClose, completedRecord }) {
+function SuccessModal({ open, adoptionId, onClose, completedRecord, parent, child }) {
   if (!open) return null;
 
   const updates = [
@@ -343,8 +281,8 @@ function SuccessModal({ open, adoptionId, onClose, completedRecord }) {
             <div className="grid gap-3 sm:grid-cols-2">
               {[
                 ["Adoption ID", adoptionId],
-                ["Parent Name", completedRecord?.parent ?? parentRecord.name],
-                ["Child Name", completedRecord?.child ?? childRecord.name],
+                ["Parent Name", completedRecord?.parent ?? parent?.name],
+                ["Child Name", completedRecord?.child ?? child?.name],
                 ["Adoption Date", completedRecord?.date ?? todayLabel()],
               ].map(([label, value]) => (
                 <div key={label} className="field-block">
@@ -379,7 +317,8 @@ function SuccessModal({ open, adoptionId, onClose, completedRecord }) {
 }
 
 export default function ChildAdoptionManagement() {
-  const [adoptionId] = useState(makeAdoptionId);
+  const { user } = useAuth();
+  const [adoptionId, setAdoptionId] = useState("");
   const [verified, setVerified] = useState(false);
   const [searching, setSearching] = useState(false);
   const [documents, setDocuments] = useState(
@@ -398,8 +337,17 @@ export default function ChildAdoptionManagement() {
   const [completedRecord, setCompletedRecord] = useState(null);
 
   const { register, handleSubmit, reset } = useForm({
-    defaultValues: { parentId: parentRecord.id, childId: childRecord.id },
+    defaultValues: { parentId: "", childId: "" },
   });
+
+  useEffect(() => {
+    adoptionsService.getAll().then((result) => setHistory((result.data || []).map((entry) => ({
+      id: entry.id, child: entry.child?.name || '—', parent: entry.parent?.name || '—',
+      date: entry.completedDate ? todayLabel(new Date(entry.completedDate)) : 'Pending',
+      status: entry.status === 'COMPLETED' ? 'Completed' : entry.status.replaceAll('_', ' '),
+      nextCheck: entry.postAdoptionFollowUp1 ? new Date(entry.postAdoptionFollowUp1).toLocaleDateString('en-IN') : 'Pending',
+    })))).catch(() => setHistory([]));
+  }, []);
 
   const addToast = (message) => {
     const id = `${Date.now()}-${message}`;
@@ -413,6 +361,7 @@ export default function ChildAdoptionManagement() {
   const allDocumentsUploaded = uploadedCount === documents.length;
   const workflowStage = completed ? 6 : allDocumentsUploaded && declared ? 5 : verified ? 4 : 1;
   const currentStatus = completed ? "Adoption Completed" : verified ? "Final Verification in Progress" : "Pending Verification";
+  const eligibilityItems = ["Parent Verified", "Child Available for Adoption", "KYC Completed", "Visit Completed"];
 
   const summaryItems = useMemo(
     () => [
@@ -425,18 +374,23 @@ export default function ChildAdoptionManagement() {
     [allDocumentsUploaded, completed, verified, workflowStage]
   );
 
-  const onVerify = () => {
+  const onVerify = async ({ parentId, childId }) => {
     setSearching(true);
-    window.setTimeout(() => {
-      setSearching(false);
+    try {
+      const result = await adoptionsService.verify(parentId, childId);
+      if (!result.eligible) throw new Error(result.blockers.join('. '));
+      parentRecord = { ...result.parent, photo: result.parent.name.split(' ').map((name) => name[0]).join('').slice(0, 2), age: '—', gender: '—', occupation: 'Not provided', annualIncome: 'Not provided', familyMembers: '—', aiTrustScore: `${result.parent.trustScore} / 100`, backgroundVerification: result.parent.verificationStatus, visitHistory: `${result.completedVisits} completed visit(s)`, adoptionEligibility: 'Eligible for final adoption', verificationBadge: 'Government Verified Parent' };
+      childRecord = { ...result.child, id: result.child.id, photo: result.child.name.split(' ').map((name) => name[0]).join('').slice(0, 2), education: 'Not provided', medicalInformation: 'Not provided', currentOrphanage: result.child.orphanageName, healthStatus: result.child.healthStatus, aiWelfareScore: 'Not available', assignedWelfareOfficer: 'Not assigned' };
+      setAdoptionId(result.adoption?.id || "");
       setVerified(true);
-      addToast("Parent Verified");
-      window.setTimeout(() => addToast("Child Verified"), 350);
-    }, 900);
+      addToast('Eligibility verified');
+    } catch (error) { addToast(error.message || 'Unable to verify adoption eligibility'); }
+    finally { setSearching(false); }
   };
 
   const onReset = () => {
-    reset({ parentId: parentRecord.id, childId: childRecord.id });
+    reset({ parentId: "", childId: "" });
+    parentRecord = {}; childRecord = {}; setAdoptionId("");
     setVerified(false);
     setSearching(false);
     setCompleted(false);
@@ -445,31 +399,28 @@ export default function ChildAdoptionManagement() {
     setDocuments(documentTemplates.map((name) => ({ name, fileName: "", progress: 0, status: "Pending" })));
   };
 
-  const uploadDocument = (index) => {
-    setDocuments((current) =>
-      current.map((doc, docIndex) =>
-        docIndex === index
-          ? {
-              ...doc,
-              fileName: `${doc.name.replaceAll(" ", "-").toLowerCase()}-${adoptionId}.pdf`,
-              progress: 68,
-              status: "Uploading",
-            }
-          : doc
-      )
-    );
-
-    window.setTimeout(() => {
+  const uploadDocument = async (index, file) => {
+    if (!file) return;
+    if (!declared) { addToast('Accept the legal declaration before uploading documents'); return; }
+    setDocuments((current) => current.map((doc, docIndex) => docIndex === index ? { ...doc, fileName: file.name, progress: 40, status: "Uploading" } : doc));
+    try {
+      let recordId = adoptionId;
+      if (!recordId) {
+        const draft = await adoptionsService.create({ parentId: parentRecord.id, childId: childRecord.id, declarationAccepted: true });
+        recordId = draft.id;
+        setAdoptionId(recordId);
+      }
+      await adoptionsService.uploadDocument(recordId, documents[index].name, file);
       setDocuments((current) =>
         current.map((doc, docIndex) =>
           docIndex === index ? { ...doc, progress: 100, status: "Verified" } : doc
         )
       );
-      addToast("Documents Uploaded");
-    }, 650);
+      addToast("Document uploaded");
+    } catch (error) { setDocuments((current) => current.map((doc, docIndex) => docIndex === index ? { ...doc, progress: 0, status: 'Pending' } : doc)); addToast(error.message || 'Document upload failed'); }
   };
 
-  const completeAdoption = () => {
+  const completeAdoption = async () => {
     if (!verified) {
       addToast("Verify parent and child details first");
       return;
@@ -485,16 +436,18 @@ export default function ChildAdoptionManagement() {
       child: childRecord.name,
       parent: parentRecord.name,
       date: todayLabel(),
-      status: "Completed",
-      nextCheck: "08 Oct 2026",
+      status: user?.role === 'admin' ? "Completed" : "Under Review",
+      nextCheck: "Pending approval",
     };
-
-    setCompleted(true);
+    try {
+      if (user?.role === 'admin') await adoptionsService.updateStatus(adoptionId, { status: 'COMPLETED' });
+    } catch (error) { addToast(error.message || 'Could not update adoption'); return; }
+    const isAdmin = user?.role === 'admin';
+    setCompleted(isAdmin);
     setCompletedRecord(record);
     setHistory((current) => [record, ...current.filter((entry) => entry.id !== adoptionId)]);
-    setModalOpen(true);
-    addToast("Adoption Completed");
-    window.setTimeout(() => addToast("Monitoring Schedule Created"), 450);
+    setModalOpen(isAdmin);
+    addToast(isAdmin ? "Adoption completed" : "Adoption submitted for admin approval");
   };
 
   const steps = [
@@ -642,9 +595,7 @@ export default function ChildAdoptionManagement() {
                           </div>
                           <div className="mt-4 flex items-center justify-between gap-3">
                             <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{doc.progress}% uploaded</span>
-                            <Button type="button" variant="secondary" icon={FiUploadCloud} onClick={() => uploadDocument(index)} disabled={doc.status === "Verified"}>
-                              Upload
-                            </Button>
+                            <label className="cursor-pointer"><input className="hidden" type="file" accept="application/pdf,image/png,image/jpeg" onChange={(event) => uploadDocument(index, event.target.files?.[0])} disabled={doc.status === "Verified"} /><Button type="button" variant="secondary" icon={FiUploadCloud} disabled={doc.status === "Verified"}>Upload</Button></label>
                           </div>
                         </div>
                       ))}
@@ -686,7 +637,7 @@ export default function ChildAdoptionManagement() {
                     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                       <Button variant="secondary" icon={FiSave} onClick={() => addToast("Draft Saved")}>Save Draft</Button>
                       <Button variant="outline" icon={FiFileText} onClick={() => addToast("Adoption Report Generated")}>Generate Adoption Report</Button>
-                      <Button icon={FiCheckCircle} onClick={completeAdoption}>Complete Adoption</Button>
+                      <Button icon={FiCheckCircle} onClick={completeAdoption}>{user?.role === 'admin' ? 'Approve & Complete Adoption' : 'Submit for Admin Approval'}</Button>
                     </div>
                   </SectionCard>
                 </motion.div>
