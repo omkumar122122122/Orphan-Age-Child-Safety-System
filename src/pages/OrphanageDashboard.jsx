@@ -9,6 +9,7 @@ import { StatCard } from "../components/Card";
 import NotificationPanel from "../components/NotificationPanel";
 import { useAuth } from "../context/AuthContext";
 import { orphanagesService } from "../services/orphanagesService";
+import { alertsService } from "../services/alertsService";
 
 const quickActions = [
   { label: "AI Attendance",   to: "/orphanage/ai-attendance",  icon: FiCamera,   color: "bg-violet-600",  ring: "ring-violet-500/20",  desc: "Face recognition check-in" },
@@ -28,6 +29,7 @@ export default function OrphanageDashboard() {
   const [dashboardData, setDashboardData] = useState(null);
   const [children, setChildren] = useState([]);
   const [chartData, setChartData] = useState(null);
+  const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,14 +39,16 @@ export default function OrphanageDashboard() {
   async function loadDashboardData() {
     try {
       setLoading(true);
-      const [stats, childrenData, safetyChart] = await Promise.all([
+      const [stats, childrenData, safetyChart, alertData] = await Promise.all([
         orphanagesService.getDashboardStats(),
         orphanagesService.getMyChildren(10),
         orphanagesService.getSafetyChart(),
+        alertsService.getAll(),
       ]);
       setDashboardData(stats);
       setChildren(childrenData.data || []);
       setChartData(safetyChart);
+      setAlerts((alertData.data || []).map((alert) => ({ id: alert.id, title: alert.title, detail: alert.detail, type: "Alert", time: new Date(alert.createdAt).toLocaleString('en-IN') })));
     } catch (error) {
       console.error('Failed to load dashboard:', error);
     } finally {
@@ -187,7 +191,7 @@ export default function OrphanageDashboard() {
             rows={children}
           />
         </div>
-        <NotificationPanel />
+        <NotificationPanel items={alerts} />
       </motion.div>
     </div>
   );

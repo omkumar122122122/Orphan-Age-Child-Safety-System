@@ -1,9 +1,11 @@
+import { useEffect, useState } from "react";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   FiUserPlus, FiHome, FiShield, FiAlertTriangle,
-  FiArrowRight, FiTrendingUp, FiZap, FiActivity
+  FiArrowRight, FiTrendingUp, FiZap, FiActivity,
+  FiUsers,
 } from "react-icons/fi";
 import Breadcrumb from "../components/Breadcrumb";
 import { DoughnutChartCard, LineChartCard } from "../components/ChartCard";
@@ -150,7 +152,7 @@ export default function AdminDashboard() {
         </div>
       </motion.div>
 
-      {/* ── Stat cards ─────────────────────────────────── */}
+      {/* ── Stat cards (live data) ─────────────────────── */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((item, i) => (
           <motion.div key={item.label} {...fadeUp(i * 0.05)}>
@@ -171,13 +173,19 @@ export default function AdminDashboard() {
               <Link
                 key={a.label}
                 to={a.to}
-                className={`group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-card transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover dark:border-slate-800 dark:bg-slate-900`}
+                className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-card transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover dark:border-slate-800 dark:bg-slate-900"
               >
                 <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${a.color} shadow-sm ring-2 ${a.ring} ring-offset-1`}>
                   <Icon className="h-4.5 w-4.5 text-white" style={{ height: 18, width: 18 }} />
                 </div>
                 <p className="mt-3 text-[13px] font-bold text-slate-900 dark:text-white">{a.label}</p>
                 <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">{a.desc}</p>
+                {/* Live critical-alert badge on the "Review Alerts" card */}
+                {a.label === "Review Alerts" && alertStats.pending > 0 && (
+                  <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                    {alertStats.pending > 9 ? "9+" : alertStats.pending}
+                  </span>
+                )}
                 <FiArrowRight className="absolute right-4 top-4 h-3.5 w-3.5 text-slate-300 opacity-0 transition group-hover:opacity-100 dark:text-slate-600" />
               </Link>
             );
@@ -191,7 +199,7 @@ export default function AdminDashboard() {
         <DoughnutChartCard title="AI Risk Distribution" subtitle="Current risk profile across children" data={riskDistribution} />
       </motion.div>
 
-      {/* ── Recent children + notifications ────────────── */}
+      {/* ── Recent children + live alert notifications ── */}
       <motion.div {...fadeUp(0.25)} className="grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
         <div className="section-card">
           <div className="section-card-header">
