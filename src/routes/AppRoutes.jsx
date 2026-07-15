@@ -17,6 +17,7 @@ import OrphanageDetail      from "../pages/OrphanageDetail";
 import OrphanageFullProfile from "../pages/OrphanageFullProfile";
 import Orphanages           from "../pages/Orphanages";
 import ParentDashboard      from "../pages/ParentDashboard";
+import ParentKYC            from "../pages/ParentKYC";
 import ParentProfile        from "../pages/ParentProfile";
 import Profile              from "../pages/Profile";
 import RegisterChild        from "../pages/RegisterChild";
@@ -56,6 +57,7 @@ export default function AppRoutes() {
         <Route path="/parent" element={<ParentLayout />}>
           <Route index                element={<ParentDashboard />} />
           <Route path="profile"       element={<Profile />} />
+          <Route path="kyc"           element={<ParentKYC />} />
           <Route path="visit-request" element={<VisitRequest />} />
           <Route path="sahayak-ai"    element={<SahayakAI />} />
           <Route path="notifications" element={<Alerts />} />

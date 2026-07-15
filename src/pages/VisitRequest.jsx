@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -14,74 +14,22 @@ import {
   FiShield,
   FiUser,
   FiUsers,
-  FiX
+  FiX,
+  FiLoader,
 } from "react-icons/fi";
 import { RiFingerprintLine } from "react-icons/ri";
 import Breadcrumb from "../components/Breadcrumb";
 import Button from "../components/Button";
 import Card from "../components/Card";
 import { classNames } from "../utils/formatters";
+import { useAuth } from "../context/AuthContext";
+import { useToast } from "../hooks/useToast";
+import ToastContainer from "../components/Toast";
+import { parentsService } from "../services/parentsService";
+import { orphanagesService } from "../services/orphanagesService";
+import { visitRequestsService } from "../services/visitRequestsService";
 
-const parentProfile = {
-  photo: "MN",
-  fullName: "Meera Nair",
-  parentId: "PAR-2026-0148",
-  email: "parent@example.com",
-  phone: "+91 98765 21048",
-  address: "42 Lake View Road, Indiranagar, Bengaluru",
-  occupation: "Senior School Counselor",
-  familyMembers: "4 verified members",
-  annualIncome: "INR 12,80,000",
-  kycStatus: "Verified",
-  trustScore: 95,
-  faceVerification: "Verified",
-  backgroundVerification: "Passed"
-};
-
-const orphanageOptions = [
-  {
-    name: "Hope Children's Home",
-    address: "18 Welfare Colony, Civil Lines, Jaipur",
-    contact: "+91 98765 44011",
-    days: "Monday, Wednesday, Friday",
-    totalChildren: 112,
-    availability: "Open for adoption counseling"
-  },
-  {
-    name: "Sunrise Orphanage",
-    address: "21 Welfare Road, Saket, New Delhi",
-    contact: "+91 98765 40001",
-    days: "Tuesday, Thursday, Saturday",
-    totalChildren: 164,
-    availability: "Children matched after case review"
-  },
-  {
-    name: "Bright Future Home",
-    address: "9 Children's Avenue, Aliganj, Lucknow",
-    contact: "+91 98765 45021",
-    days: "Monday to Thursday",
-    totalChildren: 86,
-    availability: "Limited slots this month"
-  },
-  {
-    name: "Smile Foundation",
-    address: "77 Care Street, Arera Colony, Bhopal",
-    contact: "+91 98765 46031",
-    days: "Wednesday, Friday, Sunday",
-    totalChildren: 98,
-    availability: "Available for registered parents"
-  }
-];
-
-const documents = [
-  ["Aadhaar Verified", "Identity document matched", "Verified"],
-  ["PAN Verified", "Tax identity checked", "Verified"],
-  ["Income Certificate", "Financial capacity reviewed", "Approved"],
-  ["Marriage Certificate", "Family status confirmed", "Approved"],
-  ["Address Proof", "Residence geotag verified", "Verified"],
-  ["Selfie Verified", "Live face scan matched", "Verified"]
-];
-
+// AI Analysis - keeping as UI demonstration (not from backend yet)
 const aiAnalysis = [
   { label: "Parent Trust Score", value: "95%", score: 95, detail: "High confidence profile" },
   { label: "Face Match", value: "99%", score: 99, detail: "Biometric identity matched" },
@@ -91,57 +39,13 @@ const aiAnalysis = [
   { label: "Recommendation", value: "Eligible for Visit", score: 96, detail: "Proceed with scheduling" }
 ];
 
-const requestHistory = [
-  {
-    id: "VR-24091",
-    orphanage: "Sunrise Orphanage",
-    date: "2026-07-12",
-    time: "10:30 AM",
-    purpose: "Adoption Inquiry",
-    status: "Pending",
-    aiScore: "95%",
-    timeline: ["Request submitted", "AI safety screening complete", "Awaiting orphanage coordinator review"]
-  },
-  {
-    id: "VR-23974",
-    orphanage: "Hope Children's Home",
-    date: "2026-06-20",
-    time: "02:00 PM",
-    purpose: "Counselling",
-    status: "Approved",
-    aiScore: "94%",
-    timeline: ["Request submitted", "Coordinator approved", "Visit pass generated"]
-  },
-  {
-    id: "VR-23888",
-    orphanage: "Bright Future Home",
-    date: "2026-06-03",
-    time: "11:00 AM",
-    purpose: "Document Verification",
-    status: "Completed",
-    aiScore: "96%",
-    timeline: ["Request submitted", "Documents verified", "Visit completed"]
-  },
-  {
-    id: "VR-23756",
-    orphanage: "Smile Foundation",
-    date: "2026-05-18",
-    time: "04:30 PM",
-    purpose: "Meet Child",
-    status: "Rescheduled",
-    aiScore: "91%",
-    timeline: ["Request submitted", "Slot conflict detected", "New date requested"]
-  },
-  {
-    id: "VR-23682",
-    orphanage: "Hope Children's Home",
-    date: "2026-04-28",
-    time: "09:30 AM",
-    purpose: "General Visit",
-    status: "Rejected",
-    aiScore: "82%",
-    timeline: ["Request submitted", "Missing visitor relationship details", "Request closed"]
-  }
+const documents = [
+  ["Aadhaar Verified", "Identity document matched", "Verified"],
+  ["PAN Verified", "Tax identity checked", "Verified"],
+  ["Income Certificate", "Financial capacity reviewed", "Approved"],
+  ["Marriage Certificate", "Family status confirmed", "Approved"],
+  ["Address Proof", "Residence geotag verified", "Verified"],
+  ["Selfie Verified", "Live face scan matched", "Verified"]
 ];
 
 const statusTone = {
@@ -156,12 +60,21 @@ const fieldClass =
   "mt-2 w-full rounded-lg border border-slate-200 bg-white/80 px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-civic-500 focus:ring-2 focus:ring-civic-500/20 dark:border-slate-700 dark:bg-slate-950/70 dark:text-white";
 
 export default function VisitRequest() {
-  const [selectedOrphanage, setSelectedOrphanage] = useState(orphanageOptions[0].name);
+  const { user } = useAuth();
+  const { toasts, success: showSuccess, error: showError, removeToast } = useToast();
+  
+  const [parentProfile, setParentProfile] = useState(null);
+  const [orphanageOptions, setOrphanageOptions] = useState([]);
+  const [requestHistory, setRequestHistory] = useState([]);
+  const [selectedOrphanage, setSelectedOrphanage] = useState(null);
   const [toastVisible, setToastVisible] = useState(false);
   const [activeRequest, setActiveRequest] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  
   const selected = useMemo(
-    () => orphanageOptions.find((orphanage) => orphanage.name === selectedOrphanage),
-    [selectedOrphanage]
+    () => orphanageOptions.find((orphanage) => orphanage.id === selectedOrphanage),
+    [selectedOrphanage, orphanageOptions]
   );
 
   const {
@@ -170,20 +83,108 @@ export default function VisitRequest() {
     formState: { errors }
   } = useForm({
     defaultValues: {
-      orphanage: orphanageOptions[0].name,
+      orphanageId: "",
       purpose: "Adoption Inquiry",
       timeline: "Within 3 months",
       visitors: 2
     }
   });
 
-  function onSubmit() {
-    setToastVisible(true);
-    window.setTimeout(() => setToastVisible(false), 3200);
+  useEffect(() => {
+    loadPageData();
+  }, []);
+
+  const loadPageData = async () => {
+    try {
+      setLoading(true);
+      
+      // Load parent profile
+      const dashboardData = await parentsService.getDashboard();
+      setParentProfile(dashboardData.parent);
+
+      // Load approved orphanages
+      const orphanagesData = await orphanagesService.getAll({ 
+        verificationStatus: 'APPROVED',
+        limit: 50 
+      });
+      const orphanages = orphanagesData.data || [];
+      setOrphanageOptions(orphanages);
+      if (orphanages.length > 0) {
+        setSelectedOrphanage(orphanages[0].id);
+      }
+
+      // Load parent's visit request history
+      const requestsData = await visitRequestsService.getMyRequests({ limit: 10 });
+      setRequestHistory(requestsData.data || []);
+    } catch (err) {
+      showError(err.message || 'Failed to load page data');
+      console.error('Error loading page data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  async function onSubmit(formData) {
+    try {
+      setSubmitting(true);
+      
+      const requestData = {
+        orphanageId: formData.orphanageId || selectedOrphanage,
+        visitDate: formData.visitDate,
+        visitTime: formData.visitTime,
+        purpose: formData.purpose,
+        reason: formData.reason,
+        familyBackground: formData.familyBackground,
+        visitorsCount: parseInt(formData.visitors, 10),
+        relationship: formData.relationship,
+        specialRequirements: formData.requirements || null,
+      };
+
+      await visitRequestsService.create(requestData);
+      
+      showSuccess('Visit request submitted successfully');
+      setToastVisible(true);
+      window.setTimeout(() => setToastVisible(false), 3200);
+      
+      // Reload request history
+      const requestsData = await visitRequestsService.getMyRequests({ limit: 10 });
+      setRequestHistory(requestsData.data || []);
+    } catch (err) {
+      showError(err.message || 'Failed to submit visit request');
+      console.error('Error submitting visit request:', err);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <FiLoader className="h-12 w-12 animate-spin text-civic-600" />
+      </div>
+    );
+  }
+
+  if (!parentProfile) {
+    return (
+      <div className="space-y-6">
+        <Breadcrumb items={["Parent", "Visit Request"]} />
+        <Card className="py-16">
+          <div className="empty-state">
+            <div className="empty-state-icon">
+              <FiAlertCircle className="h-6 w-6 text-red-400" />
+            </div>
+            <p className="empty-state-title">Parent Profile Not Found</p>
+            <p className="empty-state-desc">Unable to load your parent profile. Please contact support.</p>
+          </div>
+        </Card>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
       <Breadcrumb items={["Parent", "Visit Request"]} />
 
       <motion.header
@@ -207,27 +208,37 @@ export default function VisitRequest() {
       </motion.header>
 
       <section className="grid gap-6 2xl:grid-cols-[1fr_0.92fr]">
-        <ParentInformation />
-        <OrphanageSelection register={register} selected={selected} onChange={setSelectedOrphanage} />
+        <ParentInformation parentProfile={parentProfile} />
+        <OrphanageSelection register={register} selected={selected} onChange={setSelectedOrphanage} orphanageOptions={orphanageOptions} />
       </section>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <VisitForm register={register} errors={errors} />
+        <VisitForm register={register} errors={errors} submitting={submitting} />
         <DocumentStatus />
         <AiSafetyAnalysis />
         <motion.button
           type="submit"
+          disabled={submitting}
           whileHover={{ y: -2, scale: 1.01 }}
           whileTap={{ scale: 0.98 }}
-          className="flex w-full items-center justify-center gap-3 rounded-lg bg-civic-600 px-6 py-4 text-base font-extrabold text-white shadow-lg shadow-civic-600/25 transition hover:bg-civic-700 focus:outline-none focus:ring-2 focus:ring-civic-500 focus:ring-offset-2 dark:focus:ring-offset-slate-950"
+          className="flex w-full items-center justify-center gap-3 rounded-lg bg-civic-600 px-6 py-4 text-base font-extrabold text-white shadow-lg shadow-civic-600/25 transition hover:bg-civic-700 focus:outline-none focus:ring-2 focus:ring-civic-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus:ring-offset-slate-950"
         >
-          <FiCalendar className="h-5 w-5" />
-          Request Visit
+          {submitting ? (
+            <>
+              <FiLoader className="h-5 w-5 animate-spin" />
+              Submitting...
+            </>
+          ) : (
+            <>
+              <FiCalendar className="h-5 w-5" />
+              Request Visit
+            </>
+          )}
         </motion.button>
       </form>
 
-      <RequestHistory onView={setActiveRequest} />
-      <RequestDetailsModal request={activeRequest} onClose={() => setActiveRequest(null)} />
+      <RequestHistory onView={setActiveRequest} requestHistory={requestHistory} orphanageOptions={orphanageOptions} />
+      <RequestDetailsModal request={activeRequest} onClose={() => setActiveRequest(null)} orphanageOptions={orphanageOptions} />
       <Toast visible={toastVisible} />
     </div>
   );
@@ -265,19 +276,22 @@ function ProgressTracker() {
   );
 }
 
-function ParentInformation() {
+function ParentInformation({ parentProfile }) {
+  if (!parentProfile) return null;
+
   const details = [
-    ["Full Name", parentProfile.fullName],
-    ["Parent ID", parentProfile.parentId],
-    ["Email", parentProfile.email],
-    ["Phone Number", parentProfile.phone],
-    ["Address", parentProfile.address],
-    ["Occupation", parentProfile.occupation],
-    ["Family Members", parentProfile.familyMembers],
-    ["Annual Income", parentProfile.annualIncome],
-    ["Face Verification Status", parentProfile.faceVerification],
-    ["Background Verification Status", parentProfile.backgroundVerification]
+    ["Full Name", `${parentProfile.user?.firstName || ''} ${parentProfile.user?.lastName || ''}`.trim() || 'N/A'],
+    ["Parent ID", parentProfile.id || 'N/A'],
+    ["Email", parentProfile.user?.email || 'N/A'],
+    ["Phone Number", parentProfile.user?.phone || 'N/A'],
+    ["Occupation", parentProfile.occupation || 'N/A'],
+    ["Annual Income", parentProfile.annualIncome ? `INR ${parentProfile.annualIncome.toLocaleString()}` : 'N/A'],
+    ["Marital Status", parentProfile.maritalStatus || 'N/A'],
+    ["KYC Status", parentProfile.kycStatus || 'Pending'],
   ];
+
+  const initials = `${parentProfile.user?.firstName?.charAt(0) || ''}${parentProfile.user?.lastName?.charAt(0) || ''}`;
+  const trustScore = parentProfile.trustScore || 0;
 
   return (
     <Card className="rounded-lg">
@@ -285,14 +299,19 @@ function ParentInformation() {
       <div className="mt-5 flex flex-col gap-5 lg:flex-row">
         <div className="flex shrink-0 flex-col items-center rounded-lg border border-slate-200 bg-white/75 p-5 dark:border-slate-700 dark:bg-slate-950/45">
           <div className="flex h-24 w-24 items-center justify-center rounded-lg bg-civic-600 text-3xl font-extrabold text-white shadow-lg shadow-civic-600/20">
-            {parentProfile.photo}
+            {initials || 'P'}
           </div>
-          <span className="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-100 px-3 py-2 text-sm font-extrabold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200">
+          <span className={classNames(
+            "mt-4 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-extrabold",
+            parentProfile.kycStatus === 'VERIFIED' 
+              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200"
+              : "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-200"
+          )}>
             <FiCheck className="h-4 w-4" />
-            KYC {parentProfile.kycStatus}
+            KYC {parentProfile.kycStatus || 'Pending'}
           </span>
           <div className="mt-5">
-            <CircularProgress value={parentProfile.trustScore} label="AI Trust Score" />
+            <CircularProgress value={trustScore} label="AI Trust Score" />
           </div>
         </div>
         <div className="grid flex-1 gap-3 sm:grid-cols-2">
@@ -305,19 +324,19 @@ function ParentInformation() {
   );
 }
 
-function OrphanageSelection({ register, selected, onChange }) {
+function OrphanageSelection({ register, selected, onChange, orphanageOptions }) {
   return (
     <Card className="rounded-lg">
       <SectionTitle icon={FiHome} title="Orphanage Selection" subtitle="Choose a registered orphanage for your visit" />
       <label className="mt-5 block text-sm font-bold text-slate-700 dark:text-slate-200">
         Select Orphanage
         <select
-          {...register("orphanage")}
+          {...register("orphanageId")}
           onChange={(event) => onChange(event.target.value)}
           className={fieldClass}
         >
           {orphanageOptions.map((orphanage) => (
-            <option key={orphanage.name} value={orphanage.name}>
+            <option key={orphanage.id} value={orphanage.id}>
               {orphanage.name}
             </option>
           ))}
@@ -325,18 +344,17 @@ function OrphanageSelection({ register, selected, onChange }) {
       </label>
       {selected && (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-5 grid gap-3 sm:grid-cols-2">
-          <InfoTile icon={FiMapPin} label="Address" value={selected.address} />
-          <InfoTile icon={FiInfo} label="Contact Number" value={selected.contact} />
-          <InfoTile icon={FiCalendar} label="Available Visiting Days" value={selected.days} />
-          <InfoTile icon={FiUsers} label="Total Children" value={selected.totalChildren} />
-          <InfoTile icon={FiShield} label="Adoption Availability" value={selected.availability} wide />
+          <InfoTile icon={FiMapPin} label="City" value={selected.city || 'N/A'} />
+          <InfoTile icon={FiMapPin} label="State" value={selected.state || 'N/A'} />
+          <InfoTile icon={FiInfo} label="Organization Type" value={selected.organizationType || 'N/A'} />
+          <InfoTile icon={FiShield} label="Verification Status" value={selected.verificationStatus || 'N/A'} />
         </motion.div>
       )}
     </Card>
   );
 }
 
-function VisitForm({ register, errors }) {
+function VisitForm({ register, errors, submitting }) {
   const visitorsField = register("visitors");
 
   return (
@@ -344,25 +362,26 @@ function VisitForm({ register, errors }) {
       <SectionTitle icon={FiFileText} title="Visit Request Form" subtitle="Provide the scheduling and family details required for review" />
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
         <FormField label="Preferred Visit Date" error={errors.visitDate?.message}>
-          <input type="date" {...register("visitDate", { required: "Visit date is required" })} className={fieldClass} />
+          <input type="date" {...register("visitDate", { required: "Visit date is required" })} disabled={submitting} className={fieldClass} />
         </FormField>
         <FormField label="Preferred Time" error={errors.visitTime?.message}>
-          <input type="time" {...register("visitTime", { required: "Visit time is required" })} className={fieldClass} />
+          <input type="time" {...register("visitTime", { required: "Visit time is required" })} disabled={submitting} className={fieldClass} />
         </FormField>
         <FormField label="Purpose of Visit">
-          <select {...register("purpose")} className={fieldClass}>
+          <select {...register("purpose")} disabled={submitting} className={fieldClass}>
             {["Adoption Inquiry", "Meet Child", "Document Verification", "Counselling", "General Visit"].map((purpose) => (
               <option key={purpose}>{purpose}</option>
             ))}
           </select>
         </FormField>
         <FormField label="Expected Adoption Timeline">
-          <input {...register("timeline")} placeholder="Within 3 months" className={fieldClass} />
+          <input {...register("timeline")} disabled={submitting} placeholder="Within 3 months" className={fieldClass} />
         </FormField>
         <FormField label="Reason for Adoption" error={errors.reason?.message} wide>
           <textarea
             {...register("reason", { required: "Reason for adoption is required" })}
             rows={4}
+            disabled={submitting}
             placeholder="Share your motivation and readiness for adoption"
             className={fieldClass}
           />
@@ -371,6 +390,7 @@ function VisitForm({ register, errors }) {
           <textarea
             {...register("familyBackground", { required: "Family background is required" })}
             rows={4}
+            disabled={submitting}
             placeholder="Describe family environment, support system, and caregiving plan"
             className={fieldClass}
           />
@@ -381,6 +401,7 @@ function VisitForm({ register, errors }) {
             inputMode="numeric"
             min="1"
             max="5"
+            disabled={submitting}
             {...visitorsField}
             onChange={(event) => {
               event.target.value = event.target.value.replace(/[^0-9]/g, "");
@@ -390,14 +411,14 @@ function VisitForm({ register, errors }) {
           />
         </FormField>
         <FormField label="Relationship of Visitors">
-          <input {...register("relationship")} placeholder="Spouse, parent, sibling" className={fieldClass} />
+          <input {...register("relationship")} disabled={submitting} placeholder="Spouse, parent, sibling" className={fieldClass} />
         </FormField>
         <FormField label="Special Requirements" wide>
-          <input {...register("requirements")} placeholder="Accessibility, interpreter, counselling support" className={fieldClass} />
+          <input {...register("requirements")} disabled={submitting} placeholder="Accessibility, interpreter, counselling support" className={fieldClass} />
         </FormField>
       </div>
       <label className="mt-5 flex items-start gap-3 rounded-lg border border-civic-100 bg-civic-50/80 p-4 text-sm font-bold text-slate-700 dark:border-civic-500/20 dark:bg-civic-500/10 dark:text-slate-200">
-        <input type="checkbox" {...register("agreement", { required: true })} className="mt-1 h-4 w-4 rounded border-slate-300 text-civic-600 focus:ring-civic-500" />
+        <input type="checkbox" {...register("agreement", { required: true })} disabled={submitting} className="mt-1 h-4 w-4 rounded border-slate-300 text-civic-600 focus:ring-civic-500" />
         <span>I agree to follow orphanage rules.</span>
       </label>
       {errors.agreement && <p className="mt-2 text-sm font-semibold text-red-600">Agreement is required before submitting.</p>}
@@ -453,7 +474,18 @@ function AiSafetyAnalysis() {
   );
 }
 
-function RequestHistory({ onView }) {
+function RequestHistory({ onView, requestHistory, orphanageOptions }) {
+  if (!requestHistory || requestHistory.length === 0) {
+    return (
+      <Card className="rounded-lg">
+        <SectionTitle icon={FiClock} title="Request History" subtitle="Track previous and current orphanage visit requests" />
+        <div className="mt-5 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+          No visit requests yet. Submit your first request above.
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card className="rounded-lg">
       <SectionTitle icon={FiClock} title="Request History" subtitle="Track previous and current orphanage visit requests" />
@@ -461,37 +493,40 @@ function RequestHistory({ onView }) {
         <table className="w-full min-w-[920px] border-separate border-spacing-y-3 text-left">
           <thead>
             <tr className="text-sm font-extrabold text-slate-500 dark:text-slate-400">
-              {["Request ID", "Orphanage", "Visit Date", "Visit Time", "Purpose", "Status", "AI Score", "Actions"].map((heading) => (
+              {["Request ID", "Orphanage", "Visit Date", "Visit Time", "Purpose", "Status", "Actions"].map((heading) => (
                 <th key={heading} className="px-3 py-2">{heading}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {requestHistory.map((request) => (
-              <tr key={request.id} className="rounded-lg bg-white/75 text-sm font-semibold text-slate-700 shadow-sm dark:bg-slate-950/45 dark:text-slate-200">
-                <td className="rounded-l-lg px-3 py-4 font-extrabold text-civic-700 dark:text-civic-100">{request.id}</td>
-                <td className="px-3 py-4">{request.orphanage}</td>
-                <td className="px-3 py-4">{request.date}</td>
-                <td className="px-3 py-4">{request.time}</td>
-                <td className="px-3 py-4">{request.purpose}</td>
-                <td className="px-3 py-4">
-                  <span className={classNames("rounded-lg px-3 py-1 text-xs font-extrabold", statusTone[request.status])}>{request.status}</span>
-                </td>
-                <td className="px-3 py-4 font-extrabold">{request.aiScore}</td>
-                <td className="rounded-r-lg px-3 py-4">
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="secondary" onClick={() => onView(request)} className="px-3 py-2 text-xs">
-                      View Details
-                    </Button>
-                    {request.status === "Pending" && (
-                      <Button variant="ghost" className="px-3 py-2 text-xs text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-500/10">
-                        Cancel Request
+            {requestHistory.map((request) => {
+              const orphanage = orphanageOptions.find(o => o.id === request.orphanageId);
+              
+              return (
+                <tr key={request.id} className="rounded-lg bg-white/75 text-sm font-semibold text-slate-700 shadow-sm dark:bg-slate-950/45 dark:text-slate-200">
+                  <td className="rounded-l-lg px-3 py-4 font-extrabold text-civic-700 dark:text-civic-100">{request.id}</td>
+                  <td className="px-3 py-4">{orphanage?.name || 'Unknown'}</td>
+                  <td className="px-3 py-4">{new Date(request.visitDate).toLocaleDateString()}</td>
+                  <td className="px-3 py-4">{request.visitTime || 'N/A'}</td>
+                  <td className="px-3 py-4">{request.purpose}</td>
+                  <td className="px-3 py-4">
+                    <span className={classNames("rounded-lg px-3 py-1 text-xs font-extrabold", statusTone[request.status] || statusTone.Pending)}>{request.status}</span>
+                  </td>
+                  <td className="rounded-r-lg px-3 py-4">
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="secondary" onClick={() => onView(request)} className="px-3 py-2 text-xs">
+                        View Details
                       </Button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
+                      {request.status === "PENDING" && (
+                        <Button variant="ghost" className="px-3 py-2 text-xs text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-500/10">
+                          Cancel Request
+                        </Button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -499,9 +534,9 @@ function RequestHistory({ onView }) {
   );
 }
 
-function RequestDetailsModal({ request, onClose }) {
+function RequestDetailsModal({ request, onClose, orphanageOptions }) {
   if (!request) return null;
-  const orphanage = orphanageOptions.find((item) => item.name === request.orphanage) || orphanageOptions[0];
+  const orphanage = orphanageOptions.find((item) => item.id === request.orphanageId) || null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
@@ -513,7 +548,7 @@ function RequestDetailsModal({ request, onClose }) {
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-xl font-extrabold text-slate-950 dark:text-white">Request Details</h2>
-            <p className="mt-1 text-sm font-semibold text-slate-500 dark:text-slate-400">{request.id} - {request.orphanage}</p>
+            <p className="mt-1 text-sm font-semibold text-slate-500 dark:text-slate-400">{request.id} - {orphanage?.name || 'Unknown Orphanage'}</p>
           </div>
           <button onClick={onClose} className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-950 dark:hover:bg-slate-800 dark:hover:text-white" aria-label="Close request details">
             <FiX className="h-5 w-5" />
@@ -522,33 +557,19 @@ function RequestDetailsModal({ request, onClose }) {
 
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           <DetailPanel title="Complete Request Details">
-            <ReadOnlyField label="Visit Date" value={request.date} />
-            <ReadOnlyField label="Visit Time" value={request.time} />
+            <ReadOnlyField label="Visit Date" value={new Date(request.visitDate).toLocaleDateString()} />
+            <ReadOnlyField label="Visit Time" value={request.visitTime || 'N/A'} />
             <ReadOnlyField label="Purpose" value={request.purpose} />
             <ReadOnlyField label="Current Status" value={request.status} />
           </DetailPanel>
-          <DetailPanel title="AI Analysis">
-            <ReadOnlyField label="AI Score" value={request.aiScore} />
-            <ReadOnlyField label="Risk Level" value="Low" />
-            <ReadOnlyField label="Recommendation" value="Eligible for Visit" />
-            <ReadOnlyField label="Identity Result" value="Verified" />
-          </DetailPanel>
-          <DetailPanel title="Orphanage Information">
-            <ReadOnlyField label="Address" value={orphanage.address} />
-            <ReadOnlyField label="Contact" value={orphanage.contact} />
-            <ReadOnlyField label="Available Days" value={orphanage.days} />
-            <ReadOnlyField label="Adoption Availability" value={orphanage.availability} />
-          </DetailPanel>
-          <DetailPanel title="Timeline">
-            <div className="space-y-3">
-              {request.timeline.map((event, index) => (
-                <div key={event} className="flex gap-3">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-civic-100 text-xs font-extrabold text-civic-700 dark:bg-civic-500/15 dark:text-civic-100">{index + 1}</span>
-                  <p className="pt-1 text-sm font-semibold text-slate-700 dark:text-slate-200">{event}</p>
-                </div>
-              ))}
-            </div>
-          </DetailPanel>
+          {orphanage && (
+            <DetailPanel title="Orphanage Information">
+              <ReadOnlyField label="Name" value={orphanage.name} />
+              <ReadOnlyField label="City" value={orphanage.city || 'N/A'} />
+              <ReadOnlyField label="State" value={orphanage.state || 'N/A'} />
+              <ReadOnlyField label="Type" value={orphanage.organizationType || 'N/A'} />
+            </DetailPanel>
+          )}
         </div>
       </motion.div>
     </div>
