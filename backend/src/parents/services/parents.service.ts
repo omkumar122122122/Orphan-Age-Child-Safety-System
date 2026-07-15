@@ -13,6 +13,11 @@ import {
   UpdateParentDto,
   QueryParentDto,
   UpdateVerificationStatusDto,
+  CreateAddressDto,
+  CreateFamilyMemberDto,
+  ReviewDocumentDto,
+  ManualTrustScoreDto,
+  SubmitKycDto,
 } from '../dto';
 import {
   ParentBasicDto,
@@ -22,12 +27,24 @@ import {
   KYCStatusDto,
   VerificationQueueResponseDto,
 } from '../dto/parent-response.dto';
+import { DocumentUploadService } from './document-upload.service';
+import {
+  REQUIRED_DOCUMENTS,
+  TRUST_SCORE_MIN,
+  TRUST_SCORE_MAX,
+  TRUST_SCORE_DELTAS,
+} from '../constants/parent.constants';
+import { DocumentType } from '../enums/parent.enums';
 
 @Injectable()
 export class ParentsService {
   private readonly logger = new Logger(ParentsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly documentUpload: DocumentUploadService,
+  ) {}
+
 
   async create(userId: string, dto: CreateParentDto): Promise<{ id: string }> {
     const existingParent = await this.prisma.parent.findUnique({
@@ -429,15 +446,43 @@ export class ParentsService {
     const parent = await this.prisma.parent.findUnique({
       where: { userId },
       include: {
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+          },
+        },
         documents: {
           select: {
             id: true,
             documentType: true,
             status: true,
             fileName: true,
+            originalName: true,
             storageUrl: true,
             createdAt: true,
+            reviewedAt: true,
+            rejectionReason: true,
           },
+          orderBy: { createdAt: 'desc' },
+        },
+        adoptionRecords: {
+          include: {
+            child: {
+              select: {
+                id: true,
+                childCode: true,
+                firstName: true,
+                lastName: true,
+                approximateAge: true,
+                dateOfBirth: true,
+              },
+            },
+          },
+          take: 1,
+          orderBy: { createdAt: 'desc' },
         },
       },
     });
@@ -446,20 +491,332 @@ export class ParentsService {
       throw new NotFoundException('Parent profile not found');
     }
 
-    const complianceStatus =
-      parent.kycStatus === 'APPROVED' ? 'Compliant' : 'Partially Compliant';
+    const approvedTypes = new Set(
+      parent.documents
+        .filter((d) => d.status === 'APPROVED' || d.status === 'UPLOADED' || d.status === 'UNDER_REVIEW')
+        .map((d) => d.documentType),
+    );
+    const missingDocuments = REQUIRED_DOCUMENTS.filter((doc) => !approvedTypes.has(doc as any));
+
+    const adoption = parent.adoptionRecords[0];
+    const child = adoption?.child;
+    let childAge = 0;
+    if (child?.dateOfBirth) {
+      childAge = Math.floor(
+        (Date.now() - child.dateOfBirth.getTime()) / (365.25 * 24 * 60 * 60 * 1000),
+      );
+    } else if (child?.approximateAge) {
+      childAge = child.approximateAge;
+    }
+
+    const yearsUntil16 = childAge > 0 ? Math.max(0, 16 - childAge) : 16;
+
+    const nextKycDue = parent.kycApprovedAt
+      ? new Date(parent.kycApprovedAt.getTime() + 180 * 24 * 60 * 60 * 1000)
+      : parent.kycSubmittedAt
+        ? new Date(parent.kycSubmittedAt.getTime() + 180 * 24 * 60 * 60 * 1000)
+        : undefined;
+
+    const nextHealthReportDue = adoption?.completedDate
+      ? new Date(
+          new Date(adoption.completedDate).getTime() + 365 * 24 * 60 * 60 * 1000,
+        )
+      : undefined;
+
+    const healthReportStatus =
+      parent.kycStatus === 'APPROVED' ? 'Submitted' : 'Pending';
+
+    let complianceStatus = 'Partially Compliant';
+    if (parent.kycStatus === 'APPROVED' && missingDocuments.length === 0) {
+      complianceStatus = 'Compliant';
+    } else if (
+      parent.kycStatus === 'REJECTED' ||
+      (nextKycDue && nextKycDue.getTime() < Date.now())
+    ) {
+      complianceStatus = 'Non-Compliant';
+    }
+
+    const parentName = `${parent.user.firstName} ${parent.user.lastName}`.trim();
+    const parentAvatar = `${parent.user.firstName?.[0] || ''}${parent.user.lastName?.[0] || ''}`.toUpperCase();
+
+    const verificationHistory = parent.documents.map((doc) => ({
+      id: doc.id,
+      type: doc.documentType,
+      status: doc.status,
+      fileName: doc.originalName || doc.fileName,
+      date: doc.reviewedAt || doc.createdAt,
+      notes: doc.rejectionReason || undefined,
+    }));
 
     return {
+      parentId: parent.id,
+      parentName,
+      parentAvatar,
+      email: parent.user.email,
+      contactNumber: parent.user.phone || parent.alternatePhone || undefined,
       kycStatus: parent.kycStatus,
       lastKycDate: parent.kycSubmittedAt ?? undefined,
-      nextKycDue: parent.kycApprovedAt
-        ? new Date(parent.kycApprovedAt.getTime() + 180 * 24 * 60 * 60 * 1000)
-        : undefined,
+      nextKycDue,
+      healthReportStatus,
+      nextHealthReportDue,
       complianceStatus,
-      verificationHistory: [],
+      childId: child?.id,
+      childName: child
+        ? `${child.firstName} ${child.lastName || ''}`.trim()
+        : undefined,
+      childAge: child ? childAge : undefined,
+      adoptionDate: adoption?.completedDate ?? adoption?.createdAt ?? undefined,
+      yearsUntil16,
+      trustScore: parent.trustScore,
+      verificationStatus: parent.verificationStatus,
+      verificationHistory,
       documents: parent.documents,
+      requiredDocuments: [...REQUIRED_DOCUMENTS],
+      missingDocuments: missingDocuments as string[],
     };
   }
+
+  async submitKyc(userId: string, dto: SubmitKycDto = {}): Promise<{ message: string; kycStatus: string }> {
+    const parent = await this.prisma.parent.findUnique({
+      where: { userId },
+      include: { documents: true },
+    });
+
+    if (!parent || parent.deletedAt) {
+      throw new NotFoundException('Parent profile not found');
+    }
+
+    if (parent.kycStatus === 'APPROVED') {
+      throw new BadRequestException('KYC is already approved');
+    }
+
+    const uploadedTypes = new Set(parent.documents.map((d) => d.documentType));
+    const missing = REQUIRED_DOCUMENTS.filter((doc) => !uploadedTypes.has(doc as any));
+    if (missing.length > 0) {
+      throw new BadRequestException(
+        `Missing required documents: ${missing.join(', ')}. Upload all required documents before submitting KYC.`,
+      );
+    }
+
+    await this.prisma.parent.update({
+      where: { id: parent.id },
+      data: {
+        kycStatus: 'SUBMITTED' as any,
+        kycSubmittedAt: new Date(),
+        verificationStatus:
+          parent.verificationStatus === 'PENDING'
+            ? ('UNDER_REVIEW' as any)
+            : parent.verificationStatus,
+        verificationNotes: dto.notes
+          ? [parent.verificationNotes, dto.notes].filter(Boolean).join('\n')
+          : parent.verificationNotes,
+        updatedAt: new Date(),
+      },
+    });
+
+    this.logger.log(`KYC submitted for parent: ${parent.id}`);
+    return { message: 'KYC submitted successfully for review', kycStatus: 'SUBMITTED' };
+  }
+
+  async uploadDocument(
+    parentId: string,
+    documentType: string,
+    file: Express.Multer.File,
+    userId: string,
+    userRole: Role,
+    documentNumber?: string,
+  ) {
+    const parent = await this.prisma.parent.findUnique({ where: { id: parentId } });
+    if (!parent || parent.deletedAt) {
+      throw new NotFoundException('Parent not found');
+    }
+    if (userRole === Role.PARENT && parent.userId !== userId) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    if (!Object.values(DocumentType).includes(documentType as DocumentType)) {
+      throw new BadRequestException(`Invalid document type: ${documentType}`);
+    }
+
+    const saved = await this.documentUpload.saveFile(file, parentId);
+
+    const document = await this.prisma.parentDocument.create({
+      data: {
+        parentId,
+        documentType: documentType as any,
+        status: 'UPLOADED' as any,
+        fileName: saved.fileName,
+        originalName: saved.originalName,
+        mimeType: saved.mimeType,
+        fileSize: saved.fileSize,
+        storagePath: saved.storagePath,
+        storageUrl: saved.storageUrl,
+        documentNumber,
+        isRequired: REQUIRED_DOCUMENTS.includes(documentType as DocumentType),
+      },
+    });
+
+    this.logger.log(`Document uploaded for parent ${parentId}: ${document.id}`);
+    return document;
+  }
+
+  async reviewDocument(
+    parentId: string,
+    documentId: string,
+    dto: ReviewDocumentDto,
+    adminId: string,
+  ) {
+    const document = await this.prisma.parentDocument.findFirst({
+      where: { id: documentId, parentId },
+    });
+    if (!document) {
+      throw new NotFoundException('Document not found');
+    }
+
+    if (dto.status === 'REJECTED' && !dto.rejectionReason) {
+      throw new BadRequestException('Rejection reason is required when rejecting a document');
+    }
+
+    const updated = await this.prisma.parentDocument.update({
+      where: { id: documentId },
+      data: {
+        status: dto.status as any,
+        rejectionReason: dto.rejectionReason,
+        reviewNotes: dto.reviewNotes,
+        documentNumber: dto.documentNumber,
+        issuedBy: dto.issuedBy,
+        issuedDate: dto.issuedDate ? new Date(dto.issuedDate) : undefined,
+        expiryDate: dto.expiryDate ? new Date(dto.expiryDate) : undefined,
+        reviewedById: adminId,
+        reviewedAt: new Date(),
+      },
+    });
+
+    // Adjust trust score on document review
+    const delta =
+      dto.status === 'APPROVED'
+        ? TRUST_SCORE_DELTAS.DOCUMENT_APPROVED
+        : dto.status === 'REJECTED'
+          ? TRUST_SCORE_DELTAS.DOCUMENT_REJECTED
+          : 0;
+    if (delta !== 0) {
+      await this.applyTrustScoreDelta(parentId, delta, `Document ${dto.status}: ${document.documentType}`, adminId);
+    }
+
+    return updated;
+  }
+
+  async addAddress(parentId: string, dto: CreateAddressDto, userId: string, userRole: Role) {
+    const parent = await this.prisma.parent.findUnique({ where: { id: parentId } });
+    if (!parent || parent.deletedAt) throw new NotFoundException('Parent not found');
+    if (userRole === Role.PARENT && parent.userId !== userId) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    if (dto.isPrimary) {
+      await this.prisma.parentAddress.updateMany({
+        where: { parentId, isPrimary: true },
+        data: { isPrimary: false },
+      });
+    }
+
+    return this.prisma.parentAddress.create({
+      data: {
+        parentId,
+        type: dto.type as any,
+        addressLine1: dto.addressLine1,
+        addressLine2: dto.addressLine2,
+        landmark: dto.landmark,
+        city: dto.city,
+        district: dto.district,
+        state: dto.state,
+        pincode: dto.pincode,
+        country: dto.country || 'India',
+        isPrimary: dto.isPrimary ?? false,
+        latitude: dto.latitude,
+        longitude: dto.longitude,
+      },
+    });
+  }
+
+  async addFamilyMember(
+    parentId: string,
+    dto: CreateFamilyMemberDto,
+    userId: string,
+    userRole: Role,
+  ) {
+    const parent = await this.prisma.parent.findUnique({ where: { id: parentId } });
+    if (!parent || parent.deletedAt) throw new NotFoundException('Parent not found');
+    if (userRole === Role.PARENT && parent.userId !== userId) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    return this.prisma.familyMember.create({
+      data: {
+        parentId,
+        name: dto.name,
+        relationship: dto.relationship as any,
+        dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : undefined,
+        gender: dto.gender as any,
+        occupation: dto.occupation,
+        annualIncome: dto.annualIncome,
+        isDependent: dto.isDependent ?? false,
+        contactPhone: dto.contactPhone,
+        aadhaarNumber: (dto as any).aadharNumber || (dto as any).aadhaarNumber,
+        notes: dto.notes,
+      },
+    });
+  }
+
+  async updateTrustScore(parentId: string, dto: ManualTrustScoreDto, adminId: string) {
+    const parent = await this.prisma.parent.findUnique({ where: { id: parentId } });
+    if (!parent || parent.deletedAt) throw new NotFoundException('Parent not found');
+
+    return this.applyTrustScoreDelta(parentId, dto.delta, dto.reason, adminId);
+  }
+
+  private async applyTrustScoreDelta(
+    parentId: string,
+    delta: number,
+    reason: string,
+    actorId: string,
+  ) {
+    const parent = await this.prisma.parent.findUnique({ where: { id: parentId } });
+    if (!parent) throw new NotFoundException('Parent not found');
+
+    const previous = parent.trustScore;
+    const next = Math.min(TRUST_SCORE_MAX, Math.max(TRUST_SCORE_MIN, previous + delta));
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.parent.update({
+        where: { id: parentId },
+        data: {
+          trustScore: next,
+          lastTrustScoreUpdate: new Date(),
+        },
+      });
+
+      // TrustScoreLog may exist — write if model is available
+      try {
+        await (tx as any).trustScoreLog?.create?.({
+          data: {
+            parentId,
+            previousScore: previous,
+            newScore: next,
+            delta,
+            reason,
+            changedById: actorId,
+          },
+        });
+      } catch {
+        // Model optional — ignore if not present
+      }
+    });
+
+    this.logger.log(`Trust score updated for ${parentId}: ${previous} -> ${next} (${reason})`);
+    return { parentId, previousScore: previous, newScore: next, delta, reason };
+  }
+
 
   async getVerificationQueue(queryDto: QueryParentDto): Promise<VerificationQueueResponseDto> {
     const {
@@ -563,8 +920,11 @@ export class ParentsService {
         where: { id },
         data: {
           verificationStatus: 'APPROVED' as any,
+          kycStatus: 'APPROVED' as any,
+          kycApprovedAt: new Date(),
           verifiedById: adminId,
           verifiedAt: new Date(),
+          isActive: true,
           updatedAt: new Date(),
         },
       });
@@ -579,6 +939,7 @@ export class ParentsService {
 
     this.logger.log(`Parent approved: ${id}`);
   }
+
 
   async rejectParent(id: string, reason: string, adminId: string): Promise<void> {
     const parent = await this.prisma.parent.findUnique({ where: { id } });
