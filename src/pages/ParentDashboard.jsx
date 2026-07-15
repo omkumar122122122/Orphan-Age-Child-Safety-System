@@ -12,8 +12,8 @@ import ChatWindow from "../components/Chatbot/ChatWindow";
 import Chatbot from "../components/Chatbot/Chatbot";
 import { useChat } from "../hooks/useChat";
 import { useAuth } from "../context/AuthContext";
-import { notifications } from "../data/dummyData";
 import { parentsService } from "../services/parentsService";
+import { alertsService } from "../services/alertsService";
 import { classNames } from "../utils/formatters";
 
 /* ── Linked child for the demo parent (Meera Nair → Anaya Das) */
@@ -56,18 +56,44 @@ const childStatusColor = {
 export default function ParentDashboard() {
   const { user } = useAuth();
   const [, setDashboardVersion] = useState(0);
+  const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
-    parentsService.getDashboard().then((dashboard) => {
-      linkedChild = dashboard.linkedChild ? {
-        ...dashboard.linkedChild,
-        orphanage: dashboard.linkedChild.orphanageName,
-        health: dashboard.linkedChild.healthStatus,
-        attendance: '—', educationLevel: 'Not provided', risk: 'Not available',
-      } : null;
-      adoptionTimeline = (dashboard.adoptionJourney?.steps || []).map((step) => ({ step: step.name, done: step.completed, current: step.isCurrent }));
-      setDashboardVersion((value) => value + 1);
-    }).catch(() => { linkedChild = null; adoptionTimeline = []; setDashboardVersion((value) => value + 1); });
+    // Load parent dashboard data and live alerts in parallel
+    Promise.allSettled([
+      parentsService.getDashboard(),
+      alertsService.getAll(),
+    ]).then(([dashResult, alertResult]) => {
+      if (dashResult.status === 'fulfilled') {
+        const dashboard = dashResult.value;
+        linkedChild = dashboard.linkedChild ? {
+          ...dashboard.linkedChild,
+          orphanage: dashboard.linkedChild.orphanageName,
+          health: dashboard.linkedChild.healthStatus,
+          attendance: '—', educationLevel: 'Not provided', risk: 'Not available',
+        } : null;
+        adoptionTimeline = (dashboard.adoptionJourney?.steps || []).map((step) => ({ step: step.name, done: step.completed, current: step.isCurrent }));
+      }
+
+      if (alertResult.status === 'fulfilled') {
+        const result = alertResult.value;
+        setNotifications(
+          (result?.data || []).slice(0, 10).map((a) => ({
+            id: a.id,
+            title: a.title,
+            detail: a.detail,
+            type: 'Alert',
+            time: new Date(a.createdAt).toLocaleString('en-IN'),
+          }))
+        );
+      }
+
+      setDashboardVersion((v) => v + 1);
+    }).catch(() => {
+      linkedChild = null;
+      adoptionTimeline = [];
+      setDashboardVersion((v) => v + 1);
+    });
   }, []);
 
   return (

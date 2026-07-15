@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   FiAlertTriangle, FiCheckCircle, FiShield,
@@ -8,10 +8,11 @@ import Breadcrumb from "../components/Breadcrumb";
 import Button from "../components/Button";
 import Modal from "../components/Modal";
 import NotificationPanel from "../components/NotificationPanel";
-import { notifications } from "../data/dummyData";
+import { alertsService } from "../services/alertsService";
+import { useAuth } from "../context/AuthContext";
 import { classNames } from "../utils/formatters";
 
-const alertQueue = [
+const seedAlertQueue = [
   { id: "ALT-001", child: "Sara Ali",    type: "High Risk",         detail: "Recurring health flags and low attendance require immediate officer review.",     level: "high",   time: "10 min ago", orphanage: "Sunrise Care Home" },
   { id: "ALT-002", child: "Anaya Das",   type: "Medical Follow-up", detail: "Pediatric appointment due today. Welfare officer must verify completion status.", level: "medium", time: "1 hr ago",   orphanage: "Hope Nest" },
   { id: "ALT-003", child: "Vihaan Sen",  type: "Attendance Drop",   detail: "Attendance fell below 80% threshold — possible welfare concern flagged by AI.",   level: "medium", time: "3 hr ago",   orphanage: "Sunrise Care Home" },
@@ -25,14 +26,42 @@ const levelConfig = {
 };
 
 export default function Alerts() {
+  const { user } = useAuth();
   const [open, setOpen]       = useState(false);
   const [resolved, setResolved] = useState([]);
+  const [alertQueue, setAlertQueue] = useState([]);
+  const [stats, setStats] = useState({ total: 0, high: 0, pending: 0 });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    alertsService.getAll()
+      .then((result) => {
+        setAlertQueue((result.data || []).map((alert) => ({
+          ...alert,
+          level: ['HIGH', 'CRITICAL'].includes(alert.severity) ? 'high' : alert.severity === 'MEDIUM' ? 'medium' : 'low',
+          time: new Date(alert.createdAt).toLocaleString('en-IN'),
+        })));
+        setStats(result.stats || { total: 0, high: 0, pending: 0 });
+      })
+      .catch((err) => setError(err.message || 'Failed to load alerts'))
+      .finally(() => setLoading(false));
+  }, []);
 
   const counts = {
-    total:   alertQueue.length,
-    high:    alertQueue.filter((a) => a.level === "high").length,
-    medium:  alertQueue.filter((a) => a.level === "medium").length,
-    pending: alertQueue.length - resolved.length,
+    total: stats.total,
+    high: stats.high,
+    pending: Math.max(0, stats.pending - resolved.length),
+  };
+
+  const resolveAlert = async (id) => {
+    try {
+      await alertsService.resolve(id);
+      setResolved((items) => [...items, id]);
+      setOpen(true);
+    } catch (err) {
+      setError(err.message || 'Failed to resolve alert');
+    }
   };
 
   return (
@@ -76,6 +105,10 @@ export default function Alerts() {
         <div className="space-y-3">
           <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Active Alerts</h2>
 
+          {loading && <p className="text-sm text-slate-500">Loading alerts…</p>}
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          {!loading && !error && alertQueue.length === 0 && <p className="text-sm text-slate-500">No active alerts.</p>}
+
           {alertQueue.map((alert, i) => {
             const cfg    = levelConfig[alert.level];
             const Icon   = cfg.icon;
@@ -111,12 +144,12 @@ export default function Alerts() {
                       <p className="mt-1.5 text-[11px] text-slate-400">{alert.orphanage} · {alert.time}</p>
                     </div>
                   </div>
-                  {!isDone && (
+                  {!isDone && user?.role !== "parent" && (
                     <div className="flex shrink-0 items-center gap-2">
                       <Button
                         icon={FiCheckCircle}
                         size="sm"
-                        onClick={() => { setResolved((v) => [...v, alert.id]); setOpen(true); }}
+                        onClick={() => resolveAlert(alert.id)}
                       >
                         Resolve
                       </Button>
@@ -128,7 +161,7 @@ export default function Alerts() {
           })}
         </div>
 
-        <NotificationPanel items={notifications} />
+        <NotificationPanel items={alertQueue.map((alert) => ({ id: alert.id, title: alert.title, detail: alert.detail, type: "Alert", time: alert.time }))} />
       </div>
 
       {/* Resolution modal */}

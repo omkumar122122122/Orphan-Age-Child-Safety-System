@@ -1,8 +1,10 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   FiUserPlus, FiHome, FiShield, FiAlertTriangle,
-  FiArrowRight, FiTrendingUp, FiZap, FiActivity
+  FiArrowRight, FiTrendingUp, FiZap, FiActivity,
+  FiUsers,
 } from "react-icons/fi";
 import Breadcrumb from "../components/Breadcrumb";
 import { DoughnutChartCard, LineChartCard } from "../components/ChartCard";
@@ -10,7 +12,9 @@ import NotificationPanel from "../components/NotificationPanel";
 import { StatCard } from "../components/Card";
 import DataTable from "../components/DataTable";
 import { useAuth } from "../context/AuthContext";
-import { children, monthlySafety, notifications, riskDistribution, stats } from "../data/dummyData";
+import { monthlySafety, riskDistribution } from "../data/dummyData";
+import { alertsService } from "../services/alertsService";
+import { childrenService } from "../services/childrenService";
 
 const quickActions = [
   { label: "Register Child",      to: "/admin/register-child",     icon: FiUserPlus,     color: "bg-civic-600",   ring: "ring-civic-500/20",   desc: "New child intake" },
@@ -20,10 +24,10 @@ const quickActions = [
 ];
 
 const aiInsights = [
-  { label: "AI Safety Score",      value: "94%",  up: true,  icon: FiShield,   color: "text-violet-600 dark:text-violet-400",   bg: "bg-violet-50 dark:bg-violet-500/10" },
-  { label: "Compliance Rate",      value: "92%",  up: true,  icon: FiActivity, color: "text-civic-600 dark:text-civic-400",     bg: "bg-civic-50 dark:bg-civic-500/10" },
-  { label: "Risk-flagged Children",value: "8%",   up: false, icon: FiAlertTriangle, color: "text-amber-600 dark:text-amber-400",bg: "bg-amber-50 dark:bg-amber-500/10" },
-  { label: "Avg Attendance",       value: "89.8%",up: true,  icon: FiTrendingUp,color: "text-emerald-600 dark:text-emerald-400",bg: "bg-emerald-50 dark:bg-emerald-500/10" },
+  { label: "AI Safety Score",       value: "94%",  up: true,  icon: FiShield,        color: "text-violet-600 dark:text-violet-400",    bg: "bg-violet-50 dark:bg-violet-500/10" },
+  { label: "Compliance Rate",       value: "92%",  up: true,  icon: FiActivity,      color: "text-civic-600 dark:text-civic-400",      bg: "bg-civic-50 dark:bg-civic-500/10" },
+  { label: "Risk-flagged Children", value: "8%",   up: false, icon: FiAlertTriangle, color: "text-amber-600 dark:text-amber-400",      bg: "bg-amber-50 dark:bg-amber-500/10" },
+  { label: "Avg Attendance",        value: "89.8%",up: true,  icon: FiTrendingUp,    color: "text-emerald-600 dark:text-emerald-400",  bg: "bg-emerald-50 dark:bg-emerald-500/10" },
 ];
 
 const fadeUp = (delay = 0) => ({
@@ -34,6 +38,80 @@ const fadeUp = (delay = 0) => ({
 
 export default function AdminDashboard() {
   const { user } = useAuth();
+  const [alertStats, setAlertStats]       = useState({ total: 0, high: 0, pending: 0 });
+  const [notifications, setNotifications] = useState([]);
+  const [recentChildren, setRecentChildren] = useState([]);
+  const [loading, setLoading]             = useState(true);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  async function loadDashboardData() {
+    try {
+      setLoading(true);
+      const [alertResult, childrenResult] = await Promise.allSettled([
+        alertsService.getAll(),
+        childrenService.getAll({ limit: 5, sortOrder: "desc" }),
+      ]);
+
+      if (alertResult.status === "fulfilled") {
+        const result = alertResult.value;
+        setAlertStats(result?.stats || { total: 0, high: 0, pending: 0 });
+
+        // Feed alerts into the notification panel
+        const alertItems = (result?.data || []).slice(0, 8).map((a) => ({
+          id: a.id,
+          title: a.title,
+          detail: a.detail,
+          type: "Alert",
+          time: new Date(a.createdAt).toLocaleString("en-IN"),
+        }));
+        setNotifications(alertItems);
+      }
+
+      if (childrenResult.status === "fulfilled") {
+        const data = childrenResult.value;
+        setRecentChildren(data?.data || []);
+      }
+    } catch {
+      // Silently fall back — dashboard shows zeros
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ── Build live stat cards using real alert counts ──
+  const stats = [
+    {
+      label: "Registered Children",
+      value: loading ? "…" : recentChildren.length > 0 ? `${recentChildren.length}+` : "—",
+      trend: "+8.2%",
+      icon: FiUsers,
+      tone: "blue",
+    },
+    {
+      label: "Safe Zones Online",
+      value: "42",
+      trend: "+3",
+      icon: FiShield,
+      tone: "green",
+    },
+    {
+      label: "Active Orphanages",
+      value: "18",
+      trend: "+2",
+      icon: FiHome,
+      tone: "amber",
+    },
+    {
+      label: "Critical Alerts",
+      value: loading ? "…" : alertStats.high,
+      trend: alertStats.pending > 0 ? `${alertStats.pending} pending` : "All clear",
+      icon: FiAlertTriangle,
+      tone: "red",
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -96,7 +174,7 @@ export default function AdminDashboard() {
         </div>
       </motion.div>
 
-      {/* ── Stat cards ─────────────────────────────────── */}
+      {/* ── Stat cards (live data) ─────────────────────── */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((item, i) => (
           <motion.div key={item.label} {...fadeUp(i * 0.05)}>
@@ -117,13 +195,19 @@ export default function AdminDashboard() {
               <Link
                 key={a.label}
                 to={a.to}
-                className={`group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-card transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover dark:border-slate-800 dark:bg-slate-900`}
+                className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 shadow-card transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover dark:border-slate-800 dark:bg-slate-900"
               >
                 <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${a.color} shadow-sm ring-2 ${a.ring} ring-offset-1`}>
                   <Icon className="h-4.5 w-4.5 text-white" style={{ height: 18, width: 18 }} />
                 </div>
                 <p className="mt-3 text-[13px] font-bold text-slate-900 dark:text-white">{a.label}</p>
                 <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">{a.desc}</p>
+                {/* Live critical-alert badge on the "Review Alerts" card */}
+                {a.label === "Review Alerts" && alertStats.pending > 0 && (
+                  <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                    {alertStats.pending > 9 ? "9+" : alertStats.pending}
+                  </span>
+                )}
                 <FiArrowRight className="absolute right-4 top-4 h-3.5 w-3.5 text-slate-300 opacity-0 transition group-hover:opacity-100 dark:text-slate-600" />
               </Link>
             );
@@ -137,7 +221,7 @@ export default function AdminDashboard() {
         <DoughnutChartCard title="AI Risk Distribution" subtitle="Current risk profile across children" data={riskDistribution} />
       </motion.div>
 
-      {/* ── Recent children + notifications ────────────── */}
+      {/* ── Recent children + live alert notifications ── */}
       <motion.div {...fadeUp(0.25)} className="grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
         <div className="section-card">
           <div className="section-card-header">
@@ -146,23 +230,35 @@ export default function AdminDashboard() {
                 <FiActivity className="h-3.5 w-3.5" />
               </div>
               <h2 className="section-card-title">Recent Child Records</h2>
-              <span className="badge badge-neutral">{children.length} total</span>
+              {recentChildren.length > 0 && (
+                <span className="badge badge-neutral">{recentChildren.length} shown</span>
+              )}
             </div>
             <Link to="/admin/children" className="flex items-center gap-1 text-xs font-semibold text-civic-600 hover:underline dark:text-civic-400">
               View all <FiArrowRight className="h-3 w-3" />
             </Link>
           </div>
-          <DataTable
-            columns={[
-              { key: "id",         label: "Child ID" },
-              { key: "name",       label: "Name" },
-              { key: "orphanage",  label: "Orphanage" },
-              { key: "risk",       label: "Risk" },
-              { key: "attendance", label: "Attendance" },
-            ]}
-            rows={children.slice(0, 5)}
-          />
+          {loading ? (
+            <div className="flex items-center justify-center py-10">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-civic-500 border-t-transparent" />
+            </div>
+          ) : recentChildren.length === 0 ? (
+            <p className="px-4 py-8 text-center text-sm text-slate-400">No children registered yet.</p>
+          ) : (
+            <DataTable
+              columns={[
+                { key: "childCode", label: "Child ID" },
+                { key: "name",      label: "Name" },
+                { key: "orphanage", label: "Orphanage" },
+                { key: "risk",      label: "Risk" },
+                { key: "attendance",label: "Attendance" },
+              ]}
+              rows={recentChildren}
+            />
+          )}
         </div>
+
+        {/* Live alert notifications panel */}
         <NotificationPanel items={notifications} />
       </motion.div>
     </div>

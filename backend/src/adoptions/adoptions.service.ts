@@ -3,6 +3,7 @@ import { AdoptionStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { Role } from '../common/enums/role.enum';
 import { CreateAdoptionDto, QueryAdoptionDto, UpdateAdoptionStatusDto } from './dto';
+import { AlertsGenerationService } from '../alerts/alerts-generation.service';
 
 export const REQUIRED_ADOPTION_DOCUMENTS = [
   'Adoption Agreement', 'Court Order', 'Guardian Consent', 'Identity Documents',
@@ -11,7 +12,10 @@ export const REQUIRED_ADOPTION_DOCUMENTS = [
 
 @Injectable()
 export class AdoptionsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly alertsGeneration: AlertsGenerationService,
+  ) {}
 
   async verifyEligibility(parentId: string, childId: string, userId: string, role: Role) {
     const [parent, child] = await Promise.all([
@@ -83,7 +87,7 @@ export class AdoptionsService {
   async updateStatus(id: string, dto: UpdateAdoptionStatusDto, userId: string) {
     const record = await this.prisma.adoptionRecord.findUnique({ where: { id }, include: { documents: true, child: true, adoptiveParent: { include: { user: true } } } });
     if (!record) throw new NotFoundException('Adoption record not found');
-    if (![AdoptionStatus.COMPLETED, AdoptionStatus.CANCELLED].includes(dto.status)) throw new BadRequestException('Only completed or cancelled statuses are supported');
+    if (![AdoptionStatus.COMPLETED, AdoptionStatus.CANCELLED].includes(dto.status as typeof AdoptionStatus.COMPLETED | typeof AdoptionStatus.CANCELLED)) throw new BadRequestException('Only completed or cancelled statuses are supported');
     if (dto.status === AdoptionStatus.CANCELLED && !dto.cancellationReason) throw new BadRequestException('A cancellation reason is required');
     if (dto.status === AdoptionStatus.COMPLETED) {
       if (record.status === AdoptionStatus.COMPLETED) throw new BadRequestException('Adoption is already completed');
@@ -107,6 +111,16 @@ export class AdoptionsService {
       await tx.auditLog.create({ data: { userId, action: 'ADOPTION_CANCELLED', resource: 'AdoptionRecord', resourceId: id, details: { reason: dto.cancellationReason } } });
       return value;
     });
+
+    // Fire ADOPTION_BLOCKED alert asynchronously — must not block response
+    void this.alertsGeneration.onAdoptionCancelled(
+      record.childId,
+      record.adoptiveParentId!,
+      record.child.orphanageId ?? null,
+      dto.cancellationReason!,
+      userId,
+    );
+
     return updated;
   }
 
