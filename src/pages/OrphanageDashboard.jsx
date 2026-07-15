@@ -9,7 +9,6 @@ import { StatCard } from "../components/Card";
 import NotificationPanel from "../components/NotificationPanel";
 import { useAuth } from "../context/AuthContext";
 import { orphanagesService } from "../services/orphanagesService";
-import { notifications } from "../data/dummyData";
 
 const quickActions = [
   { label: "AI Attendance",   to: "/orphanage/ai-attendance",  icon: FiCamera,   color: "bg-violet-600",  ring: "ring-violet-500/20",  desc: "Face recognition check-in" },
@@ -188,7 +187,7 @@ export default function OrphanageDashboard() {
             rows={children}
           />
         </div>
-        <NotificationPanel items={notifications} />
+        <NotificationPanel />
       </motion.div>
     </div>
   );

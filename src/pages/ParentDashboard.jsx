@@ -3,30 +3,25 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   FiCalendar, FiBell, FiUser, FiHeart, FiCheckCircle,
-  FiClock, FiShield, FiArrowRight, FiZap, FiActivity,
-  FiMessageSquare, FiCpu, FiTrash2
+  FiClock, FiArrowRight, FiZap, FiActivity
 } from "react-icons/fi";
 import Breadcrumb from "../components/Breadcrumb";
 import NotificationPanel from "../components/NotificationPanel";
-import ChatWindow from "../components/Chatbot/ChatWindow";
-import Chatbot from "../components/Chatbot/Chatbot";
-import { useChat } from "../hooks/useChat";
 import { useAuth } from "../context/AuthContext";
-import { notifications } from "../data/dummyData";
 import { parentsService } from "../services/parentsService";
 import { classNames } from "../utils/formatters";
 
 /* ── Linked child for the demo parent (Meera Nair → Anaya Das) */
 let linkedChild = null;
 
-/* ── Quick navigation links ─────────────────────────────────── */
+/* ── Quick navigation links */
 const quickLinks = [
   { label: "Visit Request",  to: "/parent/visit-request", icon: FiCalendar, desc: "Schedule a visit",   color: "bg-civic-600",  ring: "ring-civic-500/20"  },
   { label: "My Profile",     to: "/parent/profile",       icon: FiUser,     desc: "View & update info", color: "bg-indigo-600", ring: "ring-indigo-500/20" },
   { label: "Notifications",  to: "/parent/notifications", icon: FiBell,     desc: "Alerts & updates",   color: "bg-amber-600",  ring: "ring-amber-500/20"  },
 ];
 
-/* ── Framer Motion stagger helper ───────────────────────────── */
+/* ── Framer Motion stagger helper */
 const fadeUp = (delay = 0) => ({
   initial:    { opacity: 0, y: 10 },
   animate:    { opacity: 1, y: 0  },
@@ -36,7 +31,7 @@ const fadeUp = (delay = 0) => ({
 /* ── Adoption journey steps (derived from dummy data) ──────── */
 let adoptionTimeline = [];
 
-/* ── Trust badge strip data ─────────────────────────────────── */
+/* ── Trust badge strip */
 const trustBadges = [
   { label: "KYC",         value: "Verified",  color: "text-emerald-600 dark:text-emerald-400" },
   { label: "Face Match",  value: "99%",        color: "text-civic-600 dark:text-civic-400"    },
@@ -45,14 +40,11 @@ const trustBadges = [
 ];
 
 const childStatusColor = {
-  Stable:          "badge-success",
-  Observation:     "badge-warning",
-  "Needs Review":  "badge-danger",
+  Stable:         "badge-success",
+  Observation:    "badge-warning",
+  "Needs Review": "badge-danger",
 };
 
-/* ════════════════════════════════════════════════════════════
-   MAIN PAGE
-═══════════════════════════════════════════════════════════ */
 export default function ParentDashboard() {
   const { user } = useAuth();
   const [, setDashboardVersion] = useState(0);
@@ -74,7 +66,7 @@ export default function ParentDashboard() {
     <div className="space-y-6">
       <Breadcrumb items={["Parent", "Dashboard"]} />
 
-      {/* ── Welcome banner ───────────────────────────────────── */}
+      {/* Welcome banner */}
       <motion.div
         {...fadeUp(0)}
         className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900"
@@ -95,8 +87,6 @@ export default function ParentDashboard() {
             </div>
           </div>
         </div>
-
-        {/* Trust badge strip */}
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-gray-100 bg-gray-50/60 px-6 py-3 dark:border-slate-800 dark:bg-slate-800/30">
           {trustBadges.map((b) => (
             <div key={b.label} className="flex items-center gap-1.5">
@@ -111,7 +101,7 @@ export default function ParentDashboard() {
         </div>
       </motion.div>
 
-      {/* ── Quick links ──────────────────────────────────────── */}
+      {/* Quick links */}
       <motion.div {...fadeUp(0.05)} className="grid gap-3 sm:grid-cols-3">
         {quickLinks.map((link) => {
           const Icon = link.icon;
@@ -137,10 +127,10 @@ export default function ParentDashboard() {
         })}
       </motion.div>
 
-      {/* ── Linked child + Adoption journey ─────────────────── */}
+      {/* Linked child + Adoption journey */}
       <motion.div {...fadeUp(0.1)} className="grid gap-5 xl:grid-cols-2">
 
-        {/* Linked child overview */}
+        {/* Linked child */}
         <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-slate-800">
             <div className="flex items-center gap-2">
@@ -183,7 +173,7 @@ export default function ParentDashboard() {
           </div>
         </div>
 
-        {/* Adoption journey timeline */}
+        {/* Adoption journey */}
         <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center gap-2 border-b border-gray-100 px-5 py-4 dark:border-slate-800">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-civic-50 text-civic-600 dark:bg-civic-500/10 dark:text-civic-400">
@@ -197,7 +187,7 @@ export default function ParentDashboard() {
                 <li key={step.step} className="flex items-center gap-3">
                   <div className={classNames(
                     "flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-bold",
-                    step.done    ? "bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400"
+                    step.done      ? "bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400"
                     : step.current ? "bg-civic-600 text-white shadow-sm shadow-civic-600/25"
                     : "border border-gray-200 bg-white text-slate-400 dark:border-slate-700 dark:bg-slate-800"
                   )}>
@@ -205,7 +195,7 @@ export default function ParentDashboard() {
                   </div>
                   <span className={classNames(
                     "flex-1 text-sm font-medium",
-                    step.done    ? "text-slate-400 line-through dark:text-slate-500"
+                    step.done      ? "text-slate-400 line-through dark:text-slate-500"
                     : step.current ? "font-semibold text-slate-900 dark:text-white"
                     : "text-slate-400 dark:text-slate-500"
                   )}>
@@ -223,9 +213,9 @@ export default function ParentDashboard() {
         </div>
       </motion.div>
 
-      {/* ── Notifications ────────────────────────────────────── */}
+      {/* Notifications */}
       <motion.div {...fadeUp(0.15)}>
-        <NotificationPanel items={notifications} />
+        <NotificationPanel />
       </motion.div>
 
       {/* ── Sahayak AI — inline chat section ─────────────────── */}

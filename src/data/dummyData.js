@@ -319,12 +319,6 @@ export const orphanages = [
   { id: "ORP-004", name: "Care Bridge", city: "Bhopal", capacity: 130, occupancy: 119, compliance: 96, totalAdmissions: 158 }
 ];
 
-export const notifications = [
-  { id: 1, title: "AI anomaly check completed", detail: "7 records need welfare officer review.", type: "Review", time: "10 min ago" },
-  { id: 2, title: "Medical follow-up due", detail: "Anaya Das has a pediatric appointment today.", type: "Health", time: "1 hr ago" },
-  { id: 3, title: "Monthly compliance report", detail: "All active homes submitted mandatory data.", type: "Report", time: "Yesterday" }
-];
-
 export const activityFeed = [
   { label: "Guardian visit verified", value: 32 },
   { label: "Health checks", value: 76 },
