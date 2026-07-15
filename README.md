@@ -759,7 +759,6 @@ MIT — see [LICENSE](./LICENSE) for details.
 
 ---
 
-Made by **Om Kumar Gupta**
 
 </div>
 
