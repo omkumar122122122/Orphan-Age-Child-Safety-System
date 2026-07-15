@@ -6,8 +6,9 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { Role } from '../common/enums/role.enum';
-import { Prisma, VisitRequestStatus, RiskLevel } from '@prisma/client';
+import { Prisma, VisitRequestStatus, RiskLevel, NotificationType } from '@prisma/client';
 import {
   CreateVisitRequestDto,
   QueryVisitRequestDto,
@@ -30,7 +31,10 @@ import {
 export class VisitRequestsService {
   private readonly logger = new Logger(VisitRequestsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async create(
     dto: CreateVisitRequestDto,
@@ -479,6 +483,35 @@ export class VisitRequestsService {
       },
     });
 
+    // Send notification to parent
+    try {
+      const parent = await this.prisma.parent.findUnique({
+        where: { id: visitRequest.parentId },
+        select: { userId: true },
+      });
+
+      const orphanage = await this.prisma.orphanage.findUnique({
+        where: { id: visitRequest.orphanageId },
+        select: { name: true },
+      });
+
+      if (parent && orphanage) {
+        await this.notificationsService.sendNotification(
+          parent.userId,
+          NotificationType.VISIT_REQUEST_UPDATE,
+          'Visit Request Approved',
+          `Your visit request for ${orphanage.name} has been approved for ${new Date(dto.visitDate).toLocaleDateString()}.`,
+          {
+            relatedEntityType: 'VisitRequest',
+            relatedEntityId: id,
+          },
+        );
+      }
+    } catch (error) {
+      this.logger.error(`Failed to send notification for approved visit request ${id}:`, error);
+      // Don't fail the entire operation if notification fails
+    }
+
     this.logger.log(
       `Visit request ${id} approved by user ${requestUserId}`,
     );
@@ -524,6 +557,35 @@ export class VisitRequestsService {
         reviewedAt: new Date(),
       },
     });
+
+    // Send notification to parent
+    try {
+      const parent = await this.prisma.parent.findUnique({
+        where: { id: visitRequest.parentId },
+        select: { userId: true },
+      });
+
+      const orphanage = await this.prisma.orphanage.findUnique({
+        where: { id: visitRequest.orphanageId },
+        select: { name: true },
+      });
+
+      if (parent && orphanage) {
+        await this.notificationsService.sendNotification(
+          parent.userId,
+          NotificationType.VISIT_REQUEST_UPDATE,
+          'Visit Request Rejected',
+          `Your visit request for ${orphanage.name} has been rejected. Reason: ${dto.reason}.`,
+          {
+            relatedEntityType: 'VisitRequest',
+            relatedEntityId: id,
+          },
+        );
+      }
+    } catch (error) {
+      this.logger.error(`Failed to send notification for rejected visit request ${id}:`, error);
+      // Don't fail the entire operation if notification fails
+    }
 
     this.logger.log(
       `Visit request ${id} rejected by user ${requestUserId}: ${dto.reason}`,
@@ -591,6 +653,35 @@ export class VisitRequestsService {
         notifiedAt: dto.notifyParent ? new Date() : null,
       },
     });
+
+    // Send notification to parent
+    try {
+      const parent = await this.prisma.parent.findUnique({
+        where: { id: visitRequest.parentId },
+        select: { userId: true },
+      });
+
+      const orphanage = await this.prisma.orphanage.findUnique({
+        where: { id: visitRequest.orphanageId },
+        select: { name: true },
+      });
+
+      if (parent && orphanage) {
+        await this.notificationsService.sendNotification(
+          parent.userId,
+          NotificationType.VISIT_REQUEST_UPDATE,
+          'Visit Rescheduled',
+          `Your visit to ${orphanage.name} has been rescheduled to ${new Date(dto.newDate).toLocaleDateString()}. Reason: ${dto.reason}.`,
+          {
+            relatedEntityType: 'VisitRequest',
+            relatedEntityId: id,
+          },
+        );
+      }
+    } catch (error) {
+      this.logger.error(`Failed to send notification for rescheduled visit request ${id}:`, error);
+      // Don't fail the entire operation if notification fails
+    }
 
     this.logger.log(
       `Visit request ${id} rescheduled by user ${requestUserId}: ${dto.reason}`,

@@ -1,59 +1,176 @@
 /**
- * authService.js  —  LOCAL DEMO (no backend required)
- *
- * Simulates login/logout using the hardcoded users in dummyData.
- * To connect a real backend later, replace fakeLogin with an actual
- * API call and return the same { user, tokens } shape.
+ * authService.js — Real backend authentication
+ * Connects to NestJS Auth module at /api/v1/auth/*
  */
 
-import { users } from "../data/dummyData";
+import { apiClient } from './apiClient';
 
-/** 550 ms simulated network delay */
-const delay = (ms = 550) => new Promise((resolve) => setTimeout(resolve, ms));
+function unwrap(response) {
+  if (response && typeof response === 'object' && 'data' in response && 'success' in response) {
+    return response.data;
+  }
+  return response;
+}
 
 /**
- * Login — matches email + password against dummy users.
- * Returns the shape AuthContext expects: { user, tokens }.
- *
- * @param {{ email: string, password: string }} credentials
- * @returns {Promise<{ user: object, tokens: { accessToken: string, refreshToken: string } }>}
+ * Normalize backend user to frontend shape.
+ * Backend returns: { id, email, firstName, lastName, role, isEmailVerified, ... }
+ * Frontend expects: { id, name, email, role (lowercase), avatar, department, firstName, lastName }
+ */
+function normalizeUser(user) {
+  if (!user) return null;
+  const firstName = user.firstName || '';
+  const lastName = user.lastName || '';
+  const name = user.name || `${firstName} ${lastName}`.trim() || user.email;
+  const role = (user.role || 'guest').toString().toLowerCase();
+  const avatar =
+    user.avatar ||
+    `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() ||
+    (user.email || '?').charAt(0).toUpperCase();
+
+  return {
+    ...user,
+    id: user.id,
+    name,
+    firstName,
+    lastName,
+    email: user.email,
+    role,
+    avatar,
+    department: user.department || roleLabel(role),
+    isEmailVerified: user.isEmailVerified,
+    isTwoFactorEnabled: user.isTwoFactorEnabled,
+  };
+}
+
+function roleLabel(role) {
+  const map = {
+    admin: 'Child Welfare Directorate',
+    parent: 'Registered Guardian',
+    orphanage: 'Care Home Operations',
+    social_worker: 'Social Worker',
+    guest: 'Guest',
+  };
+  return map[role] || role;
+}
+
+/**
+ * Login with email + password
+ * @returns {Promise<{ user: object, tokens: { accessToken, refreshToken } }>}
  */
 export async function login({ email, password }) {
-  await delay();
-
-  const found = users.find(
-    (u) => u.email === email && u.password === password
-  );
-
-  if (!found) {
-    const err = new Error("Invalid email or password. Check the demo credentials below.");
-    err.status = 401;
-    throw err;
-  }
-
-  // Strip password before storing
-  const { password: _pw, ...safeUser } = found;
+  const response = await apiClient.post('/auth/login', { email, password });
+  const data = unwrap(response);
 
   return {
-    user:   safeUser,
+    user: normalizeUser(data.user),
     tokens: {
-      accessToken:  `demo-access-${safeUser.id}-${Date.now()}`,
-      refreshToken: `demo-refresh-${safeUser.id}-${Date.now()}`,
+      accessToken: data.tokens?.accessToken || data.accessToken,
+      refreshToken: data.tokens?.refreshToken || data.refreshToken,
+      accessTokenExpiresAt: data.tokens?.accessTokenExpiresAt,
+      refreshTokenExpiresAt: data.tokens?.refreshTokenExpiresAt,
     },
+    message: data.message,
   };
 }
 
-/** Logout — nothing to do for demo mode */
-export async function logout() {
-  await delay(100);
-  return { success: true };
+/**
+ * Register a new user
+ */
+export async function register(payload) {
+  const response = await apiClient.post('/auth/register', payload);
+  return unwrap(response);
 }
 
-/** Refresh tokens — demo just returns new fake tokens */
+/**
+ * Logout — revokes current session
+ */
+export async function logout(refreshToken) {
+  try {
+    const body = refreshToken ? { refreshToken } : {};
+    const response = await apiClient.post('/auth/logout', body);
+    return unwrap(response) || { success: true };
+  } catch {
+    // Always succeed locally even if backend call fails
+    return { success: true };
+  }
+}
+
+/**
+ * Refresh access + refresh token pair
+ */
 export async function refreshTokens(refreshToken) {
-  await delay(100);
+  const response = await apiClient.post('/auth/refresh', { refreshToken });
+  const data = unwrap(response);
+
   return {
-    accessToken:  `demo-access-refreshed-${Date.now()}`,
-    refreshToken: `demo-refresh-refreshed-${Date.now()}`,
+    accessToken: data.accessToken || data.tokens?.accessToken,
+    refreshToken: data.refreshToken || data.tokens?.refreshToken,
+    accessTokenExpiresAt: data.accessTokenExpiresAt || data.tokens?.accessTokenExpiresAt,
+    refreshTokenExpiresAt: data.refreshTokenExpiresAt || data.tokens?.refreshTokenExpiresAt,
   };
+}
+
+/**
+ * Get current authenticated user profile
+ */
+export async function getMe() {
+  const response = await apiClient.get('/auth/me');
+  return normalizeUser(unwrap(response));
+}
+
+/**
+ * Request password reset email
+ */
+export async function forgotPassword(email) {
+  const response = await apiClient.post('/auth/forgot-password', { email });
+  return unwrap(response);
+}
+
+/**
+ * Reset password with token
+ */
+export async function resetPassword({ token, password, confirmPassword }) {
+  const response = await apiClient.post('/auth/reset-password', {
+    token,
+    password,
+    confirmPassword,
+  });
+  return unwrap(response);
+}
+
+/**
+ * Change password (authenticated)
+ */
+export async function changePassword({ currentPassword, newPassword, confirmPassword }) {
+  const response = await apiClient.patch('/auth/change-password', {
+    currentPassword,
+    newPassword,
+    confirmPassword,
+  });
+  return unwrap(response);
+}
+
+/**
+ * Verify email with token
+ */
+export async function verifyEmail(token) {
+  const response = await apiClient.post('/auth/verify-email', { token });
+  return unwrap(response);
+}
+
+/**
+ * Send OTP
+ */
+export async function sendOtp(purpose) {
+  const response = await apiClient.post('/auth/otp/send', { purpose });
+  return unwrap(response);
+}
+
+/**
+ * Verify OTP
+ */
+export async function verifyOtp({ code, purpose }) {
+  const response = await apiClient.post('/auth/otp/verify', { code, purpose });
+  return unwrap(response);
 }

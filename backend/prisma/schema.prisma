@@ -1680,6 +1680,8 @@ model AdoptionRecord {
   reviewedBy   User?   @relation("AdoptionReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
   reviewNotes  String?
 
+  documents AdoptionDocument[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1687,6 +1689,32 @@ model AdoptionRecord {
   @@index([adoptiveParentId])
   @@index([completedDate])
   @@map("adoption_records")
+}
+
+model AdoptionDocument {
+  id String @id @default(uuid())
+
+  adoptionRecordId String
+  adoptionRecord AdoptionRecord @relation(fields: [adoptionRecordId], references: [id], onDelete: Cascade)
+
+  documentType String
+  fileName String
+  originalName String
+  mimeType String
+  fileSize Int
+  storagePath String
+  storageUrl String?
+  isVerified Boolean @default(false)
+  verifiedById String?
+  verifiedAt DateTime?
+
+  uploadedById String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([adoptionRecordId, documentType])
+  @@index([adoptionRecordId])
+  @@map("adoption_documents")
 }
 
 // ═══════════════════════════════════════════════════════════

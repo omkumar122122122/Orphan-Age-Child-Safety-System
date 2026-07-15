@@ -1,4 +1,5 @@
-import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   FiCalendar, FiBell, FiUser, FiHeart, FiCheckCircle,
@@ -7,11 +8,12 @@ import {
 import Breadcrumb from "../components/Breadcrumb";
 import NotificationPanel from "../components/NotificationPanel";
 import { useAuth } from "../context/AuthContext";
-import { children, notifications } from "../data/dummyData";
+import { notifications } from "../data/dummyData";
+import { parentsService } from "../services/parentsService";
 import { classNames } from "../utils/formatters";
 
-/* ── Linked child for demo parent (Meera Nair → Anaya Das) */
-const linkedChild = children.find((c) => c.id === "CH-1034") ?? children[1];
+/* ── Linked child for the demo parent (Meera Nair → Anaya Das) */
+let linkedChild = null;
 
 /* ── Quick navigation links */
 const quickLinks = [
@@ -27,14 +29,8 @@ const fadeUp = (delay = 0) => ({
   transition: { duration: 0.25, delay, ease: [0.16, 1, 0.3, 1] },
 });
 
-/* ── Adoption journey steps */
-const adoptionTimeline = [
-  { step: "KYC Submitted",     done: true                 },
-  { step: "Identity Verified", done: true                 },
-  { step: "Background Check",  done: false, current: true },
-  { step: "Visit Approved",    done: false                },
-  { step: "Adoption Complete", done: false                },
-];
+/* ── Adoption journey steps (derived from dummy data) ──────── */
+let adoptionTimeline = [];
 
 /* ── Trust badge strip */
 const trustBadges = [
@@ -52,6 +48,20 @@ const childStatusColor = {
 
 export default function ParentDashboard() {
   const { user } = useAuth();
+  const [, setDashboardVersion] = useState(0);
+
+  useEffect(() => {
+    parentsService.getDashboard().then((dashboard) => {
+      linkedChild = dashboard.linkedChild ? {
+        ...dashboard.linkedChild,
+        orphanage: dashboard.linkedChild.orphanageName,
+        health: dashboard.linkedChild.healthStatus,
+        attendance: '—', educationLevel: 'Not provided', risk: 'Not available',
+      } : null;
+      adoptionTimeline = (dashboard.adoptionJourney?.steps || []).map((step) => ({ step: step.name, done: step.completed, current: step.isCurrent }));
+      setDashboardVersion((value) => value + 1);
+    }).catch(() => { linkedChild = null; adoptionTimeline = []; setDashboardVersion((value) => value + 1); });
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -130,10 +140,11 @@ export default function ParentDashboard() {
               </div>
               <h2 className="text-sm font-bold text-slate-900 dark:text-white">Linked Child Overview</h2>
             </div>
-            <span className="badge badge-success">Linked</span>
+            <span className="badge badge-success">{linkedChild ? 'Linked' : 'Not linked'}</span>
           </div>
           <div className="p-5">
-            <div className="mb-4 flex items-center gap-4 rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+            {/* Child avatar row */}
+            {linkedChild ? <div className="mb-4 flex items-center gap-4 rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-sm font-bold text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">
                 {linkedChild.name.split(" ").map((n) => n[0]).join("")}
               </div>
@@ -146,8 +157,9 @@ export default function ParentDashboard() {
               <span className={classNames("badge", childStatusColor[linkedChild.health] ?? "badge-neutral")}>
                 {linkedChild.health}
               </span>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
+            </div> : <p className="text-sm text-slate-500 dark:text-slate-400">Your adopted child will appear here once the adoption is approved.</p>}
+            {/* Stats grid */}
+            {linkedChild && <div className="grid grid-cols-3 gap-3">
               {[
                 { label: "Attendance",  value: `${linkedChild.attendance}%` },
                 { label: "Education",   value: linkedChild.educationLevel    },
@@ -158,7 +170,7 @@ export default function ParentDashboard() {
                   <p className="field-value mt-1">{info.value}</p>
                 </div>
               ))}
-            </div>
+            </div>}
           </div>
         </div>
 
@@ -206,6 +218,138 @@ export default function ParentDashboard() {
       <motion.div {...fadeUp(0.15)}>
         <NotificationPanel items={notifications} />
       </motion.div>
+
+      {/* ── Sahayak AI — inline chat section ─────────────────── */}
+      <motion.div {...fadeUp(0.2)}>
+        <SahayakAI parentId={user?.parentId} childId={linkedChild?.id} />
+      </motion.div>
+
+      {/* ── Floating chat button (always visible) ────────────── */}
+      <Chatbot parentId={user?.parentId} childId={linkedChild?.id} />
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════
+   SAHAYAK AI — Full-width inline chat card
+   Collapsible section on the Parent Dashboard.
+   Shares the same useChat hook + ChatWindow as the floating bot,
+   so both have independent conversation histories.
+═══════════════════════════════════════════════════════════ */
+function SahayakAI({ parentId, childId }) {
+  const [expanded, setExpanded] = useState(false);
+  const { messages, isLoading, error, send, retry, clearConversation } = useChat({ parentId, childId });
+
+  const capabilities = [
+    { icon: "🩺", label: "Health Reports"  },
+    { icon: "💉", label: "Vaccinations"    },
+    { icon: "🔐", label: "KYC Status"      },
+    { icon: "📅", label: "Appointments"    },
+    { icon: "🚨", label: "Emergency"       },
+    { icon: "📜", label: "Adoption Policy" },
+  ];
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
+
+      {/* ── Collapsible header ──────────────────────────────── */}
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="flex w-full items-center justify-between px-5 py-4 text-left transition hover:bg-gray-50/60 dark:hover:bg-slate-800/40"
+        aria-expanded={expanded}
+      >
+        <div className="flex items-center gap-3">
+          {/* Gradient icon */}
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-civic-600 to-indigo-600 shadow-sm shadow-civic-600/25">
+            <FiCpu className="h-4 w-4 text-white" />
+          </div>
+
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Sahayak AI</h2>
+              {/* Online badge */}
+              <span className="flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-600 ring-1 ring-green-200 dark:bg-green-500/10 dark:text-green-400 dark:ring-green-500/20">
+                <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                Online
+              </span>
+              {/* Gemini badge */}
+              <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+                Gemini AI
+              </span>
+            </div>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              Your AI welfare assistant — health, KYC, vaccination &amp; adoption guidance
+            </p>
+          </div>
+        </div>
+
+        {/* Right side: message count + chevron */}
+        <div className="flex shrink-0 items-center gap-2.5">
+          {messages.length > 0 && (
+            <span className="rounded-full bg-civic-50 px-2 py-0.5 text-[11px] font-bold text-civic-700 dark:bg-civic-500/10 dark:text-civic-300">
+              {messages.length} {messages.length === 1 ? "msg" : "msgs"}
+            </span>
+          )}
+          <div className={classNames(
+            "flex h-7 w-7 items-center justify-center rounded-lg border transition",
+            expanded
+              ? "border-civic-200 bg-civic-50 text-civic-600 dark:border-civic-500/30 dark:bg-civic-500/10 dark:text-civic-400"
+              : "border-gray-200 bg-gray-50 text-slate-400 dark:border-slate-700 dark:bg-slate-800"
+          )}>
+            <FiMessageSquare className="h-3.5 w-3.5" />
+          </div>
+        </div>
+      </button>
+
+      {/* ── Expanded body ───────────────────────────────────── */}
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            key="sahayak-body"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="overflow-hidden"
+          >
+            {/* Capability chips strip */}
+            <div className="flex flex-wrap items-center gap-2 border-t border-gray-100 bg-gray-50/60 px-5 py-3 dark:border-slate-800 dark:bg-slate-800/30">
+              {capabilities.map((cap) => (
+                <span
+                  key={cap.label}
+                  className="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                >
+                  {cap.icon} {cap.label}
+                </span>
+              ))}
+
+              {/* Clear button at end of chips row */}
+              {messages.length > 0 && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); clearConversation(); }}
+                  className="ml-auto flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-medium text-slate-400 transition hover:bg-gray-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                >
+                  <FiTrash2 className="h-3 w-3" /> Clear chat
+                </button>
+              )}
+            </div>
+
+            {/* Inline ChatWindow — no header, no floating wrapper */}
+            <ChatWindow
+              messages={messages}
+              isLoading={isLoading}
+              error={error}
+              onSend={send}
+              onRetry={retry}
+              onClear={clearConversation}
+              onClose={() => setExpanded(false)}
+              inline
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
