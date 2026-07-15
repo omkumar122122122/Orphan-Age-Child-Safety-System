@@ -8,7 +8,6 @@ import Breadcrumb from "../components/Breadcrumb";
 import Button from "../components/Button";
 import ProfileActions from "../components/ProfileActions";
 import { useAuth } from "../context/AuthContext";
-import { children, orphanages } from "../data/dummyData";
 import { roleLabels } from "../utils/constants";
 import { classNames } from "../utils/formatters";
 
@@ -33,8 +32,12 @@ export default function Profile() {
   const isAdmin     = user?.role === "admin";
   const isParent    = user?.role === "parent";
   const isOrphanage = user?.role === "orphanage";
-  const orphanage   = orphanages.find((o) => o.name === user.department);
-  const child       = children[1]; // linked child for parent demo
+  
+  // TODO: Fetch orphanage data from backend API when needed
+  const orphanage   = null; // orphanages.find((o) => o.name === user.department);
+  
+  // TODO: Fetch linked child data from backend API for parents
+  const child       = null; // children[1];
 
   return (
     <div className="space-y-5">
@@ -119,8 +122,22 @@ export default function Profile() {
       </SectionCard>
 
       {/* ── Role-specific details ─────────────────────────────── */}
-      {isParent && <ParentDetails child={child} />}
+      {isParent && child && <ParentDetails child={child} />}
+      {isParent && !child && (
+        <SectionCard title="Child Welfare Profile" icon={FiHeart}>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            No linked child found. Your child profile data will appear here once linked to your account.
+          </p>
+        </SectionCard>
+      )}
       {isOrphanage && orphanage && <OrphanageProfileDetails orphanage={orphanage} />}
+      {isOrphanage && !orphanage && (
+        <SectionCard title="Orphanage Profile" icon={FiHome}>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Orphanage profile data will load from your account settings.
+          </p>
+        </SectionCard>
+      )}
 
       {/* ── Sign out ──────────────────────────────────────────── */}
       <LogoutSection onLogout={logout} />

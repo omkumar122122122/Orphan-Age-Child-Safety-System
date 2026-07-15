@@ -9,6 +9,7 @@ import {
 import ThemeToggle from "../components/ThemeToggle";
 import Button from "../components/Button";
 import { useAuth } from "../context/AuthContext";
+import * as authService from "../services/authService";
 import { roleHome } from "../utils/constants";
 
 /* ─── Role config ───────────────────────────────────── */
@@ -62,13 +63,30 @@ export default function Login() {
     }
   };
 
-  const onSignupSubmit = (values) => {
-    const apps = JSON.parse(localStorage.getItem("parent_signup_applications") || "[]");
-    localStorage.setItem("parent_signup_applications",
-      JSON.stringify([...apps, { id: `PSA-${Date.now()}`, submittedAt: new Date().toISOString(), ...values }])
-    );
-    setSignupSuccess("Application submitted for admin verification.");
-    signupForm.reset({ hasAnotherChild: "no", otherChildStatus: "own" });
+  const onSignupSubmit = async (values) => {
+    setError("");
+    try {
+      // Call backend to register the parent account
+      // Note: Generate a strong temporary password since parent will set their own during email verification
+      const tempPassword = `Temp${Date.now()}@Safe`;
+      
+      const result = await authService.register({
+        email: values.email,
+        firstName: values.fatherName || "Parent",
+        lastName: values.motherName || values.fatherName || "Applicant",
+        phone: values.fatherPhone,
+        password: tempPassword,
+        role: "GUEST" // Will be upgraded to PARENT after admin verification
+      });
+      
+      setSignupSuccess("Application submitted for admin verification. Check your email to verify your account and set a secure password.");
+      signupForm.reset({ hasAnotherChild: "no", otherChildStatus: "own" });
+      
+      // TODO: In future, store additional parent profile data (family details, address, etc.)
+      // This could be stored in a separate ParentApplication table or added to Parent profile creation
+    } catch (err) {
+      setError(err.message || "Failed to submit application. Please try again.");
+    }
   };
 
   return (

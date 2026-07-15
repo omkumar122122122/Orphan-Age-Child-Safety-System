@@ -1,6 +1,6 @@
-import { orphanageNav } from "../data/dummyData";
+import { ORPHANAGE_NAV_ITEMS } from "../constants/navigation";
 import DashboardLayout from "./DashboardLayout";
 
 export default function OrphanageLayout() {
-  return <DashboardLayout navItems={orphanageNav} role="orphanage" title="Orphanage Console" />;
+  return <DashboardLayout navItems={ORPHANAGE_NAV_ITEMS} role="orphanage" title="Orphanage Console" />;
 }
