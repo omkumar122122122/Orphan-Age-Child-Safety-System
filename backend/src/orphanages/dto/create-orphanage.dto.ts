@@ -78,20 +78,18 @@ export class CreateOrphanageDto {
   @IsString()
   country?: string;
 
-  @ApiPropertyOptional({ example: 'Delhi' })
-  @IsOptional()
+  @ApiProperty({ example: 'Delhi' })
   @IsString()
-  state?: string;
+  state: string;
 
   @ApiPropertyOptional({ example: 'South Delhi' })
   @IsOptional()
   @IsString()
   district?: string;
 
-  @ApiPropertyOptional({ example: 'Delhi' })
-  @IsOptional()
+  @ApiProperty({ example: 'Delhi' })
   @IsString()
-  city?: string;
+  city: string;
 
   @ApiPropertyOptional({ example: '110017' })
   @IsOptional()

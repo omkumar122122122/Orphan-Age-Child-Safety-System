@@ -57,8 +57,13 @@ export class OrphanagesService {
     }
 
     return await this.prisma.$transaction(async (tx) => {
-      // Generate unique code
-      const code = await this.generateOrphanageCode(dto.city, dto.state);
+      // Validate required fields for code generation
+      if (!dto.state || !dto.city) {
+        throw new BadRequestException('State and city are required for orphanage registration');
+      }
+
+      // Generate unique code within transaction
+      const code = await this.generateOrphanageCode(dto.city, dto.state, tx);
 
       // Create orphanage
       const orphanage = await tx.orphanage.create({
@@ -727,10 +732,14 @@ export class OrphanagesService {
   private async generateOrphanageCode(
     city: string,
     state: string,
+    tx?: any,
   ): Promise<string> {
+    const prismaClient = tx || this.prisma;
     const stateCode = this.getStateCode(state);
     const year = new Date().getFullYear();
-    const count = await this.prisma.orphanage.count({
+    
+    // Count within transaction to prevent race conditions
+    const count = await prismaClient.orphanage.count({
       where: {
         state,
         createdAt: { gte: new Date(year, 0, 1) },
