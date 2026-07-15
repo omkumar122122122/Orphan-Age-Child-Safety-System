@@ -1,72 +1,135 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import {
   IsString,
-  IsOptional,
+  IsNotEmpty,
   IsDateString,
-  IsEnum,
   IsInt,
   Min,
   Max,
+  IsOptional,
+  IsBoolean,
+  IsUUID,
+  MinLength,
   MaxLength,
+  Matches,
 } from 'class-validator';
 
-export enum VisitTypeDto {
-  INITIAL_ASSESSMENT = 'INITIAL_ASSESSMENT',
-  REGULAR_VISIT = 'REGULAR_VISIT',
-  PRE_ADOPTION_VISIT = 'PRE_ADOPTION_VISIT',
-  POST_ADOPTION_VISIT = 'POST_ADOPTION_VISIT',
-  WELFARE_CHECK = 'WELFARE_CHECK',
-  SUPERVISED = 'SUPERVISED',
-}
-
 export class CreateVisitRequestDto {
-  @ApiPropertyOptional({ description: 'Child ID to visit (optional for general visits)' })
-  @IsOptional()
-  @IsString()
-  childId?: string;
-
-  @ApiProperty({ description: 'Orphanage ID where visit will take place' })
-  @IsString()
+  @ApiProperty({
+    description: 'Orphanage ID',
+    example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+  })
+  @IsUUID()
+  @IsNotEmpty()
   orphanageId: string;
 
-  @ApiPropertyOptional({ enum: VisitTypeDto, default: VisitTypeDto.REGULAR_VISIT })
-  @IsOptional()
-  @IsEnum(VisitTypeDto)
-  visitType?: VisitTypeDto;
-
-  @ApiProperty({ description: 'Requested visit date (ISO date string)', example: '2026-07-20' })
+  @ApiProperty({
+    description: 'Preferred visit date (YYYY-MM-DD)',
+    example: '2026-07-20',
+  })
   @IsDateString()
-  requestedDate: string;
+  @IsNotEmpty()
+  visitDate: string;
 
-  @ApiPropertyOptional({ description: 'Requested time (HH:mm)', example: '10:30' })
-  @IsOptional()
+  @ApiProperty({
+    description: 'Preferred visit time (HH:mm 24-hour format)',
+    example: '10:30',
+  })
   @IsString()
-  @MaxLength(20)
-  requestedTime?: string;
+  @IsNotEmpty()
+  @Matches(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, {
+    message: 'visitTime must be in HH:mm format (24-hour)',
+  })
+  visitTime: string;
 
-  @ApiPropertyOptional({ description: 'Purpose of visit', example: 'Adoption Inquiry' })
-  @IsOptional()
+  @ApiProperty({
+    description: 'Purpose of visit',
+    example: 'Adoption Inquiry',
+    enum: [
+      'Adoption Inquiry',
+      'Meet Child',
+      'Document Verification',
+      'Counselling',
+      'General Visit',
+    ],
+  })
   @IsString()
-  @MaxLength(200)
-  purpose?: string;
+  @IsNotEmpty()
+  purpose: string;
 
-  @ApiPropertyOptional({ description: 'Additional notes / reason' })
-  @IsOptional()
+  @ApiProperty({
+    description: 'Expected adoption timeline',
+    example: '3 to 6 months',
+    required: false,
+  })
   @IsString()
-  @MaxLength(1000)
-  notes?: string;
-
-  @ApiPropertyOptional({ description: 'Expected number of visitors', default: 2 })
   @IsOptional()
+  adoptionTimeline?: string;
+
+  @ApiProperty({
+    description: 'Reason for adoption (minimum 50 characters)',
+    example: 'We want to provide a loving home and education...',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(50, { message: 'Reason must be at least 50 characters' })
+  @MaxLength(1000, { message: 'Reason cannot exceed 1000 characters' })
+  reason: string;
+
+  @ApiProperty({
+    description: 'Family background description (minimum 100 characters)',
+    example: 'We are a stable family with supportive environment...',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(100, { message: 'Family background must be at least 100 characters' })
+  @MaxLength(2000, { message: 'Family background cannot exceed 2000 characters' })
+  familyBackground: string;
+
+
+  @ApiProperty({
+    description: 'Number of visitors (1-5)',
+    example: 2,
+    minimum: 1,
+    maximum: 5,
+  })
   @IsInt()
   @Min(1)
-  @Max(10)
-  visitorsCount?: number;
+  @Max(5)
+  visitorsCount: number;
 
-  @ApiPropertyOptional({ description: 'Preferred duration in minutes', default: 60 })
+  @ApiProperty({
+    description: 'Relationship of visitors',
+    example: 'Spouse, parent',
+    required: false,
+  })
+  @IsString()
   @IsOptional()
-  @IsInt()
-  @Min(15)
-  @Max(240)
-  duration?: number;
+  relationshipOfVisitors?: string;
+
+  @ApiProperty({
+    description: 'Special requirements',
+    example: 'Accessibility support needed',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  specialRequirements?: string;
+
+  @ApiProperty({
+    description: 'Agreement to follow orphanage rules',
+    example: true,
+  })
+  @IsBoolean()
+  @IsNotEmpty()
+  agreedToRules: boolean;
+
+  @ApiProperty({
+    description: 'Child ID (optional, if visiting specific child)',
+    example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+    required: false,
+  })
+  @IsUUID()
+  @IsOptional()
+  childId?: string;
 }

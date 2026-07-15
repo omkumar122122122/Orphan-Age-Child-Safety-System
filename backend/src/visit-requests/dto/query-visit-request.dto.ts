@@ -1,8 +1,16 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsInt, Min, Max, IsEnum, IsDateString } from 'class-validator';
 import { Type } from 'class-transformer';
+import {
+  IsOptional,
+  IsString,
+  IsEnum,
+  IsInt,
+  Min,
+  Max,
+  IsDateString,
+} from 'class-validator';
 
-export enum VisitRequestStatusFilter {
+enum VisitRequestStatusEnum {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',
   REJECTED = 'REJECTED',
@@ -12,59 +20,108 @@ export enum VisitRequestStatusFilter {
   RESCHEDULED = 'RESCHEDULED',
 }
 
+enum RiskLevelEnum {
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  HIGH = 'HIGH',
+}
+
+enum SortByEnum {
+  visitDate = 'visitDate',
+  createdAt = 'createdAt',
+  status = 'status',
+  trustScore = 'trustScore',
+}
+
+enum SortOrderEnum {
+  asc = 'asc',
+  desc = 'desc',
+}
+
 export class QueryVisitRequestDto {
-  @ApiPropertyOptional({ default: 1 })
+  @ApiPropertyOptional({
+    description: 'Search by parent name',
+    example: 'Ananya',
+  })
+  @IsString()
   @IsOptional()
+  search?: string;
+
+  @ApiPropertyOptional({
+    description: 'Search by request ID',
+    example: 'VR-2401',
+  })
+  @IsString()
+  @IsOptional()
+  requestId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filter by status',
+    enum: VisitRequestStatusEnum,
+    example: 'PENDING',
+  })
+  @IsEnum(VisitRequestStatusEnum)
+  @IsOptional()
+  status?: VisitRequestStatusEnum;
+
+  @ApiPropertyOptional({
+    description: 'Filter by risk level',
+    enum: RiskLevelEnum,
+    example: 'LOW',
+  })
+  @IsEnum(RiskLevelEnum)
+  @IsOptional()
+  risk?: RiskLevelEnum;
+
+  @ApiPropertyOptional({
+    description: 'Filter by visit date (YYYY-MM-DD)',
+    example: '2026-07-20',
+  })
+  @IsDateString()
+  @IsOptional()
+  visitDate?: string;
+
+  @ApiPropertyOptional({
+    description: 'Page number',
+    example: 1,
+    minimum: 1,
+    default: 1,
+  })
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  @IsOptional()
   page?: number = 1;
 
-  @ApiPropertyOptional({ default: 20 })
-  @IsOptional()
+  @ApiPropertyOptional({
+    description: 'Items per page',
+    example: 20,
+    minimum: 1,
+    maximum: 100,
+    default: 20,
+  })
   @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(100)
+  @IsOptional()
   limit?: number = 20;
 
-  @ApiPropertyOptional({ description: 'Search by parent name, request id, or email' })
+  @ApiPropertyOptional({
+    description: 'Sort by field',
+    enum: SortByEnum,
+    default: 'createdAt',
+  })
+  @IsEnum(SortByEnum)
   @IsOptional()
-  @IsString()
-  search?: string;
+  sortBy?: SortByEnum = SortByEnum.createdAt;
 
-  @ApiPropertyOptional({ enum: VisitRequestStatusFilter })
+  @ApiPropertyOptional({
+    description: 'Sort order',
+    enum: SortOrderEnum,
+    default: 'desc',
+  })
+  @IsEnum(SortOrderEnum)
   @IsOptional()
-  @IsEnum(VisitRequestStatusFilter)
-  status?: VisitRequestStatusFilter;
-
-  @ApiPropertyOptional({ description: 'Filter by orphanage ID' })
-  @IsOptional()
-  @IsString()
-  orphanageId?: string;
-
-  @ApiPropertyOptional({ description: 'Filter by parent ID' })
-  @IsOptional()
-  @IsString()
-  parentId?: string;
-
-  @ApiPropertyOptional({ description: 'Filter by child ID' })
-  @IsOptional()
-  @IsString()
-  childId?: string;
-
-  @ApiPropertyOptional({ description: 'Filter by visit date (YYYY-MM-DD)' })
-  @IsOptional()
-  @IsDateString()
-  date?: string;
-
-  @ApiPropertyOptional({ description: 'Sort field', default: 'createdAt' })
-  @IsOptional()
-  @IsString()
-  sortBy?: string = 'createdAt';
-
-  @ApiPropertyOptional({ enum: ['asc', 'desc'], default: 'desc' })
-  @IsOptional()
-  @IsString()
-  sortOrder?: 'asc' | 'desc' = 'desc';
+  sortOrder?: SortOrderEnum = SortOrderEnum.desc;
 }

@@ -9,7 +9,7 @@ import { CommonModule } from './common/common.module';
 import { ChildrenModule } from './children/children.module';
 import { ParentsModule } from './parents/parents.module';
 import { StaffModule } from './staff/staff.module';
-import { OrphanagesModule } from './orphanages/orphanages.module';
+import { VisitRequestsModule } from './visit-requests/visit-requests.module';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { SecurityHeadersMiddleware } from './common/middleware/security-headers.middleware';
 import appConfig from './config/app.config';
@@ -56,7 +56,7 @@ import emailConfig from './config/email.config';
     ChildrenModule,
     ParentsModule,
     StaffModule,
-    OrphanagesModule,
+    VisitRequestsModule,
   ],
   providers: [
     // Apply throttle guard globally
