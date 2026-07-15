@@ -22,6 +22,7 @@ import Profile              from "../pages/Profile";
 import RegisterChild        from "../pages/RegisterChild";
 import RegisterOrphanage    from "../pages/RegisterOrphanage";
 import Reports              from "../pages/Reports";
+import SystemSettings      from "../pages/SystemSettings";
 import VisitRequest         from "../pages/VisitRequest";
 import SahayakAI            from "../pages/SahayakAI";
 import ProtectedRoute       from "./ProtectedRoute";
@@ -48,6 +49,7 @@ export default function AppRoutes() {
           <Route path="alerts"                            element={<Alerts />} />
           <Route path="profile"                           element={<Profile />} />
           <Route path="adoption-management"               element={<ChildAdoptionManagement />} />
+          <Route path="settings"                          element={<SystemSettings />} />
         </Route>
       </Route>
 

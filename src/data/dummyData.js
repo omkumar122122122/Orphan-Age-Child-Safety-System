@@ -9,6 +9,7 @@ import {
   FiHome,
   FiMessageCircle,
   FiPlusCircle,
+  FiSettings,
   FiShield,
   FiUser,
   FiUserCheck,
@@ -368,6 +369,7 @@ export const adminNav = [
   { label: "Orphanages", path: "/admin/orphanages", icon: FiHome },
   { label: "Staff Management", path: "/admin/staff", icon: FiBriefcase },
   { label: "Alerts", path: "/admin/alerts", icon: FiAlertTriangle },
+  { label: "System Settings", path: "/admin/settings", icon: FiSettings },
   { label: "Profile", path: "/admin/profile", icon: FiUser }
 ];
 
