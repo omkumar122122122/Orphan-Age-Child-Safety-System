@@ -5,6 +5,15 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: "0.0.0.0",
-    port: 5173
-  }
+    port: 5173,
+    proxy: {
+      // Forward all /api/v1 requests to the NestJS backend
+      // Eliminates CORS issues in development
+      "/api/v1": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
 });

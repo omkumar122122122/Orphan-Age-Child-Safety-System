@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
@@ -12,34 +13,14 @@ import Chatbot from "../components/Chatbot/Chatbot";
 import ChatWindow from "../components/Chatbot/ChatWindow";
 import { useChat } from "../hooks/useChat";
 import { useAuth } from "../context/AuthContext";
-import { children, notifications } from "../data/dummyData";
 import { classNames } from "../utils/formatters";
-
-const childStatusCfg = {
-  Stable:           { badge: "badge-success", color: "text-emerald-600 dark:text-emerald-400" },
-  Observation:      { badge: "badge-warning",  color: "text-amber-600 dark:text-amber-400" },
-  "Needs Review":   { badge: "badge-danger",   color: "text-red-600 dark:text-red-400" },
-};
+import { parentsService } from "../services/parentsService";
+import { useToast } from "../hooks/useToast";
 
 const quickLinks = [
   { label: "Visit Request",   to: "/parent/visit-request",   icon: FiCalendar, desc: "Schedule a visit",    color: "bg-civic-600",   ring: "ring-civic-500/20" },
   { label: "My Profile",      to: "/parent/profile",         icon: FiUser,     desc: "View & update info",  color: "bg-indigo-600",  ring: "ring-indigo-500/20" },
   { label: "Notifications",   to: "/parent/notifications",   icon: FiBell,     desc: "Alerts & updates",    color: "bg-amber-600",   ring: "ring-amber-500/20" },
-];
-
-const trustBadges = [
-  { label: "KYC",         value: "Verified",  color: "text-emerald-600 dark:text-emerald-400" },
-  { label: "Face Match",  value: "99%",        color: "text-civic-600 dark:text-civic-400" },
-  { label: "Trust Score", value: "95/100",     color: "text-indigo-600 dark:text-indigo-400" },
-  { label: "Risk Level",  value: "Low",        color: "text-emerald-600 dark:text-emerald-400" },
-];
-
-const adoptionTimeline = [
-  { step: "KYC Submitted",       done: true  },
-  { step: "Identity Verified",   done: true  },
-  { step: "Visit Request",       done: false, current: true },
-  { step: "Visit Approved",      done: false },
-  { step: "Adoption Proceeding", done: false },
 ];
 
 const fadeUp = (delay = 0) => ({
@@ -50,7 +31,77 @@ const fadeUp = (delay = 0) => ({
 
 export default function ParentDashboard() {
   const { user } = useAuth();
-  const child = children[1];
+  const { success, error: showError } = useToast();
+  const [dashboard, setDashboard] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadDashboard();
+  }, []);
+
+  async function loadDashboard() {
+    try {
+      setLoading(true);
+      const data = await parentsService.getDashboard();
+      setDashboard(data);
+    } catch (err) {
+      console.error('Failed to load dashboard:', err);
+      showError(err.message || 'Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-7">
+        <Breadcrumb items={["Parent", "Dashboard"]} />
+        <div className="flex items-center justify-center py-20">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-civic-200 border-t-civic-600" />
+            <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">Loading dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!dashboard) {
+    return (
+      <div className="space-y-7">
+        <Breadcrumb items={["Parent", "Dashboard"]} />
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-12 text-center shadow-card dark:border-slate-800 dark:bg-slate-900">
+          <FiAlertCircle className="mx-auto h-12 w-12 text-slate-400" />
+          <h3 className="mt-4 text-lg font-bold text-slate-900 dark:text-white">Unable to load dashboard</h3>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Please try refreshing the page</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Extract data from dashboard
+  // Backend returns: { parent, verification, linkedChild, adoptionJourney }
+  // Safely destructure with defaults so no access crashes if fields are missing
+  const parentInfo   = dashboard.parent      ?? {};
+  const verification = dashboard.verification ?? {};
+  const adoptionJourney = dashboard.adoptionJourney ?? { currentStep: 1, steps: [] };
+
+  const parentName = `${parentInfo.firstName ?? ''} ${parentInfo.lastName ?? ''}`.trim() || 'Parent';
+
+  const trustBadges = [
+    { label: "KYC",         value: verification.kycStatus          ?? "Pending",   color: verification.kycStatus === "APPROVED"          ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400" },
+    { label: "Verification",value: verification.verificationStatus ?? "Pending",   color: verification.verificationStatus === "APPROVED" ? "text-civic-600 dark:text-civic-400"   : "text-amber-600 dark:text-amber-400" },
+    { label: "Trust Score", value: `${verification.trustScore      ?? 0}/100`,      color: "text-indigo-600 dark:text-indigo-400" },
+    { label: "Profile",     value: `${dashboard.profileCompletion  ?? 0}% Complete`, color: "text-emerald-600 dark:text-emerald-400" },
+  ];
+
+  const adoptionTimeline = [
+    { step: "Profile Created",   done: true },
+    { step: "KYC Submitted",     done: verification.kycStatus !== "PENDING" },
+    { step: "Identity Verified", done: verification.verificationStatus === "APPROVED", current: verification.verificationStatus === "IN_REVIEW" },
+    { step: "Background Check",  done: false },
+    { step: "Adoption Process",  done: false },
+  ];
 
   return (
     <div className="space-y-7">
@@ -61,12 +112,12 @@ export default function ParentDashboard() {
         <div className="px-6 py-6">
           <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-600 to-civic-600 shadow-md shadow-emerald-600/25 text-sm font-bold text-white">
-              {user?.avatar}
+              {parentName.split(' ').map(n => n[0]).join('').slice(0, 2) || 'P'}
             </div>
             <div>
               <p className="section-eyebrow">Parent Portal</p>
               <h1 className="mt-0.5 text-xl font-bold text-slate-900 dark:text-white">
-                Welcome back, {user?.name?.split(" ")[0]} 👋
+                Welcome back, {parentName.split(" ")[0]} 👋
               </h1>
               <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
                 Track your adoption process and stay updated on your child's welfare.
@@ -115,41 +166,33 @@ export default function ParentDashboard() {
 
       <motion.div {...fadeUp(0.15)} className="grid gap-5 xl:grid-cols-2">
         {/* Linked child overview */}
-        <div className="section-card">
-          <div className="section-card-header">
-            <div className="flex items-center gap-2.5">
-              <div className="section-card-icon bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400">
-                <FiHeart className="h-3.5 w-3.5" />
-              </div>
-              <h2 className="section-card-title">Linked Child</h2>
-            </div>
-            <span className={classNames("badge", childStatusCfg[child.health]?.badge ?? "badge-neutral")}>{child.health}</span>
-          </div>
-          <div className="section-card-body">
-            <div className="flex items-center gap-4 rounded-xl border border-slate-100 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/40">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 text-sm font-bold">
-                {child.name.split(" ").map((n) => n[0]).join("")}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-slate-900 dark:text-white">{child.name}</p>
-                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{child.orphanage} · Age {child.age}</p>
-              </div>
-              <Link to="/parent/profile" className="text-xs font-semibold text-civic-600 hover:underline dark:text-civic-400">View →</Link>
-            </div>
-            <div className="mt-4 grid grid-cols-3 gap-3">
-              {[
-                { label: "Attendance",  value: `${child.attendance}%` },
-                { label: "Education",   value: child.educationLevel },
-                { label: "Risk Level",  value: child.risk },
-              ].map((info) => (
-                <div key={info.label} className="field-block text-center">
-                  <p className="field-label">{info.label}</p>
-                  <p className="field-value mt-1">{info.value}</p>
+        {dashboard.linkedChild && (
+          <div className="section-card">
+            <div className="section-card-header">
+              <div className="flex items-center gap-2.5">
+                <div className="section-card-icon bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400">
+                  <FiHeart className="h-3.5 w-3.5" />
                 </div>
-              ))}
+                <h2 className="section-card-title">Linked Child</h2>
+              </div>
+              <span className={classNames("badge", "badge-success")}>Linked</span>
+            </div>
+            <div className="section-card-body">
+              <div className="flex items-center gap-4 rounded-xl border border-slate-100 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/40">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 text-sm font-bold">
+                  {dashboard.linkedChild.name?.split(" ").map((n) => n[0]).join("") || "C"}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-slate-900 dark:text-white">{dashboard.linkedChild.name}</p>
+                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                    {dashboard.linkedChild.orphanageName || dashboard.linkedChild.orphanage || "N/A"} · Age {dashboard.linkedChild.age || "N/A"}
+                  </p>
+                </div>
+                <Link to="/parent/profile" className="text-xs font-semibold text-civic-600 hover:underline dark:text-civic-400">View →</Link>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Adoption timeline */}
         <div className="section-card">
@@ -160,7 +203,7 @@ export default function ParentDashboard() {
               </div>
               <h2 className="section-card-title">Adoption Journey</h2>
             </div>
-            <span className="badge badge-civic">Step 3 of 5</span>
+            <span className="badge badge-civic">Step {adoptionJourney.currentStep || 1} of 5</span>
           </div>
           <div className="section-card-body">
             <ol className="space-y-3">

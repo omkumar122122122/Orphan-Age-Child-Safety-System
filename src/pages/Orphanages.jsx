@@ -1,8 +1,9 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FiHome, FiUsers, FiShield, FiChevronRight } from "react-icons/fi";
 import Breadcrumb from "../components/Breadcrumb";
-import { orphanages } from "../data/dummyData";
+import { orphanagesService } from "../services/orphanagesService";
 import { percentage } from "../utils/formatters";
 
 function complianceColor(val) {
@@ -19,6 +20,54 @@ function occupancyBar(occupancy, capacity) {
 
 export default function Orphanages() {
   const navigate = useNavigate();
+  const [orphanages, setOrphanages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    loadOrphanages();
+  }, []);
+
+  async function loadOrphanages() {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await orphanagesService.getAll({ limit: 100 });
+      setOrphanages(result.data || []);
+    } catch (err) {
+      console.error('Failed to load orphanages:', err);
+      setError(err.message || 'Failed to load orphanages');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-civic-500 mx-auto"></div>
+          <p className="mt-4 text-slate-600 dark:text-slate-400">Loading orphanages...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-red-600 dark:text-red-400">Error: {error}</p>
+          <button
+            onClick={loadOrphanages}
+            className="mt-4 px-4 py-2 bg-civic-500 text-white rounded-lg hover:bg-civic-600"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const rows = orphanages.map((item) => ({
     ...item,

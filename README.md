@@ -112,20 +112,24 @@ Orphan Age Child Safety System/
 
 ## Prerequisites
 
-Make sure the following are installed on your machine:
+Install these tools **before** doing anything else.
 
-| Tool | Min Version | Download |
-|---|---|---|
-| Node.js | 18.x LTS | https://nodejs.org |
-| npm | 9.x | Included with Node |
-| PostgreSQL | 14.x | https://postgresql.org/download |
-| Git | Latest | https://git-scm.com |
+| Tool | Min Version | How to Check | Download |
+|---|---|---|---|
+| **Node.js** | 18.x LTS | `node -v` | https://nodejs.org |
+| **npm** | 9.x | `npm -v` | Comes with Node |
+| **PostgreSQL** | 14.x | `psql --version` | https://www.postgresql.org/download |
+| **Git** | Latest | `git --version` | https://git-scm.com |
+
+> **Windows users:** After installing PostgreSQL, make sure the `psql` command is on your PATH, or use **pgAdmin** (installed alongside PostgreSQL) to create databases.
 
 ---
 
-## Getting Started
+## First-Time Setup
 
-### 1. Clone the repository
+Follow these steps **in order** the very first time you set up this project.
+
+### Step 1 — Clone the repository
 
 ```bash
 git clone <your-repo-url>
@@ -133,6 +137,148 @@ cd "Orphan Age Child Safety System"
 ```
 
 ---
+
+### Step 2 — Set up the Backend
+
+```bash
+cd backend
+```
+
+**2a. Install dependencies**
+```bash
+npm install
+```
+
+**2b. Create your environment file**
+```bash
+copy .env.example .env
+```
+
+Open `backend/.env` and fill in these values:
+
+```env
+# Your PostgreSQL connection — change username/password to match your local Postgres
+DATABASE_URL=postgresql://postgres:yourpassword@localhost:5432/child_safety_db?schema=public
+
+# JWT secrets — use any long random string (min 32 characters each)
+JWT_ACCESS_SECRET=replace-with-a-long-random-string-at-least-32-chars
+JWT_REFRESH_SECRET=replace-with-a-different-long-random-string-at-least-32-chars
+
+# Email — needed only for registration verification emails
+# Use a Gmail App Password: Google Account → Security → App Passwords
+EMAIL_USER=your-gmail@gmail.com
+EMAIL_PASS=your-16-character-app-password
+
+# Leave everything else as-is for local development
+```
+
+**2c. Create the PostgreSQL database**
+
+Open **pgAdmin** (or run `psql -U postgres`) and execute:
+```sql
+CREATE DATABASE child_safety_db;
+```
+
+**2d. Run database migrations** — creates all tables
+```bash
+npx prisma migrate dev --name init
+```
+
+**2e. Generate the Prisma client**
+```bash
+npx prisma generate
+```
+
+**2f. Seed default accounts**
+```bash
+npx ts-node prisma/seed.ts
+```
+
+This creates **three ready-to-use test accounts** — one for each portal:
+
+| Portal | Email | Password | Dashboard |
+|---|---|---|---|
+| 🛡️ **Admin** | `admin@childsafety.org` | `Admin@1234!` | `/admin` |
+| 🏠 **Orphanage** | `orphanage@childsafety.org` | `Orphanage@1234!` | `/orphanage` |
+| 👤 **Parent** | `parent@childsafety.org` | `Parent@1234!` | `/parent` |
+
+---
+
+### Step 3 — Set up the Frontend
+
+```bash
+# Go back to the project root
+cd ..
+```
+
+**3a. Install dependencies**
+```bash
+npm install
+```
+
+**3b. Create the frontend environment file** (already done if `.env` exists in root)
+```bash
+copy .env.example .env
+```
+
+The root `.env` should contain:
+```env
+VITE_API_URL=http://localhost:3000/api/v1
+```
+
+> This tells the frontend where the backend is. Do not change it unless you change the backend port.
+
+---
+
+## How to Start the Project
+
+Every time you want to run the project locally, open **two terminals** side by side:
+
+**Terminal 1 — Start the Backend**
+```bash
+cd backend
+npm run start:dev
+```
+Wait until you see: `Application running on: http://localhost:3000`
+
+**Terminal 2 — Start the Frontend**
+```bash
+npm run dev
+```
+Wait until you see: `Local: http://localhost:5173`
+
+Then open your browser and go to:
+
+| What | URL |
+|---|---|
+| 🌐 App (Login page) | http://localhost:5173 |
+| 📡 Backend API | http://localhost:3000/api/v1 |
+| 📖 Swagger API Docs | http://localhost:3000/docs |
+| 🗄️ Prisma DB Studio | Run `npx prisma studio` → http://localhost:5555 |
+
+**Test credentials for all three portals:**
+
+| Portal | Email | Password | Lands on |
+|---|---|---|---|
+| 🛡️ **Admin** | `admin@childsafety.org` | `Admin@1234!` | Admin Dashboard |
+| 🏠 **Orphanage** | `orphanage@childsafety.org` | `Orphanage@1234!` | Orphanage Dashboard |
+| 👤 **Parent** | `parent@childsafety.org` | `Parent@1234!` | Parent Dashboard |
+
+**How to log in:**
+1. Open http://localhost:5173
+2. Click the role button that matches the account you want to test
+3. Type the email and password from the table above
+4. Click **Sign In** — you will land on that role's dashboard
+
+> ⚠️ **If login fails with "Invalid email or password"** — the test accounts are not in the database yet.
+> Run this command inside the `backend/` folder, then try again:
+> ```bash
+> npm run prisma:seed
+> ```
+> This is safe to run multiple times — it uses `upsert` and won't duplicate accounts.
+
+---
+
 
 ## Backend Setup
 
@@ -250,9 +396,8 @@ npm run dev
 
 The frontend will be available at: **`http://localhost:5173`**
 
-> **Note:** The frontend currently uses mock data from `src/data/dummyData.js`.
-> To connect it to the live backend, update `src/services/authService.js` to call
-> `http://localhost:3000/api/v1/auth/login` instead of the fake login function.
+> **Note:** The frontend is fully connected to the live backend API.
+> Use the seeded accounts or register a new one via Swagger to log in.
 
 ### 13. Build the frontend for production
 

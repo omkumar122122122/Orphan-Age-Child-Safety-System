@@ -146,7 +146,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Logout current session',
     description:
-      'Revokes the current refresh token, invalidating the session. Pass the refresh token in the request body to target a specific session, or omit it to logout from all sessions.',
+      'Revokes the current session. Pass the refresh token in the request body to revoke only that specific session. Omit it to revoke ALL sessions (full logout).',
   })
   @ApiBody({ type: RefreshTokenDto, required: false })
   @ApiResponse({ status: 200, description: 'Logout successful' })
@@ -155,8 +155,25 @@ export class AuthController {
     @CurrentUser('sub') userId: string,
     @Body() dto?: RefreshTokenDto,
   ) {
-    // Extract JTI from refresh token if provided
-    return this.authService.logout(userId, undefined);
+    // If the client supplies a refresh token, extract its JTI to revoke only
+    // that specific session. Otherwise revoke ALL sessions for the user.
+    let jti: string | undefined;
+
+    if (dto?.refreshToken) {
+      try {
+        // Base64-decode the payload segment to extract the JTI without re-verifying
+        const payloadB64 = dto.refreshToken.split('.')[1];
+        const decoded = JSON.parse(
+          Buffer.from(payloadB64, 'base64url').toString('utf8'),
+        );
+        jti = decoded?.jti as string | undefined;
+      } catch {
+        // Malformed token — fall back to full logout for safety
+        jti = undefined;
+      }
+    }
+
+    return this.authService.logout(userId, jti);
   }
 
   // ─────────────────────────────────────────────

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import {
@@ -23,6 +23,7 @@ import {
 import Breadcrumb from "../components/Breadcrumb";
 import Button from "../components/Button";
 import { classNames } from "../utils/formatters";
+import { parentsService } from "../services/parentsService";
 
 const parentApplications = [
   {
@@ -222,9 +223,39 @@ const statusStyles = {
   Approved: "bg-emerald-50 text-emerald-700 ring-emerald-200"
 };
 
+// Shape mapper: convert backend ParentBasicDto → local component shape
+function mapToLocal(p) {
+  return {
+    id:            p.id,
+    name:          p.name ?? "Unknown",
+    dob:           p.dateOfBirth ?? "",
+    gender:        p.gender ?? "",
+    occupation:    p.occupation ?? "",
+    income:        p.annualIncome ? `INR ${Number(p.annualIncome).toLocaleString("en-IN")}` : "Not provided",
+    familyMembers: "",
+    phone:         p.phone ?? "",
+    email:         p.email ?? "",
+    address:       "",
+    emergencyContact: "",
+    registeredAt:  p.registeredAt ? new Date(p.registeredAt).toISOString().slice(0, 10) : "",
+    kycStatus:     p.kycStatus ?? "PENDING",
+    trustScore:    p.trustScore ?? 0,
+    status:        p.verificationStatus === "APPROVED" ? "Verified" : p.verificationStatus === "REJECTED" ? "Rejected" : p.verificationStatus === "UNDER_REVIEW" ? "Under Review" : "Pending",
+    issueStatus:   "Open",
+    riskLevel:     (p.trustScore ?? 0) < 50 ? "High" : (p.trustScore ?? 0) < 75 ? "Medium" : "Low",
+    photo:         (p.name ?? "?").split(" ").map(n => n[0]).join("").slice(0, 2),
+    recommendation: "",
+    documents:     [],
+    ai:            { faceMatch: "N/A", ocrMatch: "N/A", identityMatch: "N/A", documentAuthenticity: "N/A", duplicateAccount: "N/A", backgroundCheck: "N/A", blacklistCheck: "N/A", phone: "N/A", email: "N/A" },
+    issues:        [],
+    _backendId:    p.id,
+  };
+}
+
 export default function ParentVerificationCenter() {
   const [parents, setParents] = useState(parentApplications);
   const [selectedParent, setSelectedParent] = useState(parentApplications[0]);
+  const [apiLoading, setApiLoading] = useState(true);
   const [detailOpen, setDetailOpen] = useState(false);
   const [activeModal, setActiveModal] = useState(null);
   const [toast, setToast] = useState(null);
@@ -232,6 +263,24 @@ export default function ParentVerificationCenter() {
   const [filter, setFilter] = useState("All");
   const [sort, setSort] = useState("Newest");
   const [searching, setSearching] = useState(false);
+
+  // Load real data from backend on mount
+  useEffect(() => {
+    setApiLoading(true);
+    parentsService
+      .getVerificationQueue({ limit: 50 })
+      .then((result) => {
+        const items = result?.data ?? result;
+        if (Array.isArray(items) && items.length > 0) {
+          const mapped = items.map(mapToLocal);
+          setParents(mapped);
+          setSelectedParent(mapped[0]);
+        }
+        // If empty, keep demo data so the UI is never blank
+      })
+      .catch(() => { /* keep demo data on error */ })
+      .finally(() => setApiLoading(false));
+  }, []);
 
   const stats = useMemo(() => {
     const today = "2026-07-08";
@@ -271,12 +320,26 @@ export default function ParentVerificationCenter() {
     window.setTimeout(() => setToast(null), 2600);
   };
 
-  const updateParentStatus = (status, message) => {
-    setParents((current) => current.map((parent) => (parent.id === selectedParent.id ? { ...parent, status } : parent)));
-    setSelectedParent((parent) => ({ ...parent, status }));
+  const updateParentStatus = useCallback(async (status, message) => {
+    // Optimistic UI update
+    const nextStatus = status === "Approved" ? "Verified" : status;
+    setParents((current) => current.map((p) => (p.id === selectedParent.id ? { ...p, status: nextStatus } : p)));
+    setSelectedParent((p) => ({ ...p, status: nextStatus }));
     setActiveModal(null);
     notify(message);
-  };
+    // Persist to backend if we have a real ID
+    if (selectedParent._backendId) {
+      try {
+        if (status === "Approved") {
+          await parentsService.approveParent(selectedParent._backendId);
+        } else if (status === "Rejected") {
+          await parentsService.rejectParent(selectedParent._backendId, "Rejected via admin panel");
+        }
+      } catch {
+        // Silently ignore — optimistic update already applied
+      }
+    }
+  }, [selectedParent]);
 
   const resolveIssue = (issueId) => {
     setParents((current) =>

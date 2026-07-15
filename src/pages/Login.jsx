@@ -9,15 +9,19 @@ import {
 import ThemeToggle from "../components/ThemeToggle";
 import Button from "../components/Button";
 import { useAuth } from "../context/AuthContext";
-import { users } from "../data/dummyData";
+
 import { roleHome } from "../utils/constants";
 
 /* ─── Role config ───────────────────────────────────── */
+// Role keys match backend JWT enum values exactly (UPPERCASE)
 const roleConfig = {
-  admin:     { label: "Administrator", icon: FiShield,    selectedBg: "bg-indigo-600",  selectedRing: "ring-indigo-500/30" },
-  parent:    { label: "Parent",        icon: FiUserCheck, selectedBg: "bg-emerald-600", selectedRing: "ring-emerald-500/30" },
-  orphanage: { label: "Orphanage",     icon: FiHome,      selectedBg: "bg-civic-600",   selectedRing: "ring-civic-500/30" },
+  ADMIN:     { label: "Administrator", icon: FiShield,    selectedBg: "bg-indigo-600",  selectedRing: "ring-indigo-500/30" },
+  PARENT:    { label: "Parent",        icon: FiUserCheck, selectedBg: "bg-emerald-600", selectedRing: "ring-emerald-500/30" },
+  ORPHANAGE: { label: "Orphanage",     icon: FiHome,      selectedBg: "bg-civic-600",   selectedRing: "ring-civic-500/30" },
 };
+
+// Static role entries — no credentials pre-filled (real auth via backend)
+const roleEntries = Object.entries(roleConfig).map(([role, cfg]) => ({ role, ...cfg }));
 
 const heroStats = [
   { label: "Children Protected",    value: "1,248", icon: FiUsers },
@@ -44,7 +48,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
 
   const { register, handleSubmit, setValue, formState } = useForm({
-    defaultValues: { email: "admin@safety.gov", password: "admin123" },
+    defaultValues: { email: "", password: "" },
   });
   const signupForm = useForm({ defaultValues: { hasAnotherChild: "no", otherChildStatus: "own" } });
 
@@ -224,31 +228,25 @@ function LoginForm({
           Select your role
         </p>
         <div className="grid grid-cols-3 gap-2">
-          {users.map((u) => {
-            const cfg = roleConfig[u.role];
-            const Icon = cfg.icon;
-            const isSelected = selectedRole === u.role;
+          {roleEntries.map(({ role, label, icon: Icon, selectedBg }) => {
+            const isSelected = selectedRole === role;
             return (
               <motion.button
-                key={u.id}
+                key={role}
                 type="button"
                 whileTap={{ scale: 0.97 }}
-                onClick={() => {
-                  setSelectedRole(u.role);
-                  setValue("email", u.email);
-                  setValue("password", u.password);
-                }}
+                onClick={() => setSelectedRole(role)}
                 className={
                   "flex flex-col items-center gap-2 rounded-xl border px-2 py-3 text-center transition-all duration-150 " +
                   (isSelected
-                    ? `${cfg.selectedBg} border-transparent text-white shadow-md`
+                    ? `${selectedBg} border-transparent text-white shadow-md`
                     : "border-slate-200 bg-slate-50 text-slate-500 hover:border-civic-300 hover:bg-civic-50 hover:text-civic-700 " +
                       "dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-white")
                 }
                 aria-pressed={isSelected}
               >
                 <Icon style={{ height: 18, width: 18 }} />
-                <span className="text-[11px] font-semibold">{cfg.label}</span>
+                <span className="text-[11px] font-semibold">{label}</span>
                 {isSelected && <FiCheck className="h-3 w-3" />}
               </motion.button>
             );

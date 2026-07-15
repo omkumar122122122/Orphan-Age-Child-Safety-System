@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 import { FiBriefcase, FiCamera, FiCheckSquare, FiCreditCard, FiFileText, FiHome, FiMail, FiPhone, FiShield, FiUpload, FiUserCheck, FiUsers } from "react-icons/fi";
 import Breadcrumb from "../components/Breadcrumb";
 import Button from "../components/Button";
 import Card from "../components/Card";
 import FormInput from "../components/FormInput";
+import { orphanagesService } from "../services/orphanagesService";
+import { useToast } from "../hooks/useToast";
 
 const facilities = [
   "Medical Room",
@@ -20,10 +23,14 @@ const facilities = [
 ];
 
 export default function RegisterOrphanage() {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+  const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const { register, handleSubmit, reset, formState } = useForm({
     defaultValues: {
-      organizationType: "Government",
+      organizationType: "NGO",
+      country: "India",
       faceRecognitionEnabled: "No",
       cctvInstalled: "Yes",
       visitorFaceVerificationEnabled: "No",
@@ -32,16 +39,48 @@ export default function RegisterOrphanage() {
     }
   });
 
-  const onSubmit = (values) => {
-    const applications = JSON.parse(localStorage.getItem("orphanage_registration_applications") || "[]");
-    const application = {
-      id: `ORA-${Date.now()}`,
-      submittedAt: new Date().toISOString(),
-      ...values
-    };
-    localStorage.setItem("orphanage_registration_applications", JSON.stringify([...applications, application]));
-    setSuccess("Orphanage registration submitted for admin verification.");
-    reset();
+  const onSubmit = async (values) => {
+    try {
+      setLoading(true);
+      setSuccess("");
+
+      // Extract files from form inputs
+      const files = {
+        profilePhoto: values.profilePhoto?.[0],
+        registrationCertificate: values.registrationCertificate?.[0],
+        ngoCertificate: values.ngoCertificate?.[0],
+        governmentLicense: values.governmentLicense?.[0],
+        administratorIdProof: values.administratorIdProof?.[0],
+        panCard: values.panCard?.[0],
+        addressProof: values.addressProof?.[0],
+      };
+
+      // Remove file objects from form data (they'll be sent separately)
+      const formData = { ...values };
+      delete formData.profilePhoto;
+      delete formData.registrationCertificate;
+      delete formData.ngoCertificate;
+      delete formData.governmentLicense;
+      delete formData.administratorIdProof;
+      delete formData.panCard;
+      delete formData.addressProof;
+
+      const result = await orphanagesService.create(formData, files);
+      
+      setSuccess(`✅ Orphanage registered successfully! Code: ${result.code}`);
+      showToast?.('Orphanage registered successfully', 'success');
+      
+      // Reset form after 2 seconds and navigate
+      setTimeout(() => {
+        reset();
+        navigate('/admin/orphanages');
+      }, 2000);
+    } catch (error) {
+      console.error('Failed to register orphanage:', error);
+      showToast?.(error.message || 'Failed to register orphanage', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -62,9 +101,11 @@ export default function RegisterOrphanage() {
             <FormInput label="Government License Number *" icon={FiShield} error={formState.errors.governmentLicenseNumber?.message} {...register("governmentLicenseNumber", { required: "Government license number is required" })} />
             <FormInput label="Date of Establishment" type="date" icon={FiFileText} {...register("establishmentDate")} />
             <Select label="Type of Organization" icon={FiBriefcase} {...register("organizationType")}>
-              <option>Government</option>
-              <option>NGO</option>
-              <option>Private Trust</option>
+              <option value="NGO">NGO</option>
+              <option value="GOVERNMENT">Government</option>
+              <option value="TRUST">Trust</option>
+              <option value="SOCIETY">Society</option>
+              <option value="PRIVATE">Private</option>
             </Select>
             <FormInput label="Number of Children" type="number" icon={FiUsers} {...register("numberOfChildren")} />
             <FormInput label="Capacity" type="number" icon={FiUsers} {...register("capacity")} />
@@ -192,9 +233,21 @@ export default function RegisterOrphanage() {
         </Section>
 
         {success && <p className="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">{success}</p>}
-        <div className="flex justify-end">
-          <Button type="submit" icon={FiHome}>
-            Submit Orphanage Registration
+        <div className="flex justify-end gap-3">
+          <Button 
+            type="button" 
+            variant="secondary"
+            onClick={() => navigate('/admin/orphanages')}
+            disabled={loading}
+          >
+            Cancel
+          </Button>
+          <Button 
+            type="submit" 
+            icon={FiHome}
+            disabled={loading}
+          >
+            {loading ? 'Submitting...' : 'Submit Orphanage Registration'}
           </Button>
         </div>
       </form>
