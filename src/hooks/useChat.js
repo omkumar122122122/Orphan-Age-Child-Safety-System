@@ -30,10 +30,9 @@ const makeId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
 /**
  * @param {Object}      options
- * @param {string|null} options.parentId  - Parent ID for personalised AI context
  * @param {string|null} options.childId   - Child ID for personalised AI context
  */
-export function useChat({ parentId = null, childId = null } = {}) {
+export function useChat({ childId = null } = {}) {
   /** @type {[Message[], Function]} */
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -63,6 +62,7 @@ export function useChat({ parentId = null, childId = null } = {}) {
   /**
    * Core send function — adds the user message to state, calls the API,
    * and appends the assistant reply (or an error message).
+   * No longer passes parentId (extracted from JWT on backend).
    *
    * @param {string} text - User's message text
    */
@@ -92,7 +92,6 @@ export function useChat({ parentId = null, childId = null } = {}) {
             const reply = await sendChatMessage({
               message:      trimmed,
               conversation: buildHistory(updated),
-              parentId,
               childId,
             });
 
@@ -113,7 +112,7 @@ export function useChat({ parentId = null, childId = null } = {}) {
         return updated;
       });
     },
-    [isLoading, parentId, childId]
+    [isLoading, childId]
   );
 
   /**
