@@ -376,6 +376,7 @@ export const adminNav = [
 export const parentNav = [
   { label: "Dashboard", path: "/parent", icon: FiActivity },
   { label: "Sahayak AI", path: "/parent/sahayak-ai", icon: FiMessageCircle },
+  { label: "KYC Verification", path: "/parent/kyc", icon: FiShield },
   { label: "Profile", path: "/parent/profile", icon: FiUser },
   { label: "Visit Request", path: "/parent/visit-request", icon: FiCalendar },
   { label: "Child Welfare Follow-up", path: "/parent/child-welfare-follow-up-session", icon: FiHeart },

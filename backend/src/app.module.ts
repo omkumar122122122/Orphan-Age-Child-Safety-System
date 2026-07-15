@@ -10,7 +10,12 @@ import { ChildrenModule } from './children/children.module';
 import { ParentsModule } from './parents/parents.module';
 import { StaffModule } from './staff/staff.module';
 import { OrphanagesModule } from './orphanages/orphanages.module';
+import { VisitRequestsModule } from './visit-requests/visit-requests.module';
 import { AdoptionsModule } from './adoptions/adoptions.module';
+import { AlertsModule } from './alerts/alerts.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { ChatModule } from './chat/chat.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { ReportsModule } from './reports/reports.module';
 import { SettingsModule } from './settings/settings.module';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
@@ -60,7 +65,12 @@ import emailConfig from './config/email.config';
     ParentsModule,
     StaffModule,
     OrphanagesModule,
+    VisitRequestsModule,
     AdoptionsModule,
+    AlertsModule,
+    NotificationsModule,
+    ChatModule,
+    DashboardModule,
     ReportsModule,
     SettingsModule,
   ],

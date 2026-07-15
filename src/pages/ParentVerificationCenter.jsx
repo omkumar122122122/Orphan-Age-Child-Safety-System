@@ -25,180 +25,6 @@ import Button from "../components/Button";
 import { classNames } from "../utils/formatters";
 import { parentsService } from "../services/parentsService";
 
-const parentApplications = [
-  {
-    id: "PAR-2026-0148",
-    name: "Meera Nair",
-    dob: "1988-04-16",
-    gender: "Female",
-    occupation: "Public School Teacher",
-    income: "INR 8.4 LPA",
-    familyMembers: "4 members",
-    phone: "+91 98765 22014",
-    email: "meera.nair@example.com",
-    address: "Sector 21, Dwarka, New Delhi",
-    emergencyContact: "Arun Nair, +91 98765 22015",
-    registeredAt: "2026-07-08",
-    kycStatus: "Complete",
-    trustScore: 94,
-    status: "Pending",
-    issueStatus: "Open",
-    riskLevel: "Low",
-    photo: "MN",
-    recommendation: "Approve after officer declaration",
-    documents: ["Aadhaar", "PAN", "Passport", "Income Proof", "Marriage Certificate", "Address Proof", "Selfie"],
-    ai: {
-      faceMatch: "97%",
-      ocrMatch: "Matched",
-      identityMatch: "Strong",
-      documentAuthenticity: "Verified",
-      duplicateAccount: "No Duplicate",
-      backgroundCheck: "Clear",
-      blacklistCheck: "Clear",
-      phone: "OTP Verified",
-      email: "Verified"
-    },
-    issues: [
-      {
-        id: "ISS-8901",
-        category: "Document Clarification",
-        priority: "Medium",
-        status: "Open",
-        date: "2026-07-08",
-        description: "Requested confirmation for updated workplace address on income proof."
-      }
-    ]
-  },
-  {
-    id: "PAR-2026-0142",
-    name: "Raghav Menon",
-    dob: "1982-11-22",
-    gender: "Male",
-    occupation: "Logistics Contractor",
-    income: "INR 11.2 LPA",
-    familyMembers: "3 members",
-    phone: "+91 98765 22142",
-    email: "raghav.menon@example.com",
-    address: "Kakkanad, Kochi, Kerala",
-    emergencyContact: "Leela Menon, +91 98765 22143",
-    registeredAt: "2026-07-07",
-    kycStatus: "Partial",
-    trustScore: 58,
-    status: "Under Review",
-    issueStatus: "Escalated",
-    riskLevel: "High",
-    photo: "RM",
-    recommendation: "Request additional documents before approval",
-    documents: ["Aadhaar", "PAN", "Driving License", "Income Proof", "Address Proof", "Selfie"],
-    ai: {
-      faceMatch: "81%",
-      ocrMatch: "Needs Review",
-      identityMatch: "Moderate",
-      documentAuthenticity: "Manual Check",
-      duplicateAccount: "Possible Match",
-      backgroundCheck: "Pending",
-      blacklistCheck: "Clear",
-      phone: "OTP Verified",
-      email: "Verified"
-    },
-    issues: [
-      {
-        id: "ISS-8894",
-        category: "Identity Mismatch",
-        priority: "High",
-        status: "Open",
-        date: "2026-07-07",
-        description: "Form name and address proof initials differ. Officer review required."
-      },
-      {
-        id: "ISS-8895",
-        category: "Duplicate Alert",
-        priority: "High",
-        status: "Under Review",
-        date: "2026-07-07",
-        description: "AI found a historical guardian account with similar phone metadata."
-      }
-    ]
-  },
-  {
-    id: "PAR-2026-0136",
-    name: "Anjali Rao",
-    dob: "1990-01-08",
-    gender: "Female",
-    occupation: "Nurse",
-    income: "INR 7.1 LPA",
-    familyMembers: "2 members",
-    phone: "+91 98765 22136",
-    email: "anjali.rao@example.com",
-    address: "Jayanagar, Bengaluru, Karnataka",
-    emergencyContact: "Kiran Rao, +91 98765 22137",
-    registeredAt: "2026-07-06",
-    kycStatus: "Complete",
-    trustScore: 88,
-    status: "Verified",
-    issueStatus: "Resolved",
-    riskLevel: "Low",
-    photo: "AR",
-    recommendation: "Approved for activation",
-    documents: ["Aadhaar", "PAN", "Passport", "Income Proof", "Address Proof", "Selfie"],
-    ai: {
-      faceMatch: "95%",
-      ocrMatch: "Matched",
-      identityMatch: "Strong",
-      documentAuthenticity: "Verified",
-      duplicateAccount: "No Duplicate",
-      backgroundCheck: "Clear",
-      blacklistCheck: "Clear",
-      phone: "OTP Verified",
-      email: "Verified"
-    },
-    issues: []
-  },
-  {
-    id: "PAR-2026-0129",
-    name: "Sahil Kapoor",
-    dob: "1979-06-30",
-    gender: "Male",
-    occupation: "Private Consultant",
-    income: "INR 13.8 LPA",
-    familyMembers: "5 members",
-    phone: "+91 98765 22129",
-    email: "sahil.kapoor@example.com",
-    address: "Civil Lines, Jaipur, Rajasthan",
-    emergencyContact: "Nisha Kapoor, +91 98765 22130",
-    registeredAt: "2026-07-05",
-    kycStatus: "Failed",
-    trustScore: 34,
-    status: "Rejected",
-    issueStatus: "Closed",
-    riskLevel: "High",
-    photo: "SK",
-    recommendation: "Reject due to document authenticity risk",
-    documents: ["Aadhaar", "PAN", "Driving License", "Income Proof", "Address Proof", "Selfie"],
-    ai: {
-      faceMatch: "64%",
-      ocrMatch: "Mismatch",
-      identityMatch: "Weak",
-      documentAuthenticity: "Failed",
-      duplicateAccount: "No Duplicate",
-      backgroundCheck: "Flagged",
-      blacklistCheck: "Clear",
-      phone: "OTP Verified",
-      email: "Verified"
-    },
-    issues: [
-      {
-        id: "ISS-8870",
-        category: "Fraud Review",
-        priority: "Critical",
-        status: "Closed",
-        date: "2026-07-05",
-        description: "Uploaded PAN image failed tamper detection review."
-      }
-    ]
-  }
-];
-
 const summaryConfig = [
   ["Pending Parents", "Pending", FiClock],
   ["Verified Parents", "Verified", FiUserCheck],
@@ -253,8 +79,8 @@ function mapToLocal(p) {
 }
 
 export default function ParentVerificationCenter() {
-  const [parents, setParents] = useState(parentApplications);
-  const [selectedParent, setSelectedParent] = useState(parentApplications[0]);
+  const [parents, setParents] = useState([]);
+  const [selectedParent, setSelectedParent] = useState(null);
   const [apiLoading, setApiLoading] = useState(true);
   const [detailOpen, setDetailOpen] = useState(false);
   const [activeModal, setActiveModal] = useState(null);
@@ -263,24 +89,42 @@ export default function ParentVerificationCenter() {
   const [filter, setFilter] = useState("All");
   const [sort, setSort] = useState("Newest");
   const [searching, setSearching] = useState(false);
+  const [pagination, setPagination] = useState({ page: 1, limit: 50, total: 0, totalPages: 0 });
 
   // Load real data from backend on mount
   useEffect(() => {
+    loadVerificationQueue();
+  }, [pagination.page, pagination.limit]);
+
+  async function loadVerificationQueue() {
     setApiLoading(true);
-    parentsService
-      .getVerificationQueue({ limit: 50 })
-      .then((result) => {
-        const items = result?.data ?? result;
-        if (Array.isArray(items) && items.length > 0) {
-          const mapped = items.map(mapToLocal);
-          setParents(mapped);
-          setSelectedParent(mapped[0]);
-        }
-        // If empty, keep demo data so the UI is never blank
-      })
-      .catch(() => { /* keep demo data on error */ })
-      .finally(() => setApiLoading(false));
-  }, []);
+    try {
+      const result = await parentsService.getVerificationQueue({ 
+        page: pagination.page, 
+        limit: pagination.limit 
+      });
+      const items = result?.data ?? [];
+      const mapped = items.map(mapToLocal);
+      setParents(mapped);
+      if (mapped.length > 0 && !selectedParent) {
+        setSelectedParent(mapped[0]);
+      }
+      // Update pagination info
+      if (result?.pagination) {
+        setPagination(prev => ({
+          ...prev,
+          total: result.pagination.total,
+          totalPages: result.pagination.totalPages
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to load verification queue:', err);
+      // Show empty state on error instead of dummy data
+      setParents([]);
+    } finally {
+      setApiLoading(false);
+    }
+  }
 
   const stats = useMemo(() => {
     const today = "2026-07-08";
@@ -335,8 +179,13 @@ export default function ParentVerificationCenter() {
         } else if (status === "Rejected") {
           await parentsService.rejectParent(selectedParent._backendId, "Rejected via admin panel");
         }
-      } catch {
-        // Silently ignore — optimistic update already applied
+        // Reload the queue to get fresh data
+        await loadVerificationQueue();
+      } catch (err) {
+        console.error('Failed to update parent status:', err);
+        notify(`Error: ${err?.message || 'Failed to update status'}`);
+        // Reload to restore accurate state
+        await loadVerificationQueue();
       }
     }
   }, [selectedParent]);

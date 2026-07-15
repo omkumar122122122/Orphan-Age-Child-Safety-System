@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   FiCalendar, FiBell, FiUser, FiHeart, FiCheckCircle,
-  FiClock, FiArrowRight, FiZap, FiActivity
+  FiClock, FiArrowRight, FiZap, FiActivity, FiShield
 } from "react-icons/fi";
 import Breadcrumb from "../components/Breadcrumb";
 import NotificationPanel from "../components/NotificationPanel";
@@ -30,16 +30,11 @@ const fadeUp = (delay = 0) => ({
   transition: { duration: 0.25, delay, ease: [0.16, 1, 0.3, 1] },
 });
 
-/* ── Adoption journey steps (derived from dummy data) ──────── */
+/* ── Adoption journey steps (will be loaded from backend) ──────── */
 let adoptionTimeline = [];
 
-/* ── Trust badge strip */
-const trustBadges = [
-  { label: "KYC",         value: "Verified",  color: "text-emerald-600 dark:text-emerald-400" },
-  { label: "Face Match",  value: "99%",        color: "text-civic-600 dark:text-civic-400"    },
-  { label: "Trust Score", value: "95 / 100",   color: "text-indigo-600 dark:text-indigo-400"  },
-  { label: "Risk Level",  value: "Low",        color: "text-emerald-600 dark:text-emerald-400" },
-];
+/* ── Trust badge strip (will be calculated from backend data) */
+let trustBadges = [];
 
 const childStatusColor = {
   Stable:         "badge-success",
@@ -60,13 +55,42 @@ export default function ParentDashboard() {
     ]).then(([dashResult, alertResult]) => {
       if (dashResult.status === 'fulfilled') {
         const dashboard = dashResult.value;
+        
+        // Update linked child
         linkedChild = dashboard.linkedChild ? {
           ...dashboard.linkedChild,
           orphanage: dashboard.linkedChild.orphanageName,
           health: dashboard.linkedChild.healthStatus,
-          attendance: '—', educationLevel: 'Not provided', risk: 'Not available',
+          attendance: '—', 
+          educationLevel: 'Not provided', 
+          risk: 'Not available',
         } : null;
-        adoptionTimeline = (dashboard.adoptionJourney?.steps || []).map((step) => ({ step: step.name, done: step.completed, current: step.isCurrent }));
+        
+        // Update adoption timeline
+        adoptionTimeline = (dashboard.adoptionJourney?.steps || []).map((step) => ({ 
+          step: step.name, 
+          done: step.completed, 
+          current: step.isCurrent 
+        }));
+        
+        // Calculate trust badges from backend data
+        const verification = dashboard.verification || {};
+        const kycStatusLabel = verification.kycStatus === 'APPROVED' ? 'Verified' : 
+                               verification.kycStatus === 'SUBMITTED' ? 'Pending' : 
+                               verification.kycStatus === 'REJECTED' ? 'Rejected' : 'Not Started';
+        
+        const trustScore = verification.trustScore || 0;
+        const riskLevel = trustScore >= 80 ? 'Low' : trustScore >= 60 ? 'Medium' : 'High';
+        const riskColor = trustScore >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 
+                         trustScore >= 60 ? 'text-amber-600 dark:text-amber-400' : 
+                         'text-red-600 dark:text-red-400';
+        
+        trustBadges = [
+          { label: "KYC", value: kycStatusLabel, color: verification.kycStatus === 'APPROVED' ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400" },
+          { label: "Trust Score", value: `${trustScore}/100`, color: "text-civic-600 dark:text-civic-400" },
+          { label: "Risk Level", value: riskLevel, color: riskColor },
+          { label: "Status", value: verification.verificationStatus || 'Pending', color: "text-indigo-600 dark:text-indigo-400" },
+        ];
       }
 
       if (alertResult.status === 'fulfilled') {
@@ -86,6 +110,7 @@ export default function ParentDashboard() {
     }).catch(() => {
       linkedChild = null;
       adoptionTimeline = [];
+      trustBadges = [];
       setDashboardVersion((v) => v + 1);
     });
   }, []);

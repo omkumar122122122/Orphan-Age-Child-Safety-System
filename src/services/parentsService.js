@@ -59,6 +59,47 @@ class ParentsService {
     return unwrap(response);
   }
 
+  /** Submit KYC package for review */
+  async submitKyc(notes) {
+    const response = await apiClient.post('/parents/kyc/submit', { notes });
+    return unwrap(response);
+  }
+
+  /** Upload a parent document */
+  async uploadDocument(parentId, documentType, file, documentNumber) {
+    const formData = new FormData();
+    formData.append('documentType', documentType);
+    if (documentNumber) formData.append('documentNumber', documentNumber);
+    formData.append('file', file);
+
+    const response = await apiClient.post(`/parents/${parentId}/documents`, formData);
+    return unwrap(response);
+  }
+
+  /** Review a parent document (Admin only) */
+  async reviewDocument(parentId, documentId, reviewData) {
+    const response = await apiClient.patch(`/parents/${parentId}/documents/${documentId}`, reviewData);
+    return unwrap(response);
+  }
+
+  /** Add an address to a parent profile */
+  async addAddress(parentId, addressData) {
+    const response = await apiClient.post(`/parents/${parentId}/addresses`, addressData);
+    return unwrap(response);
+  }
+
+  /** Add a family member to a parent profile */
+  async addFamilyMember(parentId, memberData) {
+    const response = await apiClient.post(`/parents/${parentId}/family-members`, memberData);
+    return unwrap(response);
+  }
+
+  /** Manually adjust parent trust score (Admin only) */
+  async updateTrustScore(parentId, delta, reason) {
+    const response = await apiClient.post(`/parents/${parentId}/trust-score`, { delta, reason });
+    return unwrap(response);
+  }
+
   /** Update parent verification status (Admin only) */
   async updateVerificationStatus(id, statusData) {
     const response = await apiClient.patch(`/parents/${id}/verification-status`, statusData);

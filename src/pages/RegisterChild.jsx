@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   FiCalendar, FiCamera, FiCheckCircle, FiFileText,
@@ -12,7 +12,7 @@ import ToastContainer from "../components/Toast";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../hooks/useToast";
 import { childrenService } from "../services/childrenService";
-import { orphanages } from "../data/dummyData";
+import { orphanagesService } from "../services/orphanagesService";
 import { roleLabels } from "../utils/constants";
 import { classNames } from "../utils/formatters";
 
@@ -28,10 +28,29 @@ export default function RegisterChild() {
   const [photoPreview, setPhotoPreview] = useState("");
   const [savedRecord,  setSavedRecord]  = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  
+  const [orphanages, setOrphanages] = useState([]);
+  const [loadingOrphanages, setLoadingOrphanages] = useState(true);
+
+  useEffect(() => {
+    const loadOrphanages = async () => {
+      try {
+        const response = await orphanagesService.getAll({ limit: 100 });
+        const payload = response.data ?? response;
+        const list = Array.isArray(payload) ? payload : (payload.data || []);
+        setOrphanages(list);
+      } catch (err) {
+        console.error("Failed to load orphanages:", err);
+        showError("Failed to load orphanage list");
+      } finally {
+        setLoadingOrphanages(false);
+      }
+    };
+    loadOrphanages();
+  }, []);
+
   const { register, handleSubmit, reset, formState, watch } = useForm({
     defaultValues: {
-      orphanage:      user.role === "orphanage" ? user.department : orphanages[0].name,
+      orphanage:      "",
       risk:           "Low",
       foundCondition: foundConditions[0],
     },
@@ -53,7 +72,7 @@ export default function RegisterChild() {
       // Map form values to API format
       const childData = {
         firstName: values.name.split(' ')[0],
-        lastName: values.name.split(' ').slice(1).join(' '),
+        lastName: values.name.split(' ').slice(1).join(' ') || undefined,
         approximateAge: parseInt(values.age),
         gender: values.gender.toUpperCase(),
         bloodGroup: values.bloodGroup.replace('+', '_POSITIVE').replace('-', '_NEGATIVE'),
@@ -68,7 +87,7 @@ export default function RegisterChild() {
 
       // Get orphanage ID if admin is assigning
       if (user.role === 'admin' && values.orphanage) {
-        const orphanage = orphanages.find(o => o.name === values.orphanage);
+        const orphanage = orphanages.find(o => o.name === values.orphanage || o.id === values.orphanage);
         if (orphanage) {
           childData.orphanageId = orphanage.id;
         }
@@ -91,7 +110,7 @@ export default function RegisterChild() {
 
       // Reset form
       reset({ 
-        orphanage: user.role === "orphanage" ? user.department : orphanages[0].name, 
+        orphanage: "", 
         risk: "Low", 
         foundCondition: foundConditions[0] 
       });
@@ -178,8 +197,9 @@ export default function RegisterChild() {
             <FormInput label="Date of Admission" icon={FiCalendar} type="date" error={formState.errors.admissionDate?.message} {...register("admissionDate", { required: "Admission date is required" })} />
             <div>
               <label className="text-[13px] font-semibold text-slate-700 dark:text-slate-300">Assigned Orphanage</label>
-              <select className={selectCls} disabled={user.role === "orphanage"} {...register("orphanage", { required: true })}>
-                {orphanages.map((h) => <option key={h.id}>{h.name}</option>)}
+              <select className={selectCls} disabled={user.role === "orphanage" || loadingOrphanages} {...register("orphanage", { required: true })}>
+                <option value="">{loadingOrphanages ? "Loading orphanages..." : "Select orphanage"}</option>
+                {orphanages.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
               </select>
             </div>
             <div>

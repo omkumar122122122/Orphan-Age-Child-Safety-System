@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   FiAlertCircle,
@@ -24,280 +24,12 @@ import Button from "../components/Button";
 import Card from "../components/Card";
 import { DoughnutChartCard, LineChartCard } from "../components/ChartCard";
 import { classNames } from "../utils/formatters";
+import { useAuth } from "../context/AuthContext";
+import { useToast } from "../hooks/useToast";
+import ToastContainer from "../components/Toast";
+import { visitRequestsService } from "../services/visitRequestsService";
 
-const requestSeed = [
-  {
-    parentName: "Ananya Rao",
-    initials: "AR",
-    requestId: "VR-2401",
-    age: 34,
-    occupation: "School Principal",
-    phone: "+91 98765 10401",
-    email: "ananya.rao@example.com",
-    address: "Banjara Hills, Hyderabad",
-    familyMembers: "4 members",
-    income: "Verified salaried household",
-    visitDateOffset: 0,
-    visitTime: "10:30",
-    purpose: "Initial parent-child interaction",
-    reason: "Pre-adoption visit requested for welfare review and face verification.",
-    timeline: "3 to 6 months",
-    visitorsCount: 2,
-    specialNotes: "Bring original identity documents and arrive 15 minutes early.",
-    status: "Pending",
-    risk: "Low",
-    trend: "+8%",
-    trustScore: 96,
-    faceMatch: 99,
-    documentAuthenticity: "Verified",
-    behaviourPrediction: "Calm",
-    adoptionReadiness: "High",
-    recommendation: "Approve Visit",
-    verification: {
-      kyc: "Verified",
-      police: "Verified",
-      face: "99%",
-      background: "Passed",
-      documents: "Verified"
-    },
-    meetingRoom: "Conference Room A",
-    assignedStaff: "Meera Nair",
-    qrStatus: "Pending",
-    checkIn: "10:28",
-    checkOut: "-",
-    arrivalTime: "10:15",
-    requestedDateLabel: "Today",
-    documents: ["Aadhaar", "PAN", "Income Certificate", "Marriage Certificate", "Address Proof"],
-    missingDocuments: ["Marriage Certificate"],
-    calendarTone: "yellow"
-  },
-  {
-    parentName: "Sameer Khanna",
-    initials: "SK",
-    requestId: "VR-2402",
-    age: 38,
-    occupation: "Bank Manager",
-    phone: "+91 98765 10402",
-    email: "sameer.khanna@example.com",
-    address: "Anna Nagar, Chennai",
-    familyMembers: "3 members",
-    income: "High income verified",
-    visitDateOffset: 0,
-    visitTime: "13:15",
-    purpose: "Documentation verification visit",
-    reason: "Background and document confirmation completed through digital KYC.",
-    timeline: "2 to 4 months",
-    visitorsCount: 2,
-    specialNotes: "Face verification should be completed before room entry.",
-    status: "Approved",
-    risk: "Low",
-    trend: "+12%",
-    trustScore: 98,
-    faceMatch: 99,
-    documentAuthenticity: "Verified",
-    behaviourPrediction: "Cooperative",
-    adoptionReadiness: "High",
-    recommendation: "Approve Visit",
-    verification: {
-      kyc: "Verified",
-      police: "Verified",
-      face: "99%",
-      background: "Passed",
-      documents: "Verified"
-    },
-    meetingRoom: "Family Review Lounge",
-    assignedStaff: "Ritika Sharma",
-    qrStatus: "Generated",
-    checkIn: "13:04",
-    checkOut: "-",
-    arrivalTime: "12:50",
-    requestedDateLabel: "Today",
-    documents: ["Aadhaar", "PAN", "Income Certificate", "Marriage Certificate", "Address Proof"],
-    missingDocuments: [],
-    calendarTone: "green"
-  },
-  {
-    parentName: "Priya Mehta",
-    initials: "PM",
-    requestId: "VR-2403",
-    age: 31,
-    occupation: "Chartered Accountant",
-    phone: "+91 98765 10403",
-    email: "priya.mehta@example.com",
-    address: "Vashi, Navi Mumbai",
-    familyMembers: "5 members",
-    income: "Stable dual-income household",
-    visitDateOffset: 2,
-    visitTime: "11:00",
-    purpose: "Rescheduled due to travel delay",
-    reason: "AI review flagged delay in submitting supporting documents.",
-    timeline: "4 to 7 months",
-    visitorsCount: 3,
-    specialNotes: "Carry updated income proof and marriage certificate copy.",
-    status: "Rescheduled",
-    risk: "Medium",
-    trend: "+3%",
-    trustScore: 84,
-    faceMatch: 95,
-    documentAuthenticity: "Partially Verified",
-    behaviourPrediction: "Neutral",
-    adoptionReadiness: "Medium",
-    recommendation: "Review Again",
-    verification: {
-      kyc: "Verified",
-      police: "Verified",
-      face: "95%",
-      background: "Under Review",
-      documents: "Pending"
-    },
-    meetingRoom: "Conference Room B",
-    assignedStaff: "Karan Joshi",
-    qrStatus: "Pending",
-    checkIn: "-",
-    checkOut: "-",
-    arrivalTime: "11:00",
-    requestedDateLabel: "Jul 5",
-    documents: ["Aadhaar", "PAN", "Income Certificate"],
-    missingDocuments: ["Marriage Certificate", "Address Proof"],
-    calendarTone: "blue"
-  },
-  {
-    parentName: "Vivek Iyer",
-    initials: "VI",
-    requestId: "VR-2404",
-    age: 42,
-    occupation: "Entrepreneur",
-    phone: "+91 98765 10404",
-    email: "vivek.iyer@example.com",
-    address: "Indiranagar, Bengaluru",
-    familyMembers: "2 members",
-    income: "Self-employed, audited",
-    visitDateOffset: 1,
-    visitTime: "15:30",
-    purpose: "Detailed home-study verification",
-    reason: "Request requires further review after document mismatch alert.",
-    timeline: "6 to 8 months",
-    visitorsCount: 2,
-    specialNotes: "Verify occupation certificate before check-in.",
-    status: "Rejected",
-    risk: "High",
-    trend: "-4%",
-    trustScore: 61,
-    faceMatch: 87,
-    documentAuthenticity: "Flagged",
-    behaviourPrediction: "Concerned",
-    adoptionReadiness: "Low",
-    recommendation: "Reject Visit",
-    verification: {
-      kyc: "Verified",
-      police: "Verified",
-      face: "87%",
-      background: "Follow-up Required",
-      documents: "Incomplete"
-    },
-    meetingRoom: "Review Chamber",
-    assignedStaff: "Neha Kapoor",
-    qrStatus: "Blocked",
-    checkIn: "-",
-    checkOut: "-",
-    arrivalTime: "15:15",
-    requestedDateLabel: "Jul 4",
-    documents: ["Aadhaar", "PAN", "Income Certificate"],
-    missingDocuments: ["Marriage Certificate", "Address Proof"],
-    calendarTone: "red"
-  },
-  {
-    parentName: "Aditi Sharma",
-    initials: "AS",
-    requestId: "VR-2405",
-    age: 35,
-    occupation: "Doctor",
-    phone: "+91 98765 10405",
-    email: "aditi.sharma@example.com",
-    address: "Lajpat Nagar, New Delhi",
-    familyMembers: "4 members",
-    income: "Verified professional income",
-    visitDateOffset: 3,
-    visitTime: "09:45",
-    purpose: "Final evaluation visit",
-    reason: "All documents cleared; final council review planned after visit.",
-    timeline: "1 to 3 months",
-    visitorsCount: 2,
-    specialNotes: "Include child counsellor in the discussion room.",
-    status: "Completed",
-    risk: "Low",
-    trend: "+16%",
-    trustScore: 94,
-    faceMatch: 98,
-    documentAuthenticity: "Verified",
-    behaviourPrediction: "Warm",
-    adoptionReadiness: "High",
-    recommendation: "Approve Visit",
-    verification: {
-      kyc: "Verified",
-      police: "Verified",
-      face: "98%",
-      background: "Passed",
-      documents: "Verified"
-    },
-    meetingRoom: "Observation Suite",
-    assignedStaff: "Anita Rao",
-    qrStatus: "Completed",
-    checkIn: "09:38",
-    checkOut: "10:22",
-    arrivalTime: "09:25",
-    requestedDateLabel: "Jul 6",
-    documents: ["Aadhaar", "PAN", "Income Certificate", "Marriage Certificate", "Address Proof"],
-    missingDocuments: [],
-    calendarTone: "blue"
-  },
-  {
-    parentName: "Nikhil Verma",
-    initials: "NV",
-    requestId: "VR-2406",
-    age: 39,
-    occupation: "Civil Engineer",
-    phone: "+91 98765 10406",
-    email: "nikhil.verma@example.com",
-    address: "Sector 18, Noida",
-    familyMembers: "3 members",
-    income: "Stable private-sector income",
-    visitDateOffset: 4,
-    visitTime: "12:00",
-    purpose: "Risk review and re-verification",
-    reason: "AI alert triggered due to incomplete address proof and repeated reschedule.",
-    timeline: "5 to 8 months",
-    visitorsCount: 2,
-    specialNotes: "Needs additional documents before next visit can be scheduled.",
-    status: "Pending",
-    risk: "High",
-    trend: "+11%",
-    trustScore: 72,
-    faceMatch: 90,
-    documentAuthenticity: "Pending",
-    behaviourPrediction: "Careful",
-    adoptionReadiness: "Medium",
-    recommendation: "Request More Documents",
-    verification: {
-      kyc: "Verified",
-      police: "Verified",
-      face: "90%",
-      background: "Passed",
-      documents: "Pending"
-    },
-    meetingRoom: "Document Review Desk",
-    assignedStaff: "Rohan Verma",
-    qrStatus: "Pending",
-    checkIn: "-",
-    checkOut: "-",
-    arrivalTime: "11:45",
-    requestedDateLabel: "Jul 7",
-    documents: ["Aadhaar", "PAN", "Income Certificate"],
-    missingDocuments: ["Marriage Certificate", "Address Proof"],
-    calendarTone: "yellow"
-  }
-];
-
+// Notification configuration (static UI elements)
 const notifications = [
   { title: "New Visit Request", detail: "Ananya Rao submitted a parent-child visit request.", time: "8 min ago", icon: FiCalendar },
   { title: "Visit Approved", detail: "Sameer Khanna has been cleared for today's session.", time: "32 min ago", icon: FiCheckCircle },
@@ -595,14 +327,15 @@ function ActionButton({ children, variant = "secondary", ...props }) {
 }
 
 export default function ManageVisitRequests() {
+  const { user } = useAuth();
+  const { toasts, success: showSuccess, error: showError, removeToast } = useToast();
+  
   const today = new Date();
   const todayIso = localIsoDate(today);
-  const [requests, setRequests] = useState(() =>
-    requestSeed.map((item) => ({
-      ...item,
-      visitDate: shiftDate(todayIso, item.visitDateOffset)
-    }))
-  );
+  
+  const [requests, setRequests] = useState([]);
+  const [todayVisits, setTodayVisits] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchParent, setSearchParent] = useState("");
   const [searchRequest, setSearchRequest] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -611,6 +344,8 @@ export default function ManageVisitRequests() {
   const [activeRequest, setActiveRequest] = useState(null);
   const [activeModal, setActiveModal] = useState(null);
   const [savedReport, setSavedReport] = useState(false);
+  const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
+  
   const [feedback, setFeedback] = useState({
     parentBehaviour: "Excellent",
     childComfort: "Comfortable",
@@ -651,23 +386,62 @@ export default function ManageVisitRequests() {
     note: "Please submit the marked documents before the next slot can be confirmed."
   });
 
-  const filteredRequests = requests.filter((request) => {
-    const matchesParent = request.parentName.toLowerCase().includes(searchParent.trim().toLowerCase());
-    const matchesRequest = request.requestId.toLowerCase().includes(searchRequest.trim().toLowerCase());
-    const matchesStatus = statusFilter === "All" || request.status === statusFilter;
-    const matchesRisk = riskFilter === "All" || request.risk === riskFilter;
-    const matchesDate = !dateFilter || request.visitDate === dateFilter;
+  useEffect(() => {
+    loadRequests();
+    loadTodayVisits();
+  }, []);
 
-    return matchesParent && matchesRequest && matchesStatus && matchesRisk && matchesDate;
-  });
+  useEffect(() => {
+    const delaySearch = setTimeout(() => {
+      loadRequests();
+    }, 300);
+    return () => clearTimeout(delaySearch);
+  }, [searchParent, searchRequest, statusFilter, riskFilter, dateFilter]);
+
+  const loadRequests = async () => {
+    try {
+      setLoading(true);
+      
+      const params = {
+        page: pagination.page,
+        limit: pagination.limit,
+      };
+      
+      if (searchParent) params.parentName = searchParent;
+      if (searchRequest) params.search = searchRequest;
+      if (statusFilter !== 'All') params.status = statusFilter.toUpperCase();
+      if (riskFilter !== 'All') params.riskLevel = riskFilter.toUpperCase();
+      if (dateFilter) params.visitDate = dateFilter;
+
+      const response = await visitRequestsService.getAll(params);
+      setRequests(response.data || []);
+      setPagination(response.pagination || { page: 1, limit: 20, total: 0, totalPages: 1 });
+    } catch (err) {
+      showError(err.message || 'Failed to load visit requests');
+      console.error('Error loading requests:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadTodayVisits = async () => {
+    try {
+      const visits = await visitRequestsService.getTodayVisits();
+      setTodayVisits(visits || []);
+    } catch (err) {
+      console.error('Error loading today visits:', err);
+    }
+  };
+
+  const filteredRequests = requests;
 
   const counts = {
-    pending: requests.filter((request) => request.status === "Pending").length,
-    today: requests.filter((request) => request.visitDate === todayIso).length,
-    approved: requests.filter((request) => request.status === "Approved").length,
-    rejected: requests.filter((request) => request.status === "Rejected").length,
-    completed: requests.filter((request) => request.status === "Completed").length,
-    highRisk: requests.filter((request) => request.risk === "High").length
+    pending: requests.filter((request) => request.status === "PENDING").length,
+    today: todayVisits.length,
+    approved: requests.filter((request) => request.status === "APPROVED").length,
+    rejected: requests.filter((request) => request.status === "REJECTED").length,
+    completed: requests.filter((request) => request.status === "COMPLETED").length,
+    highRisk: requests.filter((request) => request.riskLevel === "HIGH").length
   };
 
   const riskData = {
@@ -675,9 +449,9 @@ export default function ManageVisitRequests() {
     datasets: [
       {
         data: [
-          requests.filter((request) => request.risk === "Low").length,
-          requests.filter((request) => request.risk === "Medium").length,
-          requests.filter((request) => request.risk === "High").length
+          requests.filter((request) => request.riskLevel === "LOW").length,
+          requests.filter((request) => request.riskLevel === "MEDIUM").length,
+          requests.filter((request) => request.riskLevel === "HIGH").length
         ],
         backgroundColor: ["#0f9f6e", "#f59e0b", "#dc2626"],
         borderWidth: 0
@@ -708,8 +482,7 @@ export default function ManageVisitRequests() {
   };
 
   const monthGrid = getMonthGrid(today, requests);
-  const todayVisits = requests.filter((request) => request.visitDate === todayIso);
-  const selectedRequest = (activeRequest && requests.find((request) => request.requestId === activeRequest.requestId)) || activeRequest || filteredRequests[0] || requests[0];
+  const selectedRequest = (activeRequest && requests.find((request) => request.id === activeRequest.id)) || activeRequest || filteredRequests[0] || requests[0];
 
   const openDetails = (request) => {
     setActiveRequest(request);
@@ -777,52 +550,92 @@ export default function ManageVisitRequests() {
     );
   };
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
     if (!selectedRequest) return;
 
-    updateRequest(selectedRequest.requestId, {
-      status: "Approved",
-      visitDate: approveForm.visitDate,
-      visitTime: approveForm.visitTime,
-      meetingRoom: approveForm.meetingRoom,
-      assignedStaff: approveForm.staffMember,
-      visitorsCount: Number(approveForm.visitorLimit),
-      qrStatus: approveForm.generateQr ? "Generated" : "Pending",
-      checkIn: approveForm.visitTime,
-      checkOut: "-"
-    });
-    setActiveModal(null);
+    try {
+      await visitRequestsService.approve(selectedRequest.id, {
+        visitDate: approveForm.visitDate,
+        visitTime: approveForm.visitTime,
+        meetingRoom: approveForm.meetingRoom,
+        assignedStaff: approveForm.staffMember,
+        visitorsLimit: parseInt(approveForm.visitorLimit, 10),
+        instructions: approveForm.instructions,
+        generateQrPass: approveForm.generateQr,
+        notifyParent: approveForm.notifyParent,
+      });
+      
+      showSuccess('Visit request approved successfully');
+      setActiveModal(null);
+      loadRequests();
+      loadTodayVisits();
+    } catch (err) {
+      showError(err.message || 'Failed to approve visit request');
+      console.error('Error approving request:', err);
+    }
   };
 
-  const handleReject = () => {
+  const handleReject = async () => {
     if (!selectedRequest) return;
 
-    updateRequest(selectedRequest.requestId, {
-      status: "Rejected",
-      rejectionReason: rejectForm.reason
-    });
-    setActiveModal(null);
+    try {
+      await visitRequestsService.reject(selectedRequest.id, {
+        reason: rejectForm.reason,
+        comments: rejectForm.comments,
+      });
+      
+      showSuccess('Visit request rejected');
+      setActiveModal(null);
+      loadRequests();
+    } catch (err) {
+      showError(err.message || 'Failed to reject visit request');
+      console.error('Error rejecting request:', err);
+    }
   };
 
-  const handleReschedule = () => {
+  const handleReschedule = async () => {
     if (!selectedRequest) return;
 
-    updateRequest(selectedRequest.requestId, {
-      status: "Rescheduled",
-      visitDate: rescheduleForm.newDate,
-      visitTime: rescheduleForm.newTime
-    });
-    setActiveModal(null);
+    try {
+      await visitRequestsService.reschedule(selectedRequest.id, {
+        newDate: rescheduleForm.newDate,
+        newTime: rescheduleForm.newTime,
+        reason: rescheduleForm.reason,
+        notifyParent: rescheduleForm.notifyParent,
+      });
+      
+      showSuccess('Visit rescheduled successfully');
+      setActiveModal(null);
+      loadRequests();
+    } catch (err) {
+      showError(err.message || 'Failed to reschedule visit');
+      console.error('Error rescheduling request:', err);
+    }
   };
 
-  const handleRequestDocs = () => {
+  const handleRequestDocs = async () => {
     if (!selectedRequest) return;
 
-    updateRequest(selectedRequest.requestId, {
-      status: "Pending",
-      docNote: documentsForm.note
-    });
-    setActiveModal(null);
+    try {
+      const requiredDocs = [];
+      if (documentsForm.aadhaar) requiredDocs.push('AADHAAR');
+      if (documentsForm.pan) requiredDocs.push('PAN');
+      if (documentsForm.incomeCertificate) requiredDocs.push('INCOME_CERTIFICATE');
+      if (documentsForm.marriageCertificate) requiredDocs.push('MARRIAGE_CERTIFICATE');
+      if (documentsForm.addressProof) requiredDocs.push('ADDRESS_PROOF');
+
+      await visitRequestsService.requestDocuments(selectedRequest.id, {
+        requiredDocuments: requiredDocs,
+        note: documentsForm.note,
+      });
+      
+      showSuccess('Document request sent to parent');
+      setActiveModal(null);
+      loadRequests();
+    } catch (err) {
+      showError(err.message || 'Failed to request documents');
+      console.error('Error requesting documents:', err);
+    }
   };
 
   const resetFilters = () => {
@@ -833,8 +646,17 @@ export default function ManageVisitRequests() {
     setDateFilter("");
   };
 
+  if (loading && requests.length === 0) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <FiLoader className="h-12 w-12 animate-spin text-civic-600" />
+      </div>
+    );
+  }
+
   return (
     <div className="relative space-y-8 overflow-hidden pb-10">
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
       <div className="absolute -right-20 top-10 h-72 w-72 rounded-full bg-civic-500/15 blur-3xl" />
       <div className="absolute left-0 top-40 h-64 w-64 rounded-full bg-violet-500/10 blur-3xl" />
 
