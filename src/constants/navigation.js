@@ -20,6 +20,7 @@ import {
 
 export const ADMIN_NAV_ITEMS = [
   { label: "Dashboard", path: "/admin", icon: FiActivity },
+  { label: "Users", path: "/admin/users", icon: FiUsers },
   { label: "Children", path: "/admin/children", icon: FiUsers },
   { label: "Parent Verification", path: "/admin/parent-verification", icon: FiUserCheck },
   { label: "Register Child", path: "/admin/register-child", icon: FiPlusCircle },
