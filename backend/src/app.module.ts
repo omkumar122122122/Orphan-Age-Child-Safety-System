@@ -20,6 +20,7 @@ import { ReportsModule } from './reports/reports.module';
 import { SettingsModule } from './settings/settings.module';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { SecurityHeadersMiddleware } from './common/middleware/security-headers.middleware';
+
 import appConfig from './config/app.config';
 import jwtConfig from './config/jwt.config';
 import emailConfig from './config/email.config';

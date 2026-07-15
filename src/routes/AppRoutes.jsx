@@ -23,7 +23,9 @@ import Profile              from "../pages/Profile";
 import RegisterChild        from "../pages/RegisterChild";
 import RegisterOrphanage    from "../pages/RegisterOrphanage";
 import Reports              from "../pages/Reports";
-import SystemSettings      from "../pages/SystemSettings";
+import StaffProfile         from "../pages/StaffProfile";
+import SystemSettings       from "../pages/SystemSettings";
+import ChildWelfareFollowUpSession from "../pages/ChildWelfareFollowUpSession";
 import VisitRequest         from "../pages/VisitRequest";
 import SahayakAI            from "../pages/SahayakAI";
 import ProtectedRoute       from "./ProtectedRoute";
@@ -41,12 +43,15 @@ export default function AppRoutes() {
           <Route index                                    element={<AdminDashboard />} />
           <Route path="children"                          element={<Children />} />
           <Route path="children/:childId"                 element={<ChildProfile />} />
+          <Route path="children/:childId/welfare-followup" element={<ChildWelfareFollowUpSession />} />
           <Route path="parent-profiles/:parentId"         element={<ParentProfile />} />
+          <Route path="parent-profiles/:parentId/kyc"     element={<ParentKYC />} />
           <Route path="register-child"                    element={<RegisterChild />} />
           <Route path="register-orphanage"                element={<RegisterOrphanage />} />
           <Route path="orphanages"                        element={<Orphanages />} />
           <Route path="orphanages/:orphanageId"           element={<OrphanageDetail />} />
           <Route path="orphanages/:orphanageId/profile"   element={<OrphanageFullProfile />} />
+          <Route path="staff/:staffId"                    element={<StaffProfile />} />
           <Route path="alerts"                            element={<Alerts />} />
           <Route path="profile"                           element={<Profile />} />
           <Route path="adoption-management"               element={<ChildAdoptionManagement />} />
@@ -74,10 +79,12 @@ export default function AppRoutes() {
           <Route path="visit-requests"                  element={<ManageVisitRequests />} />
           <Route path="children"                        element={<Children />} />
           <Route path="children/:childId"               element={<ChildProfile />} />
+          <Route path="children/:childId/welfare-followup" element={<ChildWelfareFollowUpSession />} />
           <Route path="parent-profiles/:parentId"       element={<ParentProfile />} />
           <Route path="register-child"                  element={<RegisterChild />} />
           <Route path="adoption-management"             element={<ChildAdoptionManagement />} />
           <Route path="health-monitoring"               element={<HealthMonitoring />} />
+          <Route path="staff/:staffId"                  element={<StaffProfile />} />
           <Route path="reports"                         element={<Reports />} />
           <Route path="profile"                         element={<Profile />} />
         </Route>
