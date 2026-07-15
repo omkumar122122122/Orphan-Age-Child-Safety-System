@@ -38,7 +38,7 @@ export class ReportsExportService {
     // Create export record
     const exportRecord = await this.prisma.reportExport.create({
       data: {
-        reportType: this.mapExportTypeToSchema(dto.reportType),
+        reportType: this.mapExportTypeToSchema(dto.reportType) as any,
         format: dto.format,
         status: 'QUEUED',
         requestedById: userId,

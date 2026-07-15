@@ -1,4 +1,4 @@
-import apiClient from './apiClient';
+import { apiClient } from './apiClient';
 
 const notificationsService = {
   // Get user's notifications with pagination and filters

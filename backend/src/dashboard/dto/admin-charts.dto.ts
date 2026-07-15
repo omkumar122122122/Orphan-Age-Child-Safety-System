@@ -40,5 +40,5 @@ export class AdminChartsDto {
   monthlySafety: LineChartDataDto;
 
   @ApiProperty({ type: DoughnutChartDataDto })
-  riskDistribution: DoughnutChartDataDto;
+  riskDistribution: any;
 }

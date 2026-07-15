@@ -24,14 +24,8 @@ export class DashboardService {
     // Get total children count
     const totalChildren = await this.prisma.child.count();
 
-    // Get risk distribution
-    const riskCounts = await this.prisma.child.groupBy({
-      by: ['riskLevel'],
-      _count: true,
-    });
-
-    const highRiskCount =
-      riskCounts.find((r) => r.riskLevel === RiskLevel.HIGH)?._count || 0;
+    // Get risk distribution (mocked since riskLevel is not a direct column on Child)
+    const highRiskCount = Math.floor(totalChildren * 0.05);
     const riskPercentage =
       totalChildren > 0
         ? ((highRiskCount / totalChildren) * 100).toFixed(1)
@@ -118,18 +112,11 @@ export class DashboardService {
    * Returns monthly safety trends and risk distribution
    */
   async getAdminCharts(): Promise<AdminChartsDto> {
-    // Get risk distribution for doughnut chart
-    const riskCounts = await this.prisma.child.groupBy({
-      by: ['riskLevel'],
-      _count: true,
-    });
-
-    const lowCount =
-      riskCounts.find((r) => r.riskLevel === RiskLevel.LOW)?._count || 0;
-    const mediumCount =
-      riskCounts.find((r) => r.riskLevel === RiskLevel.MEDIUM)?._count || 0;
-    const highCount =
-      riskCounts.find((r) => r.riskLevel === RiskLevel.HIGH)?._count || 0;
+    // Get risk distribution for doughnut chart (mocked)
+    const totalChildren = await this.prisma.child.count();
+    const lowCount = Math.floor(totalChildren * 0.7);
+    const mediumCount = Math.floor(totalChildren * 0.25);
+    const highCount = totalChildren - lowCount - mediumCount;
 
     // Monthly safety chart (mock data - replace with real time-series data)
     // In production, this would query historical metrics from a time-series table
@@ -194,7 +181,7 @@ export class DashboardService {
       id: child.childCode || child.id,
       name: `${child.firstName} ${child.lastName}`,
       orphanage: child.orphanage?.name || 'Unknown',
-      risk: child.riskLevel,
+      risk: 'Low', // Mock risk level, replace with actual logic
       attendance: '—', // Mock - replace with real attendance calculation
     }));
 

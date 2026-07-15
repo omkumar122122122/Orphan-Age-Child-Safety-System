@@ -184,9 +184,9 @@ export class ReportsService {
 
     // Fill in actual counts
     riskCounts.forEach(item => {
-      const label = riskLevelMap[item.riskLevel];
+      const label = riskLevelMap[item.riskLevel as keyof typeof riskLevelMap];
       if (label) {
-        counts[label] = Number(item.count);
+        counts[label as keyof typeof counts] = Number(item.count);
       }
     });
 

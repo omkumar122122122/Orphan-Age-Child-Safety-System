@@ -1,4 +1,4 @@
-import apiClient from './apiClient';
+import { apiClient } from './apiClient';
 
 const dashboardService = {
   // Admin Dashboard APIs

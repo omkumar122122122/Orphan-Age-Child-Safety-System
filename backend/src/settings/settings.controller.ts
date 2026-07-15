@@ -74,7 +74,7 @@ export class SettingsController {
   @ApiResponse({ status: 200, description: 'General settings updated successfully' })
   async updateGeneral(
     @Body() data: GeneralSettingsDto,
-    @Request() req,
+    @Request() req: any,
   ) {
     return this.settingsService.updateGeneral(data, req.user.id);
   }
@@ -84,7 +84,7 @@ export class SettingsController {
   @ApiResponse({ status: 200, description: 'Authentication settings updated successfully' })
   async updateAuthentication(
     @Body() data: AuthenticationSettingsDto,
-    @Request() req,
+    @Request() req: any,
   ) {
     return this.settingsService.updateAuthentication(data, req.user.id);
   }
@@ -94,7 +94,7 @@ export class SettingsController {
   @ApiResponse({ status: 200, description: 'Registration settings updated successfully' })
   async updateRegistration(
     @Body() data: RegistrationSettingsDto,
-    @Request() req,
+    @Request() req: any,
   ) {
     return this.settingsService.updateRegistration(data, req.user.id);
   }
@@ -104,7 +104,7 @@ export class SettingsController {
   @ApiResponse({ status: 200, description: 'Child safety settings updated successfully' })
   async updateChildSafety(
     @Body() data: ChildSafetySettingsDto,
-    @Request() req,
+    @Request() req: any,
   ) {
     return this.settingsService.updateChildSafety(data, req.user.id);
   }
@@ -114,7 +114,7 @@ export class SettingsController {
   @ApiResponse({ status: 200, description: 'Notification settings updated successfully' })
   async updateNotifications(
     @Body() data: NotificationSettingsDto,
-    @Request() req,
+    @Request() req: any,
   ) {
     return this.settingsService.updateNotifications(data, req.user.id);
   }
@@ -124,7 +124,7 @@ export class SettingsController {
   @ApiResponse({ status: 200, description: 'Alert settings updated successfully' })
   async updateAlerts(
     @Body() data: AlertSettingsDto,
-    @Request() req,
+    @Request() req: any,
   ) {
     return this.settingsService.updateAlerts(data, req.user.id);
   }
@@ -134,7 +134,7 @@ export class SettingsController {
   @ApiResponse({ status: 200, description: 'AI settings updated successfully' })
   async updateAI(
     @Body() data: AISettingsDto,
-    @Request() req,
+    @Request() req: any,
   ) {
     return this.settingsService.updateAI(data, req.user.id);
   }
@@ -144,7 +144,7 @@ export class SettingsController {
   @ApiResponse({ status: 200, description: 'Report settings updated successfully' })
   async updateReports(
     @Body() data: ReportSettingsDto,
-    @Request() req,
+    @Request() req: any,
   ) {
     return this.settingsService.updateReports(data, req.user.id);
   }
@@ -154,7 +154,7 @@ export class SettingsController {
   @ApiResponse({ status: 200, description: 'Backup settings updated successfully' })
   async updateBackup(
     @Body() data: BackupSettingsDto,
-    @Request() req,
+    @Request() req: any,
   ) {
     return this.settingsService.updateBackup(data, req.user.id);
   }
@@ -164,7 +164,7 @@ export class SettingsController {
   @ApiResponse({ status: 200, description: 'Audit settings updated successfully' })
   async updateAudit(
     @Body() data: AuditSettingsDto,
-    @Request() req,
+    @Request() req: any,
   ) {
     return this.settingsService.updateAudit(data, req.user.id);
   }
@@ -174,7 +174,7 @@ export class SettingsController {
   @ApiResponse({ status: 200, description: 'Security settings updated successfully' })
   async updateSecurity(
     @Body() data: SecuritySettingsDto,
-    @Request() req,
+    @Request() req: any,
   ) {
     return this.settingsService.updateSecurity(data, req.user.id);
   }
@@ -182,7 +182,7 @@ export class SettingsController {
   @Post('backup')
   @ApiOperation({ summary: 'Create manual database backup' })
   @ApiResponse({ status: 200, description: 'Backup created successfully' })
-  async createBackup(@Request() req) {
+  async createBackup(@Request() req: any) {
     return this.settingsService.createBackup(req.user.id);
   }
 
@@ -191,7 +191,7 @@ export class SettingsController {
   @ApiResponse({ status: 200, description: 'Backup restored successfully' })
   async restoreBackup(
     @Body('backupId') backupId: string,
-    @Request() req,
+    @Request() req: any,
   ) {
     return this.settingsService.restoreBackup(backupId, req.user.id);
   }
@@ -199,7 +199,7 @@ export class SettingsController {
   @Post('reset-default')
   @ApiOperation({ summary: 'Reset all settings to defaults' })
   @ApiResponse({ status: 200, description: 'Settings reset to defaults successfully' })
-  async resetToDefaults(@Request() req) {
+  async resetToDefaults(@Request() req: any) {
     return this.settingsService.resetToDefaults(req.user.id);
   }
 }

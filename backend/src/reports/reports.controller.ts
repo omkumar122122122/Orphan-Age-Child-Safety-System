@@ -56,7 +56,7 @@ export class ReportsController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - ADMIN or ORPHANAGE role required' })
-  async getDashboardStats(@Request() req): Promise<DashboardStatsDto> {
+  async getDashboardStats(@Request() req: any): Promise<DashboardStatsDto> {
     const { userId, role, orphanageId } = this.extractUserInfo(req);
     return this.reportsService.getDashboardStats(userId, role, orphanageId);
   }
@@ -74,7 +74,7 @@ export class ReportsController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - ADMIN or ORPHANAGE role required' })
-  async getMonthlyTrend(@Request() req): Promise<MonthlyTrendDto> {
+  async getMonthlyTrend(@Request() req: any): Promise<MonthlyTrendDto> {
     const { userId, role, orphanageId } = this.extractUserInfo(req);
     return this.reportsService.getMonthlyTrend(userId, role, orphanageId);
   }
@@ -92,7 +92,7 @@ export class ReportsController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - ADMIN or ORPHANAGE role required' })
-  async getRiskDistribution(@Request() req): Promise<RiskDistributionDto> {
+  async getRiskDistribution(@Request() req: any): Promise<RiskDistributionDto> {
     const { userId, role, orphanageId } = this.extractUserInfo(req);
     return this.reportsService.getRiskDistribution(userId, role, orphanageId);
   }
@@ -110,7 +110,7 @@ export class ReportsController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - ADMIN or ORPHANAGE role required' })
-  async getComplianceSummary(@Request() req): Promise<ComplianceSummaryDto> {
+  async getComplianceSummary(@Request() req: any): Promise<ComplianceSummaryDto> {
     const { userId, role, orphanageId } = this.extractUserInfo(req);
     return this.reportsService.getComplianceSummary(userId, role, orphanageId);
   }
@@ -128,7 +128,7 @@ export class ReportsController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - ADMIN or ORPHANAGE role required' })
-  async getActivityBreakdown(@Request() req): Promise<ActivityBreakdownDto> {
+  async getActivityBreakdown(@Request() req: any): Promise<ActivityBreakdownDto> {
     const { userId, role, orphanageId } = this.extractUserInfo(req);
     return this.reportsService.getActivityBreakdown(userId, role, orphanageId);
   }
@@ -149,7 +149,7 @@ export class ReportsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - ADMIN or ORPHANAGE role required' })
   async exportReport(
-    @Request() req,
+    @Request() req: any,
     @Body() dto: ExportReportDto,
   ): Promise<ExportReportResponseDto> {
     const { userId, role, orphanageId } = this.extractUserInfo(req);
@@ -169,7 +169,7 @@ export class ReportsController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - ADMIN or ORPHANAGE role required' })
-  async getExportHistory(@Request() req): Promise<ReportHistoryDto> {
+  async getExportHistory(@Request() req: any): Promise<ReportHistoryDto> {
     const { userId, role } = this.extractUserInfo(req);
     return this.reportsExportService.getExportHistory(userId, role);
   }
@@ -195,7 +195,7 @@ export class ReportsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - ADMIN or ORPHANAGE role required' })
   async getDownloadUrl(
-    @Request() req,
+    @Request() req: any,
     @Param('id') exportId: string,
   ): Promise<{ downloadUrl: string }> {
     const { userId, role } = this.extractUserInfo(req);
