@@ -1,6 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Role } from '@prisma/client';
+import { Role } from '../../common/enums/role.enum';
 
 @Injectable()
 export class OrphanageOwnershipGuard implements CanActivate {

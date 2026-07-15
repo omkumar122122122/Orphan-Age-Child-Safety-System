@@ -399,13 +399,10 @@ async function main() {
       gender: ChildGender.MALE,
       bloodGroup: BloodGroup.O_POSITIVE,
       orphanageId: orphanage1.id,
-      childStatus: ChildStatus.ACTIVE,
+      currentStatus: ChildStatus.ACTIVE,
       healthStatus: HealthStatus.HEALTHY,
       admissionDate: new Date('2016-01-15'),
-      currentLocation: orphanage1.city,
-      currentState: orphanage1.state,
       isAdoptable: true,
-      specialNeeds: false,
     },
   });
 
@@ -420,13 +417,10 @@ async function main() {
       gender: ChildGender.FEMALE,
       bloodGroup: BloodGroup.A_POSITIVE,
       orphanageId: orphanage1.id,
-      childStatus: ChildStatus.ACTIVE,
+      currentStatus: ChildStatus.ACTIVE,
       healthStatus: HealthStatus.HEALTHY,
       admissionDate: new Date('2017-02-10'),
-      currentLocation: orphanage1.city,
-      currentState: orphanage1.state,
       isAdoptable: true,
-      specialNeeds: false,
     },
   });
 
@@ -441,13 +435,10 @@ async function main() {
       gender: ChildGender.MALE,
       bloodGroup: BloodGroup.B_POSITIVE,
       orphanageId: orphanage2.id,
-      childStatus: ChildStatus.ACTIVE,
+      currentStatus: ChildStatus.ACTIVE,
       healthStatus: HealthStatus.UNDER_TREATMENT,
       admissionDate: new Date('2015-06-01'),
-      currentLocation: orphanage2.city,
-      currentState: orphanage2.state,
       isAdoptable: true,
-      specialNeeds: false,
     },
   });
   console.log('   ✅ 3 children created');

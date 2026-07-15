@@ -26,7 +26,7 @@ export class EncryptionService {
    * Encrypt sensitive data
    * Returns base64 encoded string: salt:iv:authTag:encryptedData
    */
-  encrypt(plaintext: string): string {
+  encrypt(plaintext: string): string | null {
     if (!plaintext) return null;
 
     const iv = crypto.randomBytes(this.ivLength);
@@ -45,7 +45,7 @@ export class EncryptionService {
    * Decrypt encrypted data
    * Expects format: iv:authTag:encryptedData (base64 encoded)
    */
-  decrypt(encryptedData: string): string {
+  decrypt(encryptedData: string): string | null {
     if (!encryptedData) return null;
 
     try {
@@ -78,7 +78,7 @@ export class EncryptionService {
   /**
    * Encrypt bank account number (mask + encrypt)
    */
-  encryptBankAccount(accountNumber: string): string {
+  encryptBankAccount(accountNumber: string): string | null {
     return this.encrypt(accountNumber);
   }
 
@@ -86,7 +86,7 @@ export class EncryptionService {
    * Decrypt and mask bank account number
    * Returns: XXXXXX1234
    */
-  decryptAndMaskBankAccount(encryptedAccount: string): string {
+  decryptAndMaskBankAccount(encryptedAccount: string): string | null {
     if (!encryptedAccount) return null;
     const decrypted = this.decrypt(encryptedAccount);
     if (!decrypted || decrypted.length <= 4) return decrypted;
@@ -96,28 +96,28 @@ export class EncryptionService {
   /**
    * Encrypt GST number
    */
-  encryptGST(gstNumber: string): string {
+  encryptGST(gstNumber: string): string | null {
     return this.encrypt(gstNumber);
   }
 
   /**
    * Decrypt GST number
    */
-  decryptGST(encryptedGST: string): string {
+  decryptGST(encryptedGST: string): string | null {
     return this.decrypt(encryptedGST);
   }
 
   /**
    * Encrypt PAN number
    */
-  encryptPAN(panNumber: string): string {
+  encryptPAN(panNumber: string): string | null {
     return this.encrypt(panNumber);
   }
 
   /**
    * Decrypt PAN number
    */
-  decryptPAN(encryptedPAN: string): string {
+  decryptPAN(encryptedPAN: string): string | null {
     return this.decrypt(encryptedPAN);
   }
 

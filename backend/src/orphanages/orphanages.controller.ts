@@ -29,7 +29,7 @@ import { OrphanageQueryDto } from './dto/orphanage-query.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
-import { Role } from '@prisma/client';
+import { Role } from '../common/enums/role.enum';
 import { OrphanageOwnershipGuard } from './guards/orphanage-ownership.guard';
 
 @ApiTags('Orphanages')
@@ -183,5 +183,40 @@ export class OrphanagesController {
   @ApiResponse({ status: 404, description: 'Orphanage not found' })
   async remove(@Param('id') id: string, @Req() req: any) {
     return this.orphanagesService.remove(id, req.user.id);
+  }
+
+  @Put(':id/licenses/:licenseId/verify')
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Verify an orphanage license' })
+  @ApiResponse({
+    status: 200,
+    description: 'License verified successfully and compliance recalculated',
+  })
+  @ApiResponse({ status: 404, description: 'License not found' })
+  async verifyLicense(
+    @Param('id') orphanageId: string,
+    @Param('licenseId') licenseId: string,
+    @Req() req: any,
+  ) {
+    return this.orphanagesService.verifyLicense(
+      orphanageId,
+      licenseId,
+      req.user.id,
+    );
+  }
+
+  @Put(':id/recalculate-compliance')
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Manually recalculate orphanage compliance score' })
+  @ApiResponse({
+    status: 200,
+    description: 'Compliance score recalculated successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Orphanage not found' })
+  async recalculateCompliance(
+    @Param('id') id: string,
+    @Req() req: any,
+  ) {
+    return this.orphanagesService.recalculateCompliance(id, req.user.id);
   }
 }
