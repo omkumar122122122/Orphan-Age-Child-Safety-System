@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
@@ -12,9 +13,7 @@ import NotificationPanel from "../components/NotificationPanel";
 import { StatCard } from "../components/Card";
 import DataTable from "../components/DataTable";
 import { useAuth } from "../context/AuthContext";
-import { monthlySafety, riskDistribution } from "../data/dummyData";
-import { alertsService } from "../services/alertsService";
-import { childrenService } from "../services/childrenService";
+import dashboardService from "../services/dashboardService";
 
 const quickActions = [
   { label: "Register Child",      to: "/admin/register-child",     icon: FiUserPlus,     color: "bg-civic-600",   ring: "ring-civic-500/20",   desc: "New child intake" },
@@ -23,12 +22,12 @@ const quickActions = [
   { label: "Review Alerts",       to: "/admin/alerts",             icon: FiAlertTriangle,color: "bg-red-600",     ring: "ring-red-500/20",     desc: "Safety flags pending" },
 ];
 
-const aiInsights = [
-  { label: "AI Safety Score",       value: "94%",  up: true,  icon: FiShield,        color: "text-violet-600 dark:text-violet-400",    bg: "bg-violet-50 dark:bg-violet-500/10" },
-  { label: "Compliance Rate",       value: "92%",  up: true,  icon: FiActivity,      color: "text-civic-600 dark:text-civic-400",      bg: "bg-civic-50 dark:bg-civic-500/10" },
-  { label: "Risk-flagged Children", value: "8%",   up: false, icon: FiAlertTriangle, color: "text-amber-600 dark:text-amber-400",      bg: "bg-amber-50 dark:bg-amber-500/10" },
-  { label: "Avg Attendance",        value: "89.8%",up: true,  icon: FiTrendingUp,    color: "text-emerald-600 dark:text-emerald-400",  bg: "bg-emerald-50 dark:bg-emerald-500/10" },
-];
+const iconMap = {
+  'AI Safety Score': FiShield,
+  'Compliance Rate': FiActivity,
+  'Risk-flagged Children': FiAlertTriangle,
+  'Avg Attendance': FiTrendingUp,
+};
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 10 },
@@ -38,10 +37,10 @@ const fadeUp = (delay = 0) => ({
 
 export default function AdminDashboard() {
   const { user } = useAuth();
-  const [alertStats, setAlertStats]       = useState({ total: 0, high: 0, pending: 0 });
-  const [notifications, setNotifications] = useState([]);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [chartsData, setChartsData] = useState(null);
   const [recentChildren, setRecentChildren] = useState([]);
-  const [loading, setLoading]             = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadDashboardData();
@@ -50,68 +49,39 @@ export default function AdminDashboard() {
   async function loadDashboardData() {
     try {
       setLoading(true);
-      const [alertResult, childrenResult] = await Promise.allSettled([
-        alertsService.getAll(),
-        childrenService.getAll({ limit: 5, sortOrder: "desc" }),
+      const [statsResponse, chartsResponse, childrenResponse] = await Promise.all([
+        dashboardService.getAdminStats(),
+        dashboardService.getAdminCharts(),
+        dashboardService.getAdminRecentChildren(),
       ]);
 
-      if (alertResult.status === "fulfilled") {
-        const result = alertResult.value;
-        setAlertStats(result?.stats || { total: 0, high: 0, pending: 0 });
-
-        // Feed alerts into the notification panel
-        const alertItems = (result?.data || []).slice(0, 8).map((a) => ({
-          id: a.id,
-          title: a.title,
-          detail: a.detail,
-          type: "Alert",
-          time: new Date(a.createdAt).toLocaleString("en-IN"),
-        }));
-        setNotifications(alertItems);
-      }
-
-      if (childrenResult.status === "fulfilled") {
-        const data = childrenResult.value;
-        setRecentChildren(data?.data || []);
-      }
-    } catch {
-      // Silently fall back — dashboard shows zeros
+      setDashboardData(statsResponse.data);
+      setChartsData(chartsResponse.data);
+      setRecentChildren(childrenResponse.data.children || []);
+    } catch (error) {
+      console.error('Failed to load admin dashboard:', error);
     } finally {
       setLoading(false);
     }
   }
 
-  // ── Build live stat cards using real alert counts ──
-  const stats = [
-    {
-      label: "Registered Children",
-      value: loading ? "…" : recentChildren.length > 0 ? `${recentChildren.length}+` : "—",
-      trend: "+8.2%",
-      icon: FiUsers,
-      tone: "blue",
-    },
-    {
-      label: "Safe Zones Online",
-      value: "42",
-      trend: "+3",
-      icon: FiShield,
-      tone: "green",
-    },
-    {
-      label: "Active Orphanages",
-      value: "18",
-      trend: "+2",
-      icon: FiHome,
-      tone: "amber",
-    },
-    {
-      label: "Critical Alerts",
-      value: loading ? "…" : alertStats.high,
-      trend: alertStats.pending > 0 ? `${alertStats.pending} pending` : "All clear",
-      icon: FiAlertTriangle,
-      tone: "red",
-    },
-  ];
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-civic-500 mx-auto"></div>
+          <p className="mt-4 text-slate-600 dark:text-slate-400">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const aiInsights = dashboardData?.aiInsights || [];
+  const stats = dashboardData?.stats || [];
+  const systemStatus = dashboardData?.systemStatus || 'Unknown';
+  const aiModelStatus = dashboardData?.aiModelStatus || 'Unknown';
+  const monthlySafety = chartsData?.monthlySafety || { labels: [], datasets: [] };
+  const riskDistribution = chartsData?.riskDistribution || { labels: [], datasets: [] };
 
   return (
     <div className="space-y-6">
@@ -139,14 +109,14 @@ export default function AdminDashboard() {
               <span className="flex h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.8)]" />
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">System</p>
-                <p className="text-xs font-bold text-emerald-700 dark:text-emerald-300">Operational</p>
+                <p className="text-xs font-bold text-emerald-700 dark:text-emerald-300">{systemStatus}</p>
               </div>
             </div>
             <div className="flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 dark:border-violet-500/20 dark:bg-violet-500/10">
               <FiZap className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400">AI Model</p>
-                <p className="text-xs font-bold text-violet-700 dark:text-violet-300">Active</p>
+                <p className="text-xs font-bold text-violet-700 dark:text-violet-300">{aiModelStatus}</p>
               </div>
             </div>
           </div>
@@ -155,11 +125,19 @@ export default function AdminDashboard() {
         {/* AI Insight strip */}
         <div className="grid divide-y divide-slate-100 border-t border-slate-100 sm:grid-cols-4 sm:divide-x sm:divide-y-0 dark:divide-slate-800 dark:border-slate-800">
           {aiInsights.map((kpi) => {
-            const Icon = kpi.icon;
+            const Icon = iconMap[kpi.label] || FiActivity;
+            const colorMap = {
+              'AI Safety Score': { color: "text-violet-600 dark:text-violet-400", bg: "bg-violet-50 dark:bg-violet-500/10" },
+              'Compliance Rate': { color: "text-civic-600 dark:text-civic-400", bg: "bg-civic-50 dark:bg-civic-500/10" },
+              'Risk-flagged Children': { color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-500/10" },
+              'Avg Attendance': { color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-500/10" },
+            };
+            const colors = colorMap[kpi.label] || { color: "text-slate-600", bg: "bg-slate-50" };
+            
             return (
               <div key={kpi.label} className="flex items-center gap-3 px-5 py-3">
-                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${kpi.bg}`}>
-                  <Icon className={`h-3.5 w-3.5 ${kpi.color}`} />
+                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${colors.bg}`}>
+                  <Icon className={`h-3.5 w-3.5 ${colors.color}`} />
                 </div>
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{kpi.label}</p>
@@ -230,36 +208,24 @@ export default function AdminDashboard() {
                 <FiActivity className="h-3.5 w-3.5" />
               </div>
               <h2 className="section-card-title">Recent Child Records</h2>
-              {recentChildren.length > 0 && (
-                <span className="badge badge-neutral">{recentChildren.length} shown</span>
-              )}
+              <span className="badge badge-neutral">{recentChildren.length} recent</span>
             </div>
             <Link to="/admin/children" className="flex items-center gap-1 text-xs font-semibold text-civic-600 hover:underline dark:text-civic-400">
               View all <FiArrowRight className="h-3 w-3" />
             </Link>
           </div>
-          {loading ? (
-            <div className="flex items-center justify-center py-10">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-civic-500 border-t-transparent" />
-            </div>
-          ) : recentChildren.length === 0 ? (
-            <p className="px-4 py-8 text-center text-sm text-slate-400">No children registered yet.</p>
-          ) : (
-            <DataTable
-              columns={[
-                { key: "childCode", label: "Child ID" },
-                { key: "name",      label: "Name" },
-                { key: "orphanage", label: "Orphanage" },
-                { key: "risk",      label: "Risk" },
-                { key: "attendance",label: "Attendance" },
-              ]}
-              rows={recentChildren}
-            />
-          )}
+          <DataTable
+            columns={[
+              { key: "id",         label: "Child ID" },
+              { key: "name",       label: "Name" },
+              { key: "orphanage",  label: "Orphanage" },
+              { key: "risk",       label: "Risk" },
+              { key: "attendance", label: "Attendance" },
+            ]}
+            rows={recentChildren}
+          />
         </div>
-
-        {/* Live alert notifications panel */}
-        <NotificationPanel items={notifications} />
+        <NotificationPanel />
       </motion.div>
     </div>
   );
