@@ -18,6 +18,7 @@ let linkedChild = null;
 /* ── Quick navigation links */
 const quickLinks = [
   { label: "Visit Request",  to: "/parent/visit-request", icon: FiCalendar, desc: "Schedule a visit",   color: "bg-civic-600",  ring: "ring-civic-500/20"  },
+  { label: "KYC Status",     to: "/parent/kyc",           icon: FiShield,   desc: "Compliance & Docs", color: "bg-emerald-600", ring: "ring-emerald-500/20" },
   { label: "My Profile",     to: "/parent/profile",       icon: FiUser,     desc: "View & update info", color: "bg-indigo-600", ring: "ring-indigo-500/20" },
   { label: "Notifications",  to: "/parent/notifications", icon: FiBell,     desc: "Alerts & updates",   color: "bg-amber-600",  ring: "ring-amber-500/20"  },
 ];
