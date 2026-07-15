@@ -8,7 +8,6 @@ import {
 import Breadcrumb from "../components/Breadcrumb";
 import NotificationPanel from "../components/NotificationPanel";
 import { useAuth } from "../context/AuthContext";
-import { notifications } from "../data/dummyData";
 import { parentsService } from "../services/parentsService";
 import { classNames } from "../utils/formatters";
 
@@ -216,7 +215,7 @@ export default function ParentDashboard() {
 
       {/* Notifications */}
       <motion.div {...fadeUp(0.15)}>
-        <NotificationPanel items={notifications} />
+        <NotificationPanel />
       </motion.div>
 
       {/* ── Sahayak AI — inline chat section ─────────────────── */}

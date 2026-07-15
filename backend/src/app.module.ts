@@ -12,6 +12,9 @@ import { StaffModule } from './staff/staff.module';
 import { OrphanagesModule } from './orphanages/orphanages.module';
 import { AdoptionsModule } from './adoptions/adoptions.module';
 import { ChatModule } from './chat/chat.module';
+import { VisitRequestsModule } from './visit-requests/visit-requests.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { SecurityHeadersMiddleware } from './common/middleware/security-headers.middleware';
 import appConfig from './config/app.config';
@@ -61,6 +64,9 @@ import emailConfig from './config/email.config';
     OrphanagesModule,
     AdoptionsModule,
     ChatModule,
+    VisitRequestsModule,
+    NotificationsModule,
+    DashboardModule,
   ],
   providers: [
     // Apply throttle guard globally
