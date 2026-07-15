@@ -1,4 +1,19 @@
-import { FiActivity, FiAlertTriangle, FiCamera, FiCalendar, FiHome, FiPlusCircle, FiShield, FiUser, FiUsers } from "react-icons/fi";
+import {
+  FiActivity,
+  FiAlertTriangle,
+  FiBriefcase,
+  FiCamera,
+  FiCalendar,
+  FiFileText,
+  FiHeart,
+  FiHome,
+  FiMessageCircle,
+  FiPlusCircle,
+  FiShield,
+  FiUser,
+  FiUserCheck,
+  FiUsers
+} from "react-icons/fi";
 
 export const users = [
   {
@@ -357,6 +372,7 @@ export const adminNav = [
   { label: "Register Child", path: "/admin/register-child", icon: FiPlusCircle },
   { label: "Register Orphanage", path: "/admin/register-orphanage", icon: FiHome },
   { label: "Orphanages", path: "/admin/orphanages", icon: FiHome },
+  { label: "Staff Management", path: "/admin/staff", icon: FiBriefcase },
   { label: "Alerts", path: "/admin/alerts", icon: FiAlertTriangle },
   { label: "Profile", path: "/admin/profile", icon: FiUser }
 ];
@@ -376,6 +392,7 @@ export const orphanageNav = [
   { label: "Visit Requests",     path: "/orphanage/visit-requests",   icon: FiCalendar },
   { label: "Children",           path: "/orphanage/children",         icon: FiUsers },
   { label: "Register Child",     path: "/orphanage/register-child",   icon: FiPlusCircle },
+  { label: "Staff Management",   path: "/orphanage/staff",            icon: FiBriefcase },
   { label: "Adoption Management", path: "/orphanage/adoption-management", icon: FiFileText },
   { label: "Health Monitoring",  path: "/orphanage/health-monitoring",icon: FiHeart },
   { label: "Reports",            path: "/orphanage/reports",          icon: FiShield },

@@ -1,23 +1,15 @@
 import {
-  ArcElement,
-  CategoryScale,
-  Chart as ChartJS,
-  Filler,
-  Legend,
-  LinearScale,
-  LineElement,
-  PointElement,
-  Tooltip,
+  ArcElement, CategoryScale, Chart as ChartJS, Filler,
+  Legend, LinearScale, LineElement, PointElement, Tooltip,
 } from "chart.js";
 import { Doughnut, Line } from "react-chartjs-2";
-import Card from "./Card";
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement,
   ArcElement, Filler, Tooltip, Legend
 );
 
-const lineOptions = {
+const LINE_OPTIONS = {
   responsive: true,
   maintainAspectRatio: false,
   interaction: { mode: "index", intersect: false },
@@ -27,30 +19,31 @@ const lineOptions = {
       labels: {
         usePointStyle: true,
         pointStyle: "circle",
-        boxWidth: 6,
-        boxHeight: 6,
-        padding: 16,
-        font: { family: "Inter", size: 12 },
-        color: "#64748b",
+        boxWidth: 7,
+        boxHeight: 7,
+        padding: 18,
+        font: { family: "Inter", size: 12, weight: "500" },
+        color: "#94a3b8",
       },
     },
     tooltip: {
       backgroundColor: "#0f172a",
-      titleFont: { family: "Inter", size: 12, weight: "600" },
+      titleFont: { family: "Inter", size: 12, weight: "700" },
       bodyFont:  { family: "Inter", size: 12 },
-      padding: 12,
-      cornerRadius: 10,
+      padding: 14,
+      cornerRadius: 12,
+      borderColor: "rgba(255,255,255,0.08)",
+      borderWidth: 1,
       displayColors: true,
       boxWidth: 8,
       boxHeight: 8,
-      boxPadding: 4,
+      boxPadding: 5,
     },
   },
   scales: {
     y: {
-      beginAtZero: true,
-      max: 100,
-      grid: { color: "rgba(148,163,184,0.10)", drawBorder: false },
+      beginAtZero: false,
+      grid: { color: "rgba(148,163,184,0.08)", drawBorder: false },
       ticks: {
         font: { family: "Inter", size: 11 },
         color: "#94a3b8",
@@ -70,55 +63,66 @@ const lineOptions = {
   },
 };
 
-const doughnutOptions = {
+const DOUGHNUT_OPTIONS = {
   responsive: true,
   maintainAspectRatio: false,
-  cutout: "70%",
+  cutout: "72%",
   plugins: {
     legend: {
       position: "bottom",
       labels: {
         usePointStyle: true,
         pointStyle: "circle",
-        boxWidth: 6,
-        boxHeight: 6,
-        padding: 16,
-        font: { family: "Inter", size: 12 },
-        color: "#64748b",
+        boxWidth: 7,
+        boxHeight: 7,
+        padding: 18,
+        font: { family: "Inter", size: 12, weight: "500" },
+        color: "#94a3b8",
       },
     },
     tooltip: {
       backgroundColor: "#0f172a",
-      titleFont: { family: "Inter", size: 12, weight: "600" },
+      titleFont: { family: "Inter", size: 12, weight: "700" },
       bodyFont:  { family: "Inter", size: 12 },
       padding: 12,
       cornerRadius: 10,
+      borderColor: "rgba(255,255,255,0.08)",
+      borderWidth: 1,
     },
   },
 };
 
-export function LineChartCard({ title, data }) {
+function CardShell({ title, subtitle, action, children }) {
   return (
-    <Card>
-      <div className="px-5 pt-5">
-        <h2 className="text-sm font-bold text-slate-900 dark:text-white">{title}</h2>
+    <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+        <div>
+          <h2 className="text-sm font-bold text-slate-900 dark:text-white">{title}</h2>
+          {subtitle && <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>}
+        </div>
+        {action && <div>{action}</div>}
       </div>
-      <div className="px-5 pb-5 pt-4" style={{ height: 260 }}>
-        <Line data={data} options={lineOptions} />
-      </div>
-    </Card>
+      <div className="p-5">{children}</div>
+    </div>
   );
 }
 
-export function DoughnutChartCard({ title, data }) {
+export function LineChartCard({ title, subtitle, data, action }) {
   return (
-    <Card>
-      <div className="px-5 pt-5">
-        <h2 className="text-sm font-bold text-slate-900 dark:text-white">{title}</h2>
+    <CardShell title={title} subtitle={subtitle} action={action}>
+      <div style={{ height: 280 }}>
+        <Line data={data} options={LINE_OPTIONS} />
       </div>
-      <div className="px-5 pb-5 pt-4" style={{ height: 260 }}>
-        <Doughnut data={data} options={doughnutOptions} />
+    </CardShell>
+  );
+}
+
+export function DoughnutChartCard({ title, subtitle, data, action }) {
+  return (
+    <CardShell title={title} subtitle={subtitle} action={action}>
+      <div style={{ height: 280 }}>
+        <Doughnut data={data} options={DOUGHNUT_OPTIONS} />
       </div>
-    </Card>
+    </CardShell>
   );
 }

@@ -1,5 +1,6 @@
+import { useState, useEffect } from "react";
 import {
-  FiArrowLeft, FiFileText, FiHome, FiMail,
+  FiArrowLeft, FiFileText, FiHome, FiLoader, FiMail,
   FiPhone, FiShield, FiUserCheck, FiUsers
 } from "react-icons/fi";
 import { useNavigate, useParams } from "react-router-dom";
@@ -8,27 +9,47 @@ import Breadcrumb from "../components/Breadcrumb";
 import Button from "../components/Button";
 import Card from "../components/Card";
 import { useAuth } from "../context/AuthContext";
-import { children } from "../data/dummyData";
 import { roleLabels } from "../utils/constants";
 import { classNames } from "../utils/formatters";
+import { parentsService } from "../services/parentsService";
 
 export default function ParentProfile() {
   const { parentId } = useParams();
   const navigate     = useNavigate();
   const { user }     = useAuth();
 
-  const visibleChildren =
-    user?.role === "orphanage"
-      ? children.filter((c) => c.orphanage === user.department)
-      : children;
+  const [parent, setParent] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState("");
 
-  const child  = visibleChildren.find((c) => c.parentDetails?.id === parentId);
-  const parent = child?.parentDetails;
+  useEffect(() => {
+    if (!parentId) return;
+    setLoading(true);
+    parentsService
+      .getParentById(parentId)
+      .then((data) => setParent(data))
+      .catch((err) => setFetchError(err?.message || "Failed to load parent profile"))
+      .finally(() => setLoading(false));
+  }, [parentId]);
 
-  if (!parent) {
+  if (loading) {
     return (
       <div className="space-y-5">
-        <Breadcrumb items={[roleLabels[user.role], "Parent Profile"]} />
+        <Breadcrumb items={[roleLabels[user?.role] ?? "Portal", "Parent Profile"]} />
+        <Card>
+          <div className="flex items-center justify-center py-20 gap-3">
+            <FiLoader className="h-7 w-7 animate-spin text-civic-600" />
+            <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">Loading profile...</span>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!parent || fetchError) {
+    return (
+      <div className="space-y-5">
+        <Breadcrumb items={[roleLabels[user?.role] ?? "Portal", "Parent Profile"]} />
         <Card>
           <div className="flex flex-col items-center gap-4 px-6 py-12 text-center">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 dark:bg-slate-800">
@@ -37,7 +58,7 @@ export default function ParentProfile() {
             <div>
               <h1 className="text-base font-bold text-slate-900 dark:text-white">Parent Profile Not Available</h1>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                This parent record could not be found for your dashboard access.
+                {fetchError || "This parent record could not be found."}
               </p>
             </div>
             <Button icon={FiArrowLeft} onClick={() => navigate(-1)}>Back</Button>
@@ -47,69 +68,88 @@ export default function ParentProfile() {
     );
   }
 
+  // Normalize field names from backend ParentProfileDto
+  const fullName    = `${parent.firstName ?? ""} ${parent.lastName ?? ""}`.trim();
+  const initials    = fullName.split(" ").map(n => n[0]).join("").slice(0, 2) || "P";
+  const address     = parent.addresses?.[0];
+  const addressStr  = address
+    ? `${address.addressLine1 ?? ""}, ${address.city ?? ""}, ${address.state ?? ""}`.replace(/^,\s*|,\s*$/g, "")
+    : "Not provided";
+
   return (
     <div className="space-y-5">
-      <Breadcrumb items={[roleLabels[user.role], "Parent Profile", parent.id]} />
+      <Breadcrumb items={[roleLabels[user?.role] ?? "Portal", "Parent Profile", parent.id]} />
 
       {/* Page header */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
         <div className="flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-xl font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
-            {parent.fatherName?.split(" ").map(n => n[0]).join("").slice(0, 2) ?? "P"}
+            {initials}
           </div>
           <div>
-            <h1 className="page-title">Parent / Guardian Follow-up</h1>
-            <p className="page-subtitle">
-              Linked to {child.name} ({child.id})
-            </p>
+            <h1 className="page-title">Parent / Guardian Profile</h1>
+            <p className="page-subtitle">{fullName} · {parent.email}</p>
           </div>
         </div>
         <Button icon={FiArrowLeft} variant="secondary" onClick={() => navigate(-1)}>Back</Button>
       </div>
 
-      {/* AI verification strip */}
+      {/* Status strip */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
-          { label: "Home Study",      value: parent.homeStudyStatus,     ok: parent.homeStudyStatus === "Approved" },
-          { label: "Police Check",    value: parent.policeVerification,  ok: parent.policeVerification === "Completed" },
-          { label: "Adoption Order",  value: parent.adoptionOrderId,     ok: true },
-          { label: "Has Other Child", value: parent.hasAnotherChild ? "Yes" : "No", ok: null },
+          { label: "Verification",  value: parent.verificationStatus  ?? "PENDING",  ok: parent.verificationStatus === "APPROVED" },
+          { label: "KYC Status",    value: parent.kycStatus           ?? "PENDING",  ok: parent.kycStatus === "APPROVED" },
+          { label: "Trust Score",   value: `${parent.trustScore ?? 0}/100`,           ok: (parent.trustScore ?? 0) >= 70 },
+          { label: "Active",        value: parent.isActive ? "Yes" : "No",            ok: parent.isActive },
         ].map((b) => (
-          <div key={b.label} className={`rounded-xl border px-4 py-3 ${b.ok === true ? "border-green-100 bg-green-50 dark:border-green-500/20 dark:bg-green-500/10" : b.ok === false ? "border-amber-100 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10" : "border-gray-100 bg-gray-50 dark:border-slate-700 dark:bg-slate-800"}`}>
+          <div
+            key={b.label}
+            className={`rounded-xl border px-4 py-3 ${
+              b.ok
+                ? "border-green-100 bg-green-50 dark:border-green-500/20 dark:bg-green-500/10"
+                : "border-amber-100 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10"
+            }`}
+          >
             <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">{b.label}</p>
-            <p className={`mt-1 text-sm font-bold ${b.ok === true ? "text-green-700 dark:text-green-400" : b.ok === false ? "text-amber-700 dark:text-amber-400" : "text-slate-700 dark:text-slate-200"}`}>{b.value}</p>
+            <p className={`mt-1 text-sm font-bold ${b.ok ? "text-green-700 dark:text-green-400" : "text-amber-700 dark:text-amber-400"}`}>
+              {b.value}
+            </p>
           </div>
         ))}
       </div>
 
-      {/* Parent details */}
-      <ProfileSection title="Parent Details" icon={FiUserCheck}>
-        <Field icon={FiUserCheck}  label="Father Name"          value={parent.fatherName} />
-        <Field icon={FiPhone}      label="Father Phone"         value={parent.fatherPhone} />
-        <Field icon={FiShield}     label="Father Aadhaar"       value={parent.fatherAadhaar} />
-        <Field icon={FiFileText}   label="Father Occupation"    value={parent.fatherOccupation} />
-        <Field icon={FiUserCheck}  label="Mother Name"          value={parent.motherName} />
-        <Field icon={FiPhone}      label="Mother Phone"         value={parent.motherPhone} />
-        <Field icon={FiShield}     label="Mother Aadhaar"       value={parent.motherAadhaar} />
-        <Field icon={FiFileText}   label="Mother Occupation"    value={parent.motherOccupation} />
-        <Field icon={FiMail}       label="Email"                value={parent.email} />
-        <Field icon={FiHome}       label="Address"              value={parent.address} wide />
+      {/* Personal details */}
+      <ProfileSection title="Personal Details" icon={FiUserCheck}>
+        <Field icon={FiUserCheck} label="Full Name"        value={fullName} />
+        <Field icon={FiMail}      label="Email"            value={parent.email} />
+        <Field icon={FiPhone}     label="Phone"            value={parent.phone} />
+        <Field icon={FiUsers}     label="Gender"           value={parent.gender} />
+        <Field icon={FiShield}    label="Nationality"      value={parent.nationality} />
+        <Field icon={FiUsers}     label="Marital Status"   value={parent.maritalStatus} />
+        <Field icon={FiHome}      label="Address"          value={addressStr} wide />
       </ProfileSection>
 
-      {/* Adoption assessment */}
-      <ProfileSection title="Adoption Assessment" icon={FiShield}>
-        <Field icon={FiFileText}  label="Adoption Order ID"           value={parent.adoptionOrderId} />
-        <Field icon={FiShield}    label="Voter ID"                    value={parent.voterId} />
-        <Field icon={FiShield}    label="Home Study Status"           value={parent.homeStudyStatus} />
-        <Field icon={FiShield}    label="Police Verification"         value={parent.policeVerification} />
-        <Field icon={FiUsers}     label="Has Another Child"           value={parent.hasAnotherChild ? "Yes" : "No"} />
-        <Field icon={FiUsers}     label="Other Child Status"          value={parent.otherChildStatus} />
-        <Field icon={FiUsers}     label="Other Child Details"         value={parent.otherChildDetails} wide />
-        <Field icon={FiFileText}  label="Reason for Adoption"         value={parent.adoptionReason} wide />
-        <Field icon={FiFileText}  label="Financial Condition"         value={parent.financialCondition} wide />
-        <Field icon={FiShield}    label="Follow-up Officer"           value={parent.followUpOfficer} />
-        <Field icon={FiFileText}  label="Post-adoption Follow-up"     value={parent.postAdoptionFollowUp} wide />
+      {/* Professional details */}
+      <ProfileSection title="Professional & Financial" icon={FiFileText}>
+        <Field icon={FiFileText}  label="Occupation"       value={parent.occupation} />
+        <Field icon={FiFileText}  label="Annual Income"    value={parent.annualIncome ? `₹${Number(parent.annualIncome).toLocaleString("en-IN")}` : undefined} />
+        <Field icon={FiHome}      label="House Ownership"  value={parent.houseOwnership} />
       </ProfileSection>
+
+      {/* Documents */}
+      {parent.documents?.length > 0 && (
+        <ProfileSection title="Documents" icon={FiShield}>
+          {parent.documents.map((doc) => (
+            <Field
+              key={doc.id}
+              icon={FiFileText}
+              label={doc.documentType}
+              value={`${doc.status}${doc.fileName ? ` — ${doc.fileName}` : ""}`}
+              ok={doc.status === "APPROVED"}
+            />
+          ))}
+        </ProfileSection>
+      )}
     </div>
   );
 }
