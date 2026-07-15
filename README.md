@@ -266,7 +266,28 @@ Then open your browser and go to:
 
 **How to log in:**
 1. Open http://localhost:5173
-2. Click the role button that matches the account you want to test
+2. Click the role button that matches the account you want to test+669
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.+
+
++
 3. Type the email and password from the table above
 4. Click **Sign In** — you will land on that role's dashboard
 
