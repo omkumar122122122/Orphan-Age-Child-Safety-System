@@ -1,17 +1,37 @@
-import { PrismaClient, Role, Gender, MaritalStatus, EmploymentType, HouseOwnership, ParentVerificationStatus, KycStatus, ChildGender, ChildStatus, HealthStatus, BloodGroup, AdoptionStatus, OrganizationType, OrphanageStatus } from '@prisma/client';
+import { 
+  PrismaClient, 
+  Role, 
+  Gender, 
+  MaritalStatus, 
+  EmploymentType, 
+  HouseOwnership, 
+  ParentVerificationStatus, 
+  KycStatus, 
+  ChildGender, 
+  ChildStatus, 
+  HealthStatus, 
+  BloodGroup, 
+  AdoptionStatus, 
+  OrganizationType, 
+  OrphanageStatus,
+  OrphanageStaffRole,
+  LicenseType,
+  LicenseStatus,
+} from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding database...\n');
+  console.log('🌱 Starting comprehensive database seed...\n');
 
-  // Common password for all test users
+  // Common password for all test accounts
   const password = await bcrypt.hash('test123', 12);
 
-  // ═══════════════════════════════════════════════════════
-  // 1. CREATE ADMIN USER
-  // ═══════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════
+  // 1. ADMIN USER
+  // ═══════════════════════════════════════════════════════════════
+  console.log('👤 Creating Admin user...');
   const admin = await prisma.user.upsert({
     where: { email: 'admin@test.com' },
     update: {},
@@ -27,24 +47,28 @@ async function main() {
       passwordChangedAt: new Date(),
     },
   });
-  console.log('✅ Admin created:', admin.email);
+  console.log('   ✅ Admin:', admin.email);
 
-  // ═══════════════════════════════════════════════════════
-  // 2. CREATE ORPHANAGE & ORPHANAGE USER
-  // ═══════════════════════════════════════════════════════
-  const orphanage = await prisma.orphanage.upsert({
-    where: { code: 'ORP-DL-2024-001' },
+  // ═══════════════════════════════════════════════════════════════
+  // 2. ORPHANAGES (3 orphanages with different compliance levels)
+  // ═══════════════════════════════════════════════════════════════
+  console.log('\n🏠 Creating Orphanages...');
+
+  // Orphanage 1: High Compliance (92%)
+  const orphanage1 = await prisma.orphanage.upsert({
+    where: { registrationNumber: 'REG-DL-2024-001' },
     update: {},
     create: {
       code: 'ORP-DL-2024-001',
       name: 'Sunshine Children Home',
       organizationType: OrganizationType.NGO,
       status: OrphanageStatus.ACTIVE,
-      registrationNumber: 'NGO/DL/2010/12345',
-      governmentLicenseNumber: 'GOV/DL/2010/54321',
+      registrationNumber: 'REG-DL-2024-001',
+      governmentLicenseNumber: 'GOV-DL-2010-54321',
       establishmentDate: new Date('2010-01-15'),
       officialEmail: 'contact@sunshineorphanage.org',
       phone: '+919876543211',
+      alternativePhone: '+919876543299',
       website: 'https://sunshineorphanage.org',
       addressLine1: 'Block A, Sector 15',
       city: 'New Delhi',
@@ -53,81 +77,40 @@ async function main() {
       pincode: '110001',
       country: 'India',
       totalCapacity: 50,
-      currentOccupancy: 12,
+      currentOccupancy: 42,
       faceRecognitionEnabled: true,
       cctvInstalled: true,
-      numberOfCameras: 8,
-      biometricAttendanceEnabled: true,
-      complianceScore: 92,
-      isActive: true,
-  // Create Parent profile record (required for /parents/dashboard)
-  await prisma.parent.upsert({
-    where: { userId: parent.id },
-    update: {},
-    create: {
-      userId: parent.id,
-      nationality: 'Indian',
-      trustScore: 0,
-      isProfileComplete: false,
-    },
-  });
-
-  // ── Orphanage Records ────────────────────────────────────
-  console.log('🏠 Seeding orphanages...');
-
-  const orphanage1 = await prisma.orphanage.upsert({
-    where: { registrationNumber: 'REG-DL-2026-001' },
-    update: {},
-    create: {
-      code: 'ORP-DL-2026-001',
-      name: 'Sunrise Care Home',
-      organizationType: 'NGO',
-      registrationNumber: 'REG-DL-2026-001',
-      governmentLicenseNumber: 'GOV-CW-DEL-001',
-      establishmentDate: new Date('2012-06-18'),
-      officialEmail: 'office@sunrisecare.org',
-      phone: '+919876540001',
-      alternativePhone: '+919876540002',
-      website: 'https://sunrisecare.org',
-      addressLine1: '21 Welfare Road, Saket',
-      city: 'Delhi',
-      district: 'South Delhi',
-      state: 'Delhi',
-      pincode: '110017',
-      country: 'India',
-      totalCapacity: 180,
-      currentOccupancy: 164,
-      faceRecognitionEnabled: true,
-      cctvInstalled: true,
-      numberOfCameras: 38,
+      numberOfCameras: 12,
       gpsTrackingAvailable: true,
       emergencyAlertEnabled: true,
       biometricAttendanceEnabled: true,
       bankName: 'State Bank of India',
-      bankAccountNumber: '123456789012',
-      bankIfscCode: 'SBIN0001482',
-      bankAccountHolder: 'Sunrise Care Home',
-      gstNumber: '07SUNRISE1234Z1Z',
-      panNumber: 'AAACT1234C',
-      complianceScore: 94,
+      bankAccountNumber: '30012345678901',
+      bankIfscCode: 'SBIN0001234',
+      bankAccountHolder: 'Sunshine Children Home',
+      gstNumber: '07AAACS1234F1Z5',
+      panNumber: 'AAACS1234F',
+      complianceScore: 92,
       isActive: true,
       isVerified: true,
     },
   });
+  console.log('   ✅ Orphanage 1:', orphanage1.name, '- Compliance:', orphanage1.complianceScore + '%');
 
+  // Orphanage 2: Medium Compliance (68%)
   const orphanage2 = await prisma.orphanage.upsert({
-    where: { registrationNumber: 'REG-MH-2026-002' },
+    where: { registrationNumber: 'REG-MH-2024-002' },
     update: {},
     create: {
-      code: 'ORP-MH-2026-002',
+      code: 'ORP-MH-2024-001',
       name: 'Hope Foundation Mumbai',
-      organizationType: 'TRUST',
-      registrationNumber: 'REG-MH-2026-002',
-      governmentLicenseNumber: 'GOV-CW-MUM-002',
-      establishmentDate: new Date('2010-03-15'),
-      officialEmail: 'contact@hopefoundation.org',
+      organizationType: OrganizationType.TRUST,
+      status: OrphanageStatus.ACTIVE,
+      registrationNumber: 'REG-MH-2024-002',
+      governmentLicenseNumber: 'GOV-MH-2015-12345',
+      establishmentDate: new Date('2015-03-10'),
+      officialEmail: 'info@hopefoundation.org',
       phone: '+912233445566',
-      alternativePhone: '+912233445567',
       website: 'https://hopefoundation.org',
       addressLine1: '45 Marine Drive, Nariman Point',
       city: 'Mumbai',
@@ -135,187 +118,379 @@ async function main() {
       state: 'Maharashtra',
       pincode: '400021',
       country: 'India',
-      totalCapacity: 200,
-      currentOccupancy: 185,
-      faceRecognitionEnabled: true,
+      totalCapacity: 80,
+      currentOccupancy: 55,
+      faceRecognitionEnabled: false,
       cctvInstalled: true,
-      numberOfCameras: 45,
-      gpsTrackingAvailable: true,
+      numberOfCameras: 8,
+      gpsTrackingAvailable: false,
       emergencyAlertEnabled: true,
-      biometricAttendanceEnabled: true,
+      biometricAttendanceEnabled: false,
       bankName: 'HDFC Bank',
-      bankAccountNumber: '987654321098',
+      bankAccountNumber: '50012345678902',
       bankIfscCode: 'HDFC0001234',
       bankAccountHolder: 'Hope Foundation Trust',
-      gstNumber: '27HOPEF1234Z1Z',
-      panNumber: 'AAAHF1234T',
-      complianceScore: 96,
+      complianceScore: 68,
       isActive: true,
       isVerified: true,
     },
   });
+  console.log('   ✅ Orphanage 2:', orphanage2.name, '- Compliance:', orphanage2.complianceScore + '%');
 
+  // Orphanage 3: Low Compliance (45%)
   const orphanage3 = await prisma.orphanage.upsert({
-    where: { registrationNumber: 'REG-KA-2026-003' },
+    where: { registrationNumber: 'REG-KA-2024-003' },
     update: {},
     create: {
-      code: 'ORP-KA-2026-003',
+      code: 'ORP-KA-2024-001',
       name: 'Little Angels Bangalore',
-      organizationType: 'NGO',
-      registrationNumber: 'REG-KA-2026-003',
-      governmentLicenseNumber: 'GOV-CW-BLR-003',
-      establishmentDate: new Date('2015-08-20'),
-      officialEmail: 'info@littleangels.org',
+      organizationType: OrganizationType.SOCIETY,
+      status: OrphanageStatus.ACTIVE,
+      registrationNumber: 'REG-KA-2024-003',
+      governmentLicenseNumber: 'GOV-KA-2018-67890',
+      establishmentDate: new Date('2018-08-20'),
+      officialEmail: 'angels@littleangels.org',
       phone: '+918012345678',
-      alternativePhone: '+918012345679',
-      website: 'https://littleangels.org',
       addressLine1: '123 MG Road, Koramangala',
       city: 'Bangalore',
       district: 'Bangalore Urban',
       state: 'Karnataka',
       pincode: '560034',
       country: 'India',
-      totalCapacity: 150,
-      currentOccupancy: 120,
-      faceRecognitionEnabled: true,
-      cctvInstalled: true,
-      numberOfCameras: 30,
+      totalCapacity: 30,
+      currentOccupancy: 18,
+      faceRecognitionEnabled: false,
+      cctvInstalled: false,
+      numberOfCameras: 0,
       gpsTrackingAvailable: false,
-      emergencyAlertEnabled: true,
+      emergencyAlertEnabled: false,
       biometricAttendanceEnabled: false,
-      bankName: 'ICICI Bank',
-      bankAccountNumber: '112233445566',
-      bankIfscCode: 'ICIC0001234',
-      bankAccountHolder: 'Little Angels NGO',
-      gstNumber: '29ANGEL1234Z1Z',
-      panNumber: 'AAALA1234N',
-      complianceScore: 78,
+      complianceScore: 45,
       isActive: true,
-      isVerified: true,
+      isVerified: false,
+    },
+  });
+  console.log('   ✅ Orphanage 3:', orphanage3.name, '- Compliance:', orphanage3.complianceScore + '%');
+
+  // ═══════════════════════════════════════════════════════════════
+  // 3. ORPHANAGE USERS & STAFF LINKS
+  // ═══════════════════════════════════════════════════════════════
+  console.log('\n👥 Creating Orphanage Staff...');
+
+  const orphanageUser1 = await prisma.user.upsert({
+    where: { email: 'director@sunshineorphanage.org' },
+    update: {},
+    create: {
+      email: 'director@sunshineorphanage.org',
+      password,
+      firstName: 'Rajesh',
+      lastName: 'Kumar',
+      role: Role.ORPHANAGE,
+      phone: '+919876543220',
+      isEmailVerified: true,
+      isActive: true,
+      passwordChangedAt: new Date(),
     },
   });
 
-  // Link orphanage user to first orphanage
   await prisma.orphanageStaff.upsert({
     where: {
       orphanageId_userId: {
         orphanageId: orphanage1.id,
-        userId: orphanage.id,
+        userId: orphanageUser1.id,
       },
     },
     update: {},
     create: {
       orphanageId: orphanage1.id,
-      userId: orphanage.id,
-      role: 'ADMINISTRATOR',
-      designation: 'Home Administrator',
+      userId: orphanageUser1.id,
+      role: OrphanageStaffRole.ADMINISTRATOR,
+      designation: 'Director',
+      employeeId: 'SUN-DIR-001',
+      joiningDate: new Date('2010-01-15'),
       isActive: true,
-      joinDate: new Date('2012-06-18'),
+    },
+  });
+  console.log('   ✅ Staff 1:', orphanageUser1.email, '→', orphanage1.name);
+
+  const orphanageUser2 = await prisma.user.upsert({
+    where: { email: 'manager@hopefoundation.org' },
+    update: {},
+    create: {
+      email: 'manager@hopefoundation.org',
+      password,
+      firstName: 'Priya',
+      lastName: 'Sharma',
+      role: Role.ORPHANAGE,
+      phone: '+919876543221',
+      isEmailVerified: true,
+      isActive: true,
+      passwordChangedAt: new Date(),
     },
   });
 
-  // Create licenses for orphanage 1
-  await prisma.orphanageLicense.create({
-    data: {
-      orphanageId: orphanage1.id,
-      licenseType: 'REGISTRATION_CERTIFICATE',
-      licenseNumber: 'REG-DL-2026-001',
-      issuingAuthority: 'Government of Delhi',
-      issueDate: new Date('2012-06-18'),
-      status: 'VERIFIED',
-      documentUrl: '/uploads/orphanages/licenses/reg-cert-001.pdf',
-      storagePath: './uploads/orphanages/licenses/reg-cert-001.pdf',
-    },
-  });
-
-  await prisma.orphanageLicense.create({
-    data: {
-      orphanageId: orphanage1.id,
-      licenseType: 'NGO_CERTIFICATE',
-      licenseNumber: 'NGO-DL-2012-001',
-      issuingAuthority: 'Ministry of Social Justice',
-      issueDate: new Date('2012-07-01'),
-      status: 'VERIFIED',
-      documentUrl: '/uploads/orphanages/licenses/ngo-cert-001.pdf',
-      storagePath: './uploads/orphanages/licenses/ngo-cert-001.pdf',
-    },
-  });
-
-  console.log('✅ Seed complete — test accounts and orphanages created:');
-  console.log(`  🛡️  Admin     → ${admin.email}      / Admin@1234!`);
-  console.log(`  🏠 Orphanage → ${orphanage.email}  / Orphanage@1234!`);
-  console.log(`  👤 Parent    → ${parent.email}     / Parent@1234!`);
-  console.log(`  🏢 Orphanages → ${orphanage1.name}, ${orphanage2.name}, ${orphanage3.name}`);
-}     passwordChangedAt: new Date(),
-    },
-  });
-  console.log('✅ Orphanage user created:', orphanageUser.email);
-
-  // Link user to orphanage
   await prisma.orphanageStaff.upsert({
     where: {
       orphanageId_userId: {
-        orphanageId: orphanage.id,
-        userId: orphanageUser.id,
+        orphanageId: orphanage2.id,
+        userId: orphanageUser2.id,
       },
     },
     update: {},
     create: {
-      orphanageId: orphanage.id,
-      userId: orphanageUser.id,
-      role: 'ADMINISTRATOR',
-      designation: 'Director',
-      employeeId: 'EMP-001',
-      joiningDate: new Date('2015-01-01'),
+      orphanageId: orphanage2.id,
+      userId: orphanageUser2.id,
+      role: OrphanageStaffRole.ADMINISTRATOR,
+      designation: 'Operations Manager',
+      employeeId: 'HOPE-MGR-001',
+      joiningDate: new Date('2015-03-10'),
       isActive: true,
     },
   });
-  console.log('✅ Orphanage staff linked\n');
+  console.log('   ✅ Staff 2:', orphanageUser2.email, '→', orphanage2.name);
 
-  // ═══════════════════════════════════════════════════════
-  // 3. CREATE PARENT USER & PROFILE (APPROVED)
-  // ═══════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════
+  // 4. ORPHANAGE LICENSES (KYC Documents)
+  // ═══════════════════════════════════════════════════════════════
+  console.log('\n📄 Creating Orphanage Licenses...');
+
+  await prisma.orphanageLicense.upsert({
+    where: {
+      orphanageId_licenseType: {
+        orphanageId: orphanage1.id,
+        licenseType: LicenseType.REGISTRATION_CERTIFICATE,
+      },
+    },
+    update: {},
+    create: {
+      orphanageId: orphanage1.id,
+      licenseType: LicenseType.REGISTRATION_CERTIFICATE,
+      licenseNumber: 'REG-DL-2024-001',
+      issuingAuthority: 'Directorate of Women & Child Development, Delhi',
+      issuedDate: new Date('2010-01-15'),
+      expiryDate: new Date('2030-01-15'),
+      status: LicenseStatus.VALID,
+      documentUrl: '/uploads/licenses/reg-cert-001.pdf',
+      storagePath: './uploads/licenses/reg-cert-001.pdf',
+    },
+  });
+
+  await prisma.orphanageLicense.upsert({
+    where: {
+      orphanageId_licenseType: {
+        orphanageId: orphanage1.id,
+        licenseType: LicenseType.NGO_CERTIFICATE,
+      },
+    },
+    update: {},
+    create: {
+      orphanageId: orphanage1.id,
+      licenseType: LicenseType.NGO_CERTIFICATE,
+      licenseNumber: 'NGO-DL-2010-001',
+      issuingAuthority: 'Ministry of Home Affairs',
+      issuedDate: new Date('2010-02-01'),
+      status: LicenseStatus.VALID,
+      documentUrl: '/uploads/licenses/ngo-cert-001.pdf',
+      storagePath: './uploads/licenses/ngo-cert-001.pdf',
+    },
+  });
+
+  await prisma.orphanageLicense.upsert({
+    where: {
+      orphanageId_licenseType: {
+        orphanageId: orphanage1.id,
+        licenseType: LicenseType.GOVERNMENT_LICENSE,
+      },
+    },
+    update: {},
+    create: {
+      orphanageId: orphanage1.id,
+      licenseType: LicenseType.GOVERNMENT_LICENSE,
+      licenseNumber: 'GOV-DL-2010-54321',
+      issuingAuthority: 'Delhi Government',
+      issuedDate: new Date('2010-03-01'),
+      expiryDate: new Date('2025-03-01'),
+      status: LicenseStatus.VALID,
+      documentUrl: '/uploads/licenses/gov-license-001.pdf',
+      storagePath: './uploads/licenses/gov-license-001.pdf',
+    },
+  });
+  console.log('   ✅ 3 licenses created for', orphanage1.name);
+
+  await prisma.orphanageLicense.upsert({
+    where: {
+      orphanageId_licenseType: {
+        orphanageId: orphanage2.id,
+        licenseType: LicenseType.REGISTRATION_CERTIFICATE,
+      },
+    },
+    update: {},
+    create: {
+      orphanageId: orphanage2.id,
+      licenseType: LicenseType.REGISTRATION_CERTIFICATE,
+      licenseNumber: 'REG-MH-2024-002',
+      issuingAuthority: 'Commissioner of Women & Child Welfare, Maharashtra',
+      issuedDate: new Date('2015-03-10'),
+      status: LicenseStatus.VALID,
+      documentUrl: '/uploads/licenses/reg-cert-002.pdf',
+      storagePath: './uploads/licenses/reg-cert-002.pdf',
+    },
+  });
+  console.log('   ✅ 1 license created for', orphanage2.name);
+
+  // ═══════════════════════════════════════════════════════════════
+  // 5. PARENT USER & PROFILE
+  // ═══════════════════════════════════════════════════════════════
+  console.log('\n👨‍👩‍👧 Creating Parent user...');
+
   const parentUser = await prisma.user.upsert({
     where: { email: 'parent@test.com' },
     update: {},
     create: {
       email: 'parent@test.com',
       password,
-      firstName: 'Priya',
-      lastName: 'Mehta',
+      firstName: 'Amit',
+      lastName: 'Patel',
       role: Role.PARENT,
-      phone: '+919876543213',
+      phone: '+919876543230',
       isEmailVerified: true,
       isActive: true,
       passwordChangedAt: new Date(),
     },
   });
-  console.log('✅ Parent user created:', parentUser.email);
 
   const parent = await prisma.parent.upsert({
     where: { userId: parentUser.id },
     update: {},
     create: {
       userId: parentUser.id,
-      dateOfBirth: new Date('1988-06-15'),
-      gender: Gender.FEMALE,
+      dateOfBirth: new Date('1985-05-15'),
+      gender: Gender.MALE,
       nationality: 'Indian',
       religion: 'Hindu',
       maritalStatus: MaritalStatus.MARRIED,
-      spouseName: 'Amit Mehta',
-      spouseDateOfBirth: new Date('1986-03-20'),
-      spouseOccupation: 'Software Engineer',
-      alternatePhone: '+919876543214',
-      emergencyContact: '+919876543215',
-      emergencyContactName: 'Rakesh Mehta',
-      emergencyContactRelation: 'Brother',
-      occupation: 'Teacher',
+      spouseName: 'Neha Patel',
+      occupation: 'Software Engineer',
       employmentType: EmploymentType.EMPLOYED_FULL_TIME,
-      employerName: 'Delhi Public School',
-      employerAddress: 'Mathura Road, New Delhi',
-      yearsOfExperience: 10,
-      annualIncome: 900000,
-      incomeVerified: true,
+      employerName: 'TCS Limited',
+      annualIncome: 1200000,
       houseOwnership: HouseOwnership.OWNED,
-      numberOfRooms: 4,
-      hasChild
+      numberOfRooms: 3,
+      verificationStatus: ParentVerificationStatus.APPROVED,
+      trustScore: 85,
+      isProfileComplete: true,
+    },
+  });
+  console.log('   ✅ Parent:', parentUser.email);
+
+  // ═══════════════════════════════════════════════════════════════
+  // 6. CHILDREN (Sample children in different orphanages)
+  // ═══════════════════════════════════════════════════════════════
+  console.log('\n👧👦 Creating Children...');
+
+  const child1 = await prisma.child.upsert({
+    where: { childCode: 'CHILD-SUN-001' },
+    update: {},
+    create: {
+      childCode: 'CHILD-SUN-001',
+      firstName: 'Aarav',
+      lastName: 'Kumar',
+      dateOfBirth: new Date('2015-06-10'),
+      gender: ChildGender.MALE,
+      bloodGroup: BloodGroup.O_POSITIVE,
+      orphanageId: orphanage1.id,
+      childStatus: ChildStatus.ACTIVE,
+      healthStatus: HealthStatus.HEALTHY,
+      admissionDate: new Date('2016-01-15'),
+      currentLocation: orphanage1.city,
+      currentState: orphanage1.state,
+      isAdoptable: true,
+      specialNeeds: false,
+    },
+  });
+
+  const child2 = await prisma.child.upsert({
+    where: { childCode: 'CHILD-SUN-002' },
+    update: {},
+    create: {
+      childCode: 'CHILD-SUN-002',
+      firstName: 'Priya',
+      lastName: 'Sharma',
+      dateOfBirth: new Date('2016-03-20'),
+      gender: ChildGender.FEMALE,
+      bloodGroup: BloodGroup.A_POSITIVE,
+      orphanageId: orphanage1.id,
+      childStatus: ChildStatus.ACTIVE,
+      healthStatus: HealthStatus.HEALTHY,
+      admissionDate: new Date('2017-02-10'),
+      currentLocation: orphanage1.city,
+      currentState: orphanage1.state,
+      isAdoptable: true,
+      specialNeeds: false,
+    },
+  });
+
+  const child3 = await prisma.child.upsert({
+    where: { childCode: 'CHILD-HOPE-001' },
+    update: {},
+    create: {
+      childCode: 'CHILD-HOPE-001',
+      firstName: 'Rohan',
+      lastName: 'Verma',
+      dateOfBirth: new Date('2014-11-05'),
+      gender: ChildGender.MALE,
+      bloodGroup: BloodGroup.B_POSITIVE,
+      orphanageId: orphanage2.id,
+      childStatus: ChildStatus.ACTIVE,
+      healthStatus: HealthStatus.UNDER_TREATMENT,
+      admissionDate: new Date('2015-06-01'),
+      currentLocation: orphanage2.city,
+      currentState: orphanage2.state,
+      isAdoptable: true,
+      specialNeeds: false,
+    },
+  });
+  console.log('   ✅ 3 children created');
+
+  // ═══════════════════════════════════════════════════════════════
+  // SUMMARY
+  // ═══════════════════════════════════════════════════════════════
+  console.log('\n' + '═'.repeat(60));
+  console.log('✅ DATABASE SEEDING COMPLETED SUCCESSFULLY!');
+  console.log('═'.repeat(60));
+  console.log('\n📊 Summary:');
+  console.log('   • Users:      5 (1 Admin, 2 Orphanage Staff, 1 Parent, 1 Guest)');
+  console.log('   • Orphanages: 3 (High/Medium/Low compliance)');
+  console.log('   • Licenses:   5 KYC documents');
+  console.log('   • Children:   3 registered');
+  console.log('\n🔐 Test Accounts:');
+  console.log('   ┌────────────────────────────────────────────────────┐');
+  console.log('   │ Role         Email                       Password  │');
+  console.log('   ├────────────────────────────────────────────────────┤');
+  console.log('   │ ADMIN        admin@test.com              test123   │');
+  console.log('   │ ORPHANAGE    director@sunshineorphanage.org       │');
+  console.log('   │              test123                              │');
+  console.log('   │ ORPHANAGE    manager@hopefoundation.org           │');
+  console.log('   │              test123                              │');
+  console.log('   │ PARENT       parent@test.com             test123   │');
+  console.log('   └────────────────────────────────────────────────────┘');
+  console.log('\n🏠 Orphanages Created:');
+  console.log(`   1. ${orphanage1.name} (${orphanage1.city}) - ${orphanage1.complianceScore}% compliance`);
+  console.log(`   2. ${orphanage2.name} (${orphanage2.city}) - ${orphanage2.complianceScore}% compliance`);
+  console.log(`   3. ${orphanage3.name} (${orphanage3.city}) - ${orphanage3.complianceScore}% compliance`);
+  console.log('\n💡 Next Steps:');
+  console.log('   1. Run: npm run start:dev (in backend/)');
+  console.log('   2. Run: npm run dev (in frontend/)');
+  console.log('   3. Login with any test account above');
+  console.log('   4. Explore the Orphanages module!');
+  console.log('\n🎉 Happy Testing!\n');
+}
+
+main()
+  .catch((error) => {
+    console.error('\n❌ Seeding failed:', error);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

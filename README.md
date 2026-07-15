@@ -762,3 +762,7 @@ MIT — see [LICENSE](./LICENSE) for details.
 Made by **Om Kumar Gupta**
 
 </div>
+
+
+
+check whole project dont make new modules or generate code use frontend as source of truth check backend of the created modules are generated according to frontend does they are intregated check no of the module should use dummy data

@@ -35,9 +35,9 @@ export class CreateOrphanageDto {
   @IsDateString()
   establishmentDate?: string;
 
-  @ApiProperty({ example: 'NGO', enum: ['NGO', 'GOVERNMENT', 'TRUST', 'SOCIETY', 'PRIVATE'] })
+  @ApiProperty({ example: 'NGO', enum: ['NGO', 'GOVERNMENT', 'TRUST', 'SOCIETY', 'PRIVATE', 'RELIGIOUS'] })
   @IsString()
-  @IsIn(['NGO', 'GOVERNMENT', 'TRUST', 'SOCIETY', 'PRIVATE'])
+  @IsIn(['NGO', 'GOVERNMENT', 'TRUST', 'SOCIETY', 'PRIVATE', 'RELIGIOUS'])
   organizationType: string;
 
   @ApiPropertyOptional({ example: 164 })
