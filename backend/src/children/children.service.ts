@@ -206,13 +206,20 @@ export class ChildrenService {
 
       const attendance = this.calculateAttendancePercentage(child.attendanceRecords);
 
+      // Calculate risk based on health status and attendance
+      const calcRisk = child.healthStatus === 'CRITICAL' || child.healthStatus === 'UNDER_TREATMENT'
+        ? 'High'
+        : child.healthStatus === 'CHRONIC_CONDITION' || attendance < 75
+          ? 'Medium'
+          : 'Low';
+
       return {
         id: child.id,
         childCode: child.childCode,
         name: `${child.firstName} ${child.lastName || ''}`.trim(),
         age,
         orphanage: child.orphanage?.name || 'Unknown',
-        risk: 'Low',
+        risk: calcRisk,
         health: child.healthStatus,
         attendance,
       };
@@ -345,6 +352,13 @@ export class ChildrenService {
       };
     }
 
+    // Calculate risk based on health status and attendance
+    const profileRisk = child.healthStatus === 'CRITICAL' || child.healthStatus === 'UNDER_TREATMENT'
+      ? 'High'
+      : child.healthStatus === 'CHRONIC_CONDITION' || attendance < 75
+        ? 'Medium'
+        : 'Low';
+
     return {
       id: child.id,
       childCode: child.childCode,
@@ -359,7 +373,7 @@ export class ChildrenService {
       admissionDate: child.admissionDate,
       foundCondition: child.entrySource || 'Unknown',
       foundLocation: child.foundLocation || 'Unknown',
-      risk: 'Low',
+      risk: profileRisk,
       health: child.healthStatus,
       attendance,
       educationLevel,
@@ -465,16 +479,24 @@ export class ChildrenService {
       take: limit,
     });
 
-    return children.map((child) => ({
-      id: child.id,
-      childCode: child.childCode,
-      name: `${child.firstName} ${child.lastName || ''}`.trim(),
-      age: child.dateOfBirth ? this.calculateAge(child.dateOfBirth) : child.approximateAge || 0,
-      orphanage: child.orphanage?.name || 'Unknown',
-      risk: 'Low',
-      health: child.healthStatus,
-      attendance: this.calculateAttendancePercentage(child.attendanceRecords),
-    }));
+    return children.map((child) => {
+      const attendance = this.calculateAttendancePercentage(child.attendanceRecords);
+      const calcRisk = child.healthStatus === 'CRITICAL' || child.healthStatus === 'UNDER_TREATMENT'
+        ? 'High'
+        : child.healthStatus === 'CHRONIC_CONDITION' || attendance < 75
+          ? 'Medium'
+          : 'Low';
+      return {
+        id: child.id,
+        childCode: child.childCode,
+        name: `${child.firstName} ${child.lastName || ''}`.trim(),
+        age: child.dateOfBirth ? this.calculateAge(child.dateOfBirth) : child.approximateAge || 0,
+        orphanage: child.orphanage?.name || 'Unknown',
+        risk: calcRisk,
+        health: child.healthStatus,
+        attendance,
+      };
+    });
   }
 
   async getSummaryStats(orphanageId?: string): Promise<ChildrenSummaryDto> {
@@ -489,7 +511,15 @@ export class ChildrenService {
 
     const [total, highRisk, adopted, needsReview] = await Promise.all([
       this.prisma.child.count({ where: baseFilter }),
-      this.prisma.child.count({ where: baseFilter }),
+      this.prisma.child.count({
+        where: {
+          ...baseFilter,
+          OR: [
+            { healthStatus: 'CRITICAL' },
+            { healthStatus: 'UNDER_TREATMENT' },
+          ],
+        },
+      }),
       this.prisma.child.count({
         where: { ...baseFilter, adoptionStatus: 'COMPLETED' },
       }),
@@ -503,7 +533,7 @@ export class ChildrenService {
 
     return {
       total,
-      highRisk: Math.floor(total * 0.1),
+      highRisk,
       adopted,
       needsReview,
     };

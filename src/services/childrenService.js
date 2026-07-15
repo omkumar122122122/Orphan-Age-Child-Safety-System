@@ -107,4 +107,14 @@ export const childrenService = {
 
     return response.blob();
   },
+
+  /**
+   * Get medical history for a child
+   * @param {string} id
+   * @returns {Promise<Array>}
+   */
+  async getMedicalHistory(id) {
+    const response = await apiClient.get(`/children/${id}/medical-history`);
+    return unwrap(response);
+  },
 };
