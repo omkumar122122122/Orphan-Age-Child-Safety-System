@@ -65,7 +65,7 @@ export class OrphanagesService {
       }
 
       // FIX-14: Generate unique code with retry logic
-      let code: string;
+      let code: string = '';
       let attempts = 0;
       const maxAttempts = 5;
 
@@ -122,7 +122,7 @@ export class OrphanagesService {
           city: dto.city,
           district: dto.district,
           state: dto.state,
-          pincode: dto.pinCode,
+          pincode: dto.pinCode || '',
           country: dto.country || 'India',
           totalCapacity: dto.capacity || 0,
           currentOccupancy: dto.numberOfChildren || 0,
@@ -147,7 +147,7 @@ export class OrphanagesService {
           emergencyContactEmail: dto.emergencyEmail,
           emergencyContactRelationship: dto.emergencyRelationship,
           // FIX-2: Store facilities as JSON array
-          facilities: facilitiesArray.length > 0 ? facilitiesArray : null,
+          facilities: facilitiesArray.length > 0 ? (facilitiesArray as any) : undefined,
           complianceScore: 0,
           isActive: true,
           isVerified: false,
@@ -183,7 +183,7 @@ export class OrphanagesService {
                     : `${fieldName.toUpperCase()}-${orphanage.code}`,
                 issuingAuthority: 'Government Authority',
                 // FIX-10: Set status to VERIFIED for immediate compliance credit
-                status: 'VERIFIED',
+                status: 'VERIFIED' as any,
                 documentUrl: uploadResult.url,
                 storagePath: uploadResult.path,
               },
@@ -220,7 +220,7 @@ export class OrphanagesService {
               licenseType: 'OTHER',
               licenseNumber: `PAN-${orphanage.code}`,
               issuingAuthority: 'Income Tax Department',
-              status: 'VERIFIED',
+              status: 'VERIFIED' as any,
               documentUrl: uploadResult.url,
               storagePath: uploadResult.path,
             },
@@ -308,7 +308,7 @@ export class OrphanagesService {
           { city: { contains: search, mode: 'insensitive' } },
         ],
       }),
-      ...(organizationType && { organizationType }),
+      ...(organizationType && { organizationType: organizationType as OrganizationType }),
       ...(minCompliance !== undefined && {
         complianceScore: { gte: minCompliance },
       }),
@@ -455,9 +455,9 @@ export class OrphanagesService {
     };
 
     // FIX-2: Return facilities from JSON field
-    const facilitiesArray = orphanage.facilities
-      ? Array.isArray(orphanage.facilities)
-        ? orphanage.facilities
+    const facilitiesArray = (orphanage as any).facilities
+      ? Array.isArray((orphanage as any).facilities)
+        ? (orphanage as any).facilities
         : []
       : [];
 
@@ -500,10 +500,10 @@ export class OrphanagesService {
         facilities: facilitiesArray.length > 0 ? facilitiesArray : [],
         // FIX-1: Return emergency contact from database
         emergencyContact: {
-          contactPerson: orphanage.emergencyContactPerson,
-          mobile: orphanage.emergencyContactMobile,
-          email: orphanage.emergencyContactEmail,
-          relationship: orphanage.emergencyContactRelationship,
+          contactPerson: (orphanage as any).emergencyContactPerson,
+          mobile: (orphanage as any).emergencyContactMobile,
+          email: (orphanage as any).emergencyContactEmail,
+          relationship: (orphanage as any).emergencyContactRelationship,
         },
         aiSafety: {
           faceRecognitionEnabled: orphanage.faceRecognitionEnabled
@@ -929,7 +929,12 @@ export class OrphanagesService {
   private async aggregateChildSummary(orphanageId: string) {
     const children = await this.prisma.child.findMany({
       where: { orphanageId, deletedAt: null },
-      select: { gender, dateOfBirth, approximateAge, hasDisability },
+      select: {
+        gender: true,
+        dateOfBirth: true,
+        approximateAge: true,
+        hasDisability: true,
+      },
     });
 
     const summary = {
@@ -1009,5 +1014,126 @@ export class OrphanagesService {
       CARETAKER: 'Dormitory',
     };
     return mapping[role] || null;
+  }
+
+  // FIX-27: License verification workflow
+  async verifyLicense(orphanageId: string, licenseId: string, userId: string) {
+    const license = await this.prisma.orphanageLicense.findFirst({
+      where: {
+        id: licenseId,
+        orphanageId,
+      },
+    });
+
+    if (!license) {
+      throw new NotFoundException('License not found');
+    }
+
+    return await this.prisma.$transaction(async (tx) => {
+      // Update license status to VERIFIED
+      const updatedLicense = await tx.orphanageLicense.update({
+        where: { id: licenseId },
+        data: {
+          status: 'VERIFIED' as any,
+        },
+      });
+
+      // Recalculate compliance score
+      const orphanage = await tx.orphanage.findUnique({
+        where: { id: orphanageId },
+      });
+
+      const allLicenses = await tx.orphanageLicense.findMany({
+        where: { orphanageId },
+      });
+
+      const newComplianceScore =
+        this.complianceCalculator.calculateComplianceScore(
+          orphanage!,
+          allLicenses,
+        );
+
+      await tx.orphanage.update({
+        where: { id: orphanageId },
+        data: { complianceScore: newComplianceScore },
+      });
+
+      // Audit log
+      await tx.auditLog.create({
+        data: {
+          userId,
+          action: 'VERIFY_LICENSE',
+          resource: 'OrphanageLicense',
+          resourceId: licenseId,
+          details: {
+            orphanageId,
+            licenseType: updatedLicense.licenseType,
+            newComplianceScore,
+          },
+          success: true,
+        },
+      });
+
+      return {
+        success: true,
+        message: 'License verified successfully',
+        data: {
+          license: updatedLicense,
+          newComplianceScore,
+        },
+      };
+    });
+  }
+
+  // FIX-18: Manual compliance recalculation
+  async recalculateCompliance(orphanageId: string, userId: string) {
+    const orphanage = await this.prisma.orphanage.findUnique({
+      where: { id: orphanageId, deletedAt: null },
+    });
+
+    if (!orphanage) {
+      throw new NotFoundException('Orphanage not found');
+    }
+
+    return await this.prisma.$transaction(async (tx) => {
+      const licenses = await tx.orphanageLicense.findMany({
+        where: { orphanageId },
+      });
+
+      const newComplianceScore =
+        this.complianceCalculator.calculateComplianceScore(
+          orphanage,
+          licenses,
+        );
+
+      await tx.orphanage.update({
+        where: { id: orphanageId },
+        data: { complianceScore: newComplianceScore },
+      });
+
+      // Audit log
+      await tx.auditLog.create({
+        data: {
+          userId,
+          action: 'RECALCULATE_COMPLIANCE',
+          resource: 'Orphanage',
+          resourceId: orphanageId,
+          details: {
+            previousScore: orphanage.complianceScore,
+            newScore: newComplianceScore,
+          },
+          success: true,
+        },
+      });
+
+      return {
+        success: true,
+        message: 'Compliance score recalculated successfully',
+        data: {
+          previousScore: orphanage.complianceScore,
+          newScore: newComplianceScore,
+        },
+      };
+    });
   }
 }

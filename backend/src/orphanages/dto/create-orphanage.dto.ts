@@ -284,4 +284,12 @@ export class CreateOrphanageDto {
   @IsOptional()
   @IsString()
   panCard?: string;
+
+  // Section 9: Facilities (FIX-2)
+  @ApiPropertyOptional({
+    example: ['Medical Room', 'CCTV Surveillance', 'School'],
+    type: [String],
+  })
+  @IsOptional()
+  facilities?: string | string[];
 }

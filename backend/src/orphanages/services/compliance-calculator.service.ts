@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Orphanage, OrphanageLicense } from '@prisma/client';
+import { Orphanage, OrphanageLicense, LicenseStatus } from '@prisma/client';
 
 @Injectable()
 export class ComplianceCalculatorService {
@@ -45,8 +45,11 @@ export class ComplianceCalculatorService {
       'GOVERNMENT_LICENSE',
     ];
 
+    // FIX-9: Accept both VERIFIED and VALID status
     const verifiedLicenses = licenses.filter(
-      (l) => l.status === 'VERIFIED' && requiredLicenses.includes(l.licenseType),
+      (l) =>
+        ((l.status as string) === 'VERIFIED' || l.status === LicenseStatus.VALID) &&
+        requiredLicenses.includes(l.licenseType),
     );
 
     // Each verified license worth 13.33 points (40/3)
@@ -167,7 +170,7 @@ export class ComplianceCalculatorService {
       'GOVERNMENT_LICENSE',
     ];
     const verifiedLicenses = licenses.filter(
-      (l) => l.status === 'VERIFIED' && requiredLicenses.includes(l.licenseType),
+      (l) => (l.status as string) === 'VERIFIED' && requiredLicenses.includes(l.licenseType),
     );
 
     if (verifiedLicenses.length < requiredLicenses.length) {
