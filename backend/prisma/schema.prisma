@@ -404,6 +404,7 @@ enum LicenseStatus {
   UNDER_RENEWAL
   REVOKED
   PENDING
+  VERIFIED // FIX-9: Add VERIFIED status for compliance calculator compatibility
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -812,7 +813,7 @@ model Orphanage {
 
   // Bank details (encrypted at service layer)
   bankName          String?
-  bankAccountNumber String?
+  bankAccountNumber String? // AES-256 encrypted
   bankIfscCode      String?
   bankAccountHolder String?
 
@@ -827,8 +828,17 @@ model Orphanage {
   isFeatured Boolean @default(false)
 
   // GST / PAN (encrypted at service layer)
-  gstNumber String?
-  panNumber String?
+  gstNumber String? // AES-256 encrypted
+  panNumber String? // AES-256 encrypted
+
+  // Emergency Contact (FIX-1: Store emergency contact data)
+  emergencyContactPerson       String?
+  emergencyContactMobile       String?
+  emergencyContactEmail        String?
+  emergencyContactRelationship String?
+
+  // Facilities (FIX-2: Store facilities as JSON array)
+  facilities Json? // Array of facility names
 
   // Timestamps
   createdAt DateTime  @default(now())

@@ -6,11 +6,13 @@ import { OrphanagesService } from './orphanages.service';
 import { FileUploadService } from './services/file-upload.service';
 import { ComplianceCalculatorService } from './services/compliance-calculator.service';
 import { PrismaModule } from '../prisma/prisma.module';
+import { CommonModule } from '../common/common.module';
 
 @Module({
   imports: [
     PrismaModule,
     ConfigModule,
+    CommonModule,
     MulterModule.register({
       dest: './uploads',
       limits: {
