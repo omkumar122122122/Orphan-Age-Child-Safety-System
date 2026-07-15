@@ -6,6 +6,7 @@ import {
 } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import notificationsService from "../services/notificationsService";
 
 const roleColors = {
   admin:     "bg-indigo-600",
@@ -13,11 +14,26 @@ const roleColors = {
   parent:    "bg-emerald-600",
 };
 
-const mockNotifications = [
-  { id: 1, title: "High Risk Alert", body: "Sara Ali flagged for welfare review", time: "5m ago", unread: true,  tone: "red"   },
-  { id: 2, title: "Visit Approved",  body: "Parent visit confirmed for today",     time: "1h ago", unread: true,  tone: "green" },
-  { id: 3, title: "KYC Pending",     body: "2 parent verifications awaiting review", time: "3h ago", unread: false, tone: "amber" },
-];
+// Map backend notification types to frontend tones
+const getNotificationTone = (type) => {
+  const typeMap = {
+    'ADOPTION_STATUS_CHANGED': 'green',
+    'VISIT_REQUEST_UPDATE': 'green',
+    'DOCUMENT_REVIEW_RESULT': 'green',
+    'POLICE_VERIFICATION_UPDATE': 'amber',
+    'KYC_STATUS_CHANGED': 'amber',
+    'TRUST_SCORE_UPDATED': 'amber',
+    'WELFARE_SESSION_REMINDER': 'amber',
+    'HEALTH_CHECKUP_DUE': 'red',
+    'VACCINATION_DUE': 'red',
+    'ALERT_RAISED': 'red',
+    'ACCOUNT_STATUS_CHANGED': 'amber',
+    'SYSTEM_ANNOUNCEMENT': 'green',
+    'AI_SESSION_SCHEDULED': 'green',
+    'DOCUMENT_EXPIRY_WARNING': 'amber',
+  };
+  return typeMap[type] || 'amber';
+};
 
 const toneMap = {
   red:   "bg-red-100 text-red-600 dark:bg-red-500/15 dark:text-red-400",
@@ -25,8 +41,54 @@ const toneMap = {
   amber: "bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400",
 };
 
+// Format time ago
+const formatTimeAgo = (dateString) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now - date) / 1000);
+  
+  if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  return date.toLocaleDateString();
+};
+
 function NotificationDropdown({ onClose }) {
-  const unreadCount = mockNotifications.filter((n) => n.unread).length;
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      const response = await notificationsService.getAll({ limit: 5, sortBy: 'createdAt', sortOrder: 'desc' });
+      setNotifications(response.data.data);
+      setUnreadCount(response.data.meta.unreadCount);
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMarkAsRead = async (id) => {
+    try {
+      await notificationsService.markAsRead(id);
+      // Update local state
+      setNotifications(notifications.map(n => 
+        n.id === id ? { ...n, isRead: true, readAt: new Date() } : n
+      ));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error('Failed to mark as read:', error);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8, scale: 0.97 }}
@@ -49,20 +111,37 @@ function NotificationDropdown({ onClose }) {
         </button>
       </div>
       <div className="divide-y divide-slate-100 dark:divide-slate-800">
-        {mockNotifications.map((n) => (
-          <div key={n.id} className={`flex items-start gap-3 px-4 py-3.5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 ${n.unread ? "" : "opacity-60"}`}>
-            <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${toneMap[n.tone]}`}>
-              {n.unread ? <span className="h-2 w-2 rounded-full bg-current" /> : <FiCheck className="h-3.5 w-3.5" />}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-start justify-between gap-2">
-                <p className="text-[13px] font-semibold text-slate-900 dark:text-white leading-tight">{n.title}</p>
-                <span className="shrink-0 text-[10px] text-slate-400 mt-0.5">{n.time}</span>
-              </div>
-              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{n.body}</p>
-            </div>
+        {loading ? (
+          <div className="py-8 text-center text-sm text-slate-500">Loading...</div>
+        ) : notifications.length === 0 ? (
+          <div className="py-8 text-center">
+            <FiBell className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-600" />
+            <p className="mt-2 text-sm font-medium text-slate-600 dark:text-slate-400">No notifications</p>
+            <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">You're all caught up</p>
           </div>
-        ))}
+        ) : (
+          notifications.map((n) => {
+            const tone = getNotificationTone(n.type);
+            return (
+              <div 
+                key={n.id} 
+                className={`flex items-start gap-3 px-4 py-3.5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer ${n.isRead ? "opacity-60" : ""}`}
+                onClick={() => !n.isRead && handleMarkAsRead(n.id)}
+              >
+                <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${toneMap[tone]}`}>
+                  {n.isRead ? <FiCheck className="h-3.5 w-3.5" /> : <span className="h-2 w-2 rounded-full bg-current" />}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-[13px] font-semibold text-slate-900 dark:text-white leading-tight">{n.title}</p>
+                    <span className="shrink-0 text-[10px] text-slate-400 mt-0.5">{formatTimeAgo(n.createdAt)}</span>
+                  </div>
+                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{n.body}</p>
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
       <div className="border-t border-slate-100 px-4 py-2.5 dark:border-slate-800">
         <button className="text-xs font-semibold text-civic-600 hover:underline dark:text-civic-400">
@@ -79,9 +158,26 @@ export default function Navbar({ title, onMenuClick }) {
   const [profileOpen, setProfileOpen]   = useState(false);
   const [notifOpen, setNotifOpen]       = useState(false);
   const [searchOpen, setSearchOpen]     = useState(false);
+  const [unreadCount, setUnreadCount]   = useState(0);
   const searchRef = useRef(null);
   const avatarBg  = roleColors[user?.role] ?? "bg-slate-600";
-  const unread    = mockNotifications.filter((n) => n.unread).length;
+
+  // Fetch unread count
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await notificationsService.getUnreadCount();
+        setUnreadCount(response.data.unreadCount);
+      } catch (error) {
+        console.error('Failed to fetch unread count:', error);
+      }
+    };
+
+    fetchUnreadCount();
+    // Poll every 30 seconds
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (searchOpen) searchRef.current?.focus();
@@ -159,9 +255,9 @@ export default function Navbar({ title, onMenuClick }) {
           aria-label="Notifications"
         >
           <FiBell style={{ height: 18, width: 18 }} />
-          {unread > 0 && (
+          {unreadCount > 0 && (
             <span className="absolute right-1.5 top-1.5 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white ring-2 ring-white dark:ring-slate-950">
-              {unread}
+              {unreadCount}
             </span>
           )}
         </button>
