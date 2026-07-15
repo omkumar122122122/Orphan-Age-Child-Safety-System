@@ -173,6 +173,21 @@ export class ParentDashboardDto {
 
 export class KYCStatusDto {
   @ApiProperty()
+  parentId: string;
+
+  @ApiProperty()
+  parentName: string;
+
+  @ApiProperty({ required: false })
+  parentAvatar?: string;
+
+  @ApiProperty()
+  email: string;
+
+  @ApiProperty({ required: false })
+  contactNumber?: string;
+
+  @ApiProperty()
   kycStatus: string;
 
   @ApiProperty({ required: false })
@@ -182,14 +197,48 @@ export class KYCStatusDto {
   nextKycDue?: Date;
 
   @ApiProperty()
+  healthReportStatus: string;
+
+  @ApiProperty({ required: false })
+  nextHealthReportDue?: Date;
+
+  @ApiProperty()
   complianceStatus: string;
+
+  @ApiProperty({ required: false })
+  childId?: string;
+
+  @ApiProperty({ required: false })
+  childName?: string;
+
+  @ApiProperty({ required: false })
+  childAge?: number;
+
+  @ApiProperty({ required: false })
+  adoptionDate?: Date;
+
+  @ApiProperty()
+  yearsUntil16: number;
+
+  @ApiProperty()
+  trustScore: number;
+
+  @ApiProperty()
+  verificationStatus: string;
 
   @ApiProperty({ type: [Object] })
   verificationHistory: any[];
 
   @ApiProperty({ type: [Object] })
   documents: any[];
+
+  @ApiProperty({ type: [String] })
+  requiredDocuments: string[];
+
+  @ApiProperty({ type: [String] })
+  missingDocuments: string[];
 }
+
 
 export class VerificationQueueItemDto {
   @ApiProperty()
