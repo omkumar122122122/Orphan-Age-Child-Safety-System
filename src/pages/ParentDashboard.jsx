@@ -6,7 +6,6 @@ import {
   FiClock, FiShield, FiArrowRight, FiZap, FiActivity,
   FiMessageSquare, FiCpu
 } from "react-icons/fi";
-import { useState } from "react";
 import Breadcrumb from "../components/Breadcrumb";
 import NotificationPanel from "../components/NotificationPanel";
 import Chatbot from "../components/Chatbot/Chatbot";
