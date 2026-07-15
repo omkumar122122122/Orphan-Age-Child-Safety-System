@@ -124,9 +124,9 @@ export default function RegisterOrphanage() {
         <Section title="3. Address">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <FormInput label="Country" icon={FiHome} {...register("country")} />
-            <FormInput label="State" icon={FiHome} {...register("state")} />
+            <FormInput label="State *" icon={FiHome} error={formState.errors.state?.message} {...register("state", { required: "State is required" })} />
             <FormInput label="District" icon={FiHome} {...register("district")} />
-            <FormInput label="City" icon={FiHome} {...register("city")} />
+            <FormInput label="City *" icon={FiHome} error={formState.errors.city?.message} {...register("city", { required: "City is required" })} />
             <FormInput label="PIN Code" icon={FiHome} {...register("pinCode")} />
           </div>
           <TextArea label="Full Address" icon={FiHome} {...register("fullAddress")} />
