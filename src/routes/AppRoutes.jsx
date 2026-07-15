@@ -46,6 +46,7 @@ export default function AppRoutes() {
           <Route path="orphanages/:orphanageId/profile"   element={<OrphanageFullProfile />} />
           <Route path="alerts"                            element={<Alerts />} />
           <Route path="profile"                           element={<Profile />} />
+          <Route path="adoption-management"               element={<ChildAdoptionManagement />} />
         </Route>
       </Route>
 

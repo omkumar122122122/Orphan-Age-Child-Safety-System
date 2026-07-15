@@ -376,6 +376,9 @@ export class ParentsService {
 
     const adoptionRecord = parent.adoptionRecords[0];
     const child = adoptionRecord?.child;
+    const completedVisits = await this.prisma.visitRequest.count({
+      where: { parentId: parent.id, status: 'COMPLETED' },
+    });
 
     let linkedChild: any = undefined;
     if (child) {
@@ -399,9 +402,9 @@ export class ParentsService {
       steps: [
         { name: 'KYC Submitted', completed: parent.kycStatus !== 'PENDING' },
         { name: 'Identity Verified', completed: parent.verificationStatus === 'APPROVED' },
-        { name: 'Visit Request', completed: false, isCurrent: true },
-        { name: 'Visit Approved', completed: false },
-        { name: 'Adoption Proceeding', completed: adoptionRecord?.status === 'COMPLETED' },
+        { name: 'Visit Completed', completed: completedVisits > 0, isCurrent: completedVisits === 0 && parent.verificationStatus === 'APPROVED' },
+        { name: 'Legal Review', completed: adoptionRecord?.status === 'COMPLETED', isCurrent: ['LEGAL_PROCESS', 'UNDER_REVIEW', 'MATCHED'].includes(adoptionRecord?.status || '') },
+        { name: 'Adoption Complete', completed: adoptionRecord?.status === 'COMPLETED' },
       ],
     };
 
