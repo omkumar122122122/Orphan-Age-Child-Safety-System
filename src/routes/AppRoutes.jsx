@@ -19,10 +19,12 @@ import Orphanages           from "../pages/Orphanages";
 import ParentDashboard      from "../pages/ParentDashboard";
 import ParentKYC            from "../pages/ParentKYC";
 import ParentProfile        from "../pages/ParentProfile";
+import ParentVerificationCenter from "../pages/ParentVerificationCenter";
 import Profile              from "../pages/Profile";
 import RegisterChild        from "../pages/RegisterChild";
 import RegisterOrphanage    from "../pages/RegisterOrphanage";
 import Reports              from "../pages/Reports";
+import StaffManagement      from "../pages/StaffManagement";
 import StaffProfile         from "../pages/StaffProfile";
 import SystemSettings       from "../pages/SystemSettings";
 import ChildWelfareFollowUpSession from "../pages/ChildWelfareFollowUpSession";
@@ -54,6 +56,9 @@ export default function AppRoutes() {
           <Route path="staff/:staffId"                    element={<StaffProfile />} />
           <Route path="alerts"                            element={<Alerts />} />
           <Route path="profile"                           element={<Profile />} />
+          <Route path="parent-verification"               element={<ParentVerificationCenter />} />
+          <Route path="staff"                             element={<StaffManagement />} />
+          <Route path="staff/:staffId"                    element={<StaffProfile />} />
           <Route path="adoption-management"               element={<ChildAdoptionManagement />} />
           <Route path="settings"                          element={<SystemSettings />} />
         </Route>
@@ -68,6 +73,7 @@ export default function AppRoutes() {
           <Route path="visit-request" element={<VisitRequest />} />
           <Route path="sahayak-ai"    element={<SahayakAI />} />
           <Route path="notifications" element={<Alerts />} />
+          <Route path="child-welfare-follow-up-session" element={<ChildWelfareFollowUpSession />} />
         </Route>
       </Route>
 

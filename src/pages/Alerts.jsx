@@ -12,12 +12,6 @@ import { alertsService } from "../services/alertsService";
 import { useAuth } from "../context/AuthContext";
 import { classNames } from "../utils/formatters";
 
-const seedAlertQueue = [
-  { id: "ALT-001", child: "Sara Ali",    type: "High Risk",         detail: "Recurring health flags and low attendance require immediate officer review.",     level: "high",   time: "10 min ago", orphanage: "Sunrise Care Home" },
-  { id: "ALT-002", child: "Anaya Das",   type: "Medical Follow-up", detail: "Pediatric appointment due today. Welfare officer must verify completion status.", level: "medium", time: "1 hr ago",   orphanage: "Hope Nest" },
-  { id: "ALT-003", child: "Vihaan Sen",  type: "Attendance Drop",   detail: "Attendance fell below 80% threshold — possible welfare concern flagged by AI.",   level: "medium", time: "3 hr ago",   orphanage: "Sunrise Care Home" },
-  { id: "ALT-004", child: "General",     type: "Compliance Report", detail: "Monthly report submitted by all active homes. No critical flags raised.",          level: "low",    time: "Yesterday",  orphanage: "All facilities" },
-];
 
 const levelConfig = {
   high:   { badge: "badge-danger",  icon: FiAlertTriangle, bar: "bg-red-500",     iconBg: "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400",         label: "High",   priority: "Critical" },

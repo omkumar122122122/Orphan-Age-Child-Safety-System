@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   FiCalendar, FiBell, FiUser, FiHeart, FiCheckCircle,
-  FiClock, FiArrowRight, FiZap, FiActivity, FiShield
+  FiClock, FiArrowRight, FiZap, FiActivity, FiShield,
+  FiCpu, FiMessageSquare, FiTrash2
 } from "react-icons/fi";
 import Breadcrumb from "../components/Breadcrumb";
 import NotificationPanel from "../components/NotificationPanel";
@@ -11,11 +12,11 @@ import { useAuth } from "../context/AuthContext";
 import { parentsService } from "../services/parentsService";
 import { alertsService } from "../services/alertsService";
 import { classNames } from "../utils/formatters";
+import Chatbot from "../components/Chatbot/Chatbot";
+import ChatWindow from "../components/Chatbot/ChatWindow";
+import { useChat } from "../hooks/useChat";
 
-/* ── Linked child for the demo parent (Meera Nair → Anaya Das) */
-let linkedChild = null;
-
-/* ── Quick navigation links */
+/* ── Quick navigation links ──────── */
 const quickLinks = [
   { label: "Visit Request",  to: "/parent/visit-request", icon: FiCalendar, desc: "Schedule a visit",   color: "bg-civic-600",  ring: "ring-civic-500/20"  },
   { label: "KYC Status",     to: "/parent/kyc",           icon: FiShield,   desc: "Compliance & Docs", color: "bg-emerald-600", ring: "ring-emerald-500/20" },
@@ -23,18 +24,12 @@ const quickLinks = [
   { label: "Notifications",  to: "/parent/notifications", icon: FiBell,     desc: "Alerts & updates",   color: "bg-amber-600",  ring: "ring-amber-500/20"  },
 ];
 
-/* ── Framer Motion stagger helper */
+/* ── Framer Motion stagger helper ── */
 const fadeUp = (delay = 0) => ({
   initial:    { opacity: 0, y: 10 },
   animate:    { opacity: 1, y: 0  },
   transition: { duration: 0.25, delay, ease: [0.16, 1, 0.3, 1] },
 });
-
-/* ── Adoption journey steps (will be loaded from backend) ──────── */
-let adoptionTimeline = [];
-
-/* ── Trust badge strip (will be calculated from backend data) */
-let trustBadges = [];
 
 const childStatusColor = {
   Stable:         "badge-success",
@@ -46,6 +41,9 @@ export default function ParentDashboard() {
   const { user } = useAuth();
   const [, setDashboardVersion] = useState(0);
   const [notifications, setNotifications] = useState([]);
+  const [linkedChild, setLinkedChild] = useState(null);
+  const [adoptionTimeline, setAdoptionTimeline] = useState([]);
+  const [trustBadges, setTrustBadges] = useState([]);
 
   useEffect(() => {
     // Load parent dashboard data and live alerts in parallel
@@ -57,21 +55,21 @@ export default function ParentDashboard() {
         const dashboard = dashResult.value;
         
         // Update linked child
-        linkedChild = dashboard.linkedChild ? {
+        setLinkedChild(dashboard.linkedChild ? {
           ...dashboard.linkedChild,
           orphanage: dashboard.linkedChild.orphanageName,
           health: dashboard.linkedChild.healthStatus,
           attendance: '—', 
           educationLevel: 'Not provided', 
           risk: 'Not available',
-        } : null;
+        } : null);
         
         // Update adoption timeline
-        adoptionTimeline = (dashboard.adoptionJourney?.steps || []).map((step) => ({ 
+        setAdoptionTimeline((dashboard.adoptionJourney?.steps || []).map((step) => ({ 
           step: step.name, 
           done: step.completed, 
           current: step.isCurrent 
-        }));
+        })));
         
         // Calculate trust badges from backend data
         const verification = dashboard.verification || {};
@@ -85,12 +83,12 @@ export default function ParentDashboard() {
                          trustScore >= 60 ? 'text-amber-600 dark:text-amber-400' : 
                          'text-red-600 dark:text-red-400';
         
-        trustBadges = [
+        setTrustBadges([
           { label: "KYC", value: kycStatusLabel, color: verification.kycStatus === 'APPROVED' ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400" },
           { label: "Trust Score", value: `${trustScore}/100`, color: "text-civic-600 dark:text-civic-400" },
           { label: "Risk Level", value: riskLevel, color: riskColor },
           { label: "Status", value: verification.verificationStatus || 'Pending', color: "text-indigo-600 dark:text-indigo-400" },
-        ];
+        ]);
       }
 
       if (alertResult.status === 'fulfilled') {
@@ -108,9 +106,9 @@ export default function ParentDashboard() {
 
       setDashboardVersion((v) => v + 1);
     }).catch(() => {
-      linkedChild = null;
-      adoptionTimeline = [];
-      trustBadges = [];
+      setLinkedChild(null);
+      setAdoptionTimeline([]);
+      setTrustBadges([]);
       setDashboardVersion((v) => v + 1);
     });
   }, []);
@@ -287,7 +285,7 @@ export default function ParentDashboard() {
    Collapsible section on the Parent Dashboard.
    Shares the same useChat hook + ChatWindow as the floating bot,
    so both have independent conversation histories.
-═══════════════════════════════════════════════════════════ */
+════════════════════════════════════════════════════════════ */
 function SahayakAI({ parentId, childId }) {
   const [expanded, setExpanded] = useState(false);
   const { messages, isLoading, error, send, retry, clearConversation } = useChat({ parentId, childId });
@@ -331,7 +329,7 @@ function SahayakAI({ parentId, childId }) {
               </span>
             </div>
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-              Your AI welfare assistant — health, KYC, vaccination &amp; adoption guidance
+              Your AI welfare assistant — health, KYC, vaccination & adoption guidance
             </p>
           </div>
         </div>

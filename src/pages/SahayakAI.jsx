@@ -8,10 +8,8 @@ import {
 import ReactMarkdown from "react-markdown";
 import Breadcrumb from "../components/Breadcrumb";
 import { useChat } from "../hooks/useChat";
+import { useAuth } from "../context/AuthContext";
 import { classNames } from "../utils/formatters";
-
-const PARENT_ID = "PAR-2026-0148";
-const CHILD_ID  = "CH-1034";
 
 const recentChats = [
   "What is my child's vaccination status?",
@@ -51,9 +49,10 @@ const sideCards = [
    MAIN PAGE
 ═══════════════════════════════════════════════════════════ */
 export default function SahayakAI() {
+  const { user } = useAuth();
   const { messages, isLoading, error, send, retry, clearConversation } = useChat({
-    parentId: PARENT_ID,
-    childId:  CHILD_ID,
+    parentId: user?.parentId || user?.id,
+    childId:  null,
   });
 
   const [chatSearch, setChatSearch] = useState("");

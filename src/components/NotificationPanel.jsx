@@ -77,7 +77,8 @@ export default function NotificationPanel({ limit = 10 }) {
         sortBy: 'createdAt', 
         sortOrder: 'desc' 
       });
-      setItems(response.data.data);
+      const fetchedItems = response.data?.data || response.data || response || [];
+      setItems(Array.isArray(fetchedItems) ? fetchedItems : []);
     } catch (err) {
       console.error('Failed to fetch notifications:', err);
       setError('Failed to load notifications');

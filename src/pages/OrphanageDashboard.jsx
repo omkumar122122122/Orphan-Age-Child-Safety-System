@@ -46,9 +46,17 @@ export default function OrphanageDashboard() {
         alertsService.getAll(),
       ]);
       setDashboardData(stats);
-      setChildren(childrenData.data || []);
-      setChartData(safetyChart);
-      setAlerts((alertData.data || []).map((alert) => ({ id: alert.id, title: alert.title, detail: alert.detail, type: "Alert", time: new Date(alert.createdAt).toLocaleString('en-IN') })));
+      setChildren(childrenData?.data || (Array.isArray(childrenData) ? childrenData : []));
+      setChartData(safetyChart || { labels: [], datasets: [] });
+      
+      const alertsArray = alertData?.data || (Array.isArray(alertData) ? alertData : []);
+      setAlerts(alertsArray.map((alert) => ({ 
+        id: alert.id, 
+        title: alert.title, 
+        detail: alert.detail, 
+        type: "Alert", 
+        time: alert.createdAt ? new Date(alert.createdAt).toLocaleString('en-IN') : '' 
+      })));
     } catch (error) {
       console.error('Failed to load dashboard:', error);
     } finally {

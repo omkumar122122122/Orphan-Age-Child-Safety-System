@@ -29,24 +29,31 @@ import { parentsService } from "../services/parentsService";
 import { orphanagesService } from "../services/orphanagesService";
 import { visitRequestsService } from "../services/visitRequestsService";
 
-// AI Analysis - keeping as UI demonstration (not from backend yet)
-const aiAnalysis = [
-  { label: "Parent Trust Score", value: "95%", score: 95, detail: "High confidence profile" },
-  { label: "Face Match", value: "99%", score: 99, detail: "Biometric identity matched" },
-  { label: "Document Verification", value: "Verified", score: 100, detail: "All documents accepted" },
-  { label: "Background Check", value: "Passed", score: 92, detail: "No adverse records" },
-  { label: "Risk Level", value: "Low", score: 88, detail: "Eligible low-risk visitor" },
-  { label: "Recommendation", value: "Eligible for Visit", score: 96, detail: "Proceed with scheduling" }
-];
+// AI Analysis - computed from parent profile data
+const getAiAnalysis = (parentProfile) => {
+  if (!parentProfile) return [];
+  const trustScore = parentProfile.trustScore || 0;
+  const kycStatus = parentProfile.kycStatus || 'PENDING';
+  const isVerified = kycStatus === 'APPROVED' || kycStatus === 'VERIFIED';
+  
+  return [
+    { label: "Parent Trust Score", value: `${trustScore}%`, score: trustScore, detail: trustScore >= 70 ? "High confidence profile" : "Needs improvement" },
+    { label: "Face Match", value: isVerified ? "99%" : "N/A", score: isVerified ? 99 : 0, detail: isVerified ? "Biometric identity matched" : "Pending verification" },
+    { label: "Document Verification", value: isVerified ? "Verified" : "Pending", score: isVerified ? 100 : 50, detail: isVerified ? "All documents accepted" : "Documents under review" },
+    { label: "Background Check", value: isVerified ? "Passed" : "Pending", score: isVerified ? 92 : 0, detail: isVerified ? "No adverse records" : "Background check in progress" },
+    { label: "Risk Level", value: trustScore >= 80 ? "Low" : trustScore >= 60 ? "Medium" : "High", score: trustScore, detail: trustScore >= 80 ? "Eligible low-risk visitor" : "Additional review required" },
+    { label: "Recommendation", value: isVerified && trustScore >= 70 ? "Eligible for Visit" : "Under Review", score: isVerified && trustScore >= 70 ? 96 : 50, detail: isVerified && trustScore >= 70 ? "Proceed with scheduling" : "Complete verification first" }
+  ];
+};
 
-const documents = [
-  ["Aadhaar Verified", "Identity document matched", "Verified"],
-  ["PAN Verified", "Tax identity checked", "Verified"],
-  ["Income Certificate", "Financial capacity reviewed", "Approved"],
-  ["Marriage Certificate", "Family status confirmed", "Approved"],
-  ["Address Proof", "Residence geotag verified", "Verified"],
-  ["Selfie Verified", "Live face scan matched", "Verified"]
-];
+const getDocuments = (parentProfile) => {
+  if (!parentProfile?.documents) return [];
+  return parentProfile.documents.map(doc => [
+    doc.documentType?.replace(/_/g, ' ') || 'Document',
+    doc.status === 'APPROVED' ? 'Verified and accepted' : doc.status === 'REJECTED' ? 'Rejected - resubmit required' : 'Under review',
+    doc.status === 'APPROVED' ? 'Verified' : doc.status === 'REJECTED' ? 'Rejected' : 'Pending'
+  ]);
+};
 
 const statusTone = {
   Pending: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-200",
@@ -214,8 +221,8 @@ export default function VisitRequest() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <VisitForm register={register} errors={errors} submitting={submitting} />
-        <DocumentStatus />
-        <AiSafetyAnalysis />
+        <DocumentStatus parentProfile={parentProfile} />
+        <AiSafetyAnalysis parentProfile={parentProfile} />
         <motion.button
           type="submit"
           disabled={submitting}
@@ -426,12 +433,23 @@ function VisitForm({ register, errors, submitting }) {
   );
 }
 
-function DocumentStatus() {
+function DocumentStatus({ parentProfile }) {
+  const docs = getDocuments(parentProfile);
+  if (!docs || docs.length === 0) {
+    return (
+      <Card className="rounded-lg">
+        <SectionTitle icon={RiFingerprintLine} title="Document Status" subtitle="Uploaded documents verified before visit scheduling" />
+        <div className="mt-5 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+          No documents uploaded yet. Complete KYC to see document status.
+        </div>
+      </Card>
+    );
+  }
   return (
     <Card className="rounded-lg">
       <SectionTitle icon={RiFingerprintLine} title="Document Status" subtitle="Uploaded documents verified before visit scheduling" />
       <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {documents.map(([title, detail, status]) => (
+        {docs.map(([title, detail, status]) => (
           <motion.div
             key={title}
             whileHover={{ y: -3 }}
@@ -452,12 +470,23 @@ function DocumentStatus() {
   );
 }
 
-function AiSafetyAnalysis() {
+function AiSafetyAnalysis({ parentProfile }) {
+  const analysis = getAiAnalysis(parentProfile);
+  if (!analysis || analysis.length === 0) {
+    return (
+      <Card className="rounded-lg">
+        <SectionTitle icon={FiShield} title="AI Safety Analysis" subtitle="Risk and identity insights computed from your profile" />
+        <div className="mt-5 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+          Complete your profile verification to see AI safety analysis.
+        </div>
+      </Card>
+    );
+  }
   return (
     <Card className="rounded-lg">
-      <SectionTitle icon={FiShield} title="AI Safety Analysis" subtitle="Risk and identity insights generated from dummy safety data" />
+      <SectionTitle icon={FiShield} title="AI Safety Analysis" subtitle="Risk and identity insights computed from your profile" />
       <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {aiAnalysis.map((item) => (
+        {analysis.map((item) => (
           <motion.div key={item.label} whileHover={{ y: -3 }} className="rounded-lg border border-slate-200 bg-white/75 p-4 dark:border-slate-700 dark:bg-slate-950/45">
             <div className="flex items-center justify-between gap-4">
               <div>

@@ -13,6 +13,7 @@ import { StatCard } from "../components/Card";
 import DataTable from "../components/DataTable";
 import { useAuth } from "../context/AuthContext";
 import dashboardService from "../services/dashboardService";
+import { alertsService } from "../services/alertsService";
 
 const quickActions = [
   { label: "Register Child",      to: "/admin/register-child",     icon: FiUserPlus,     color: "bg-civic-600",   ring: "ring-civic-500/20",   desc: "New child intake" },
@@ -39,6 +40,7 @@ export default function AdminDashboard() {
   const [dashboardData, setDashboardData] = useState(null);
   const [chartsData, setChartsData] = useState(null);
   const [recentChildren, setRecentChildren] = useState([]);
+  const [alertStats, setAlertStats] = useState({ total: 0, high: 0, pending: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -48,15 +50,21 @@ export default function AdminDashboard() {
   async function loadDashboardData() {
     try {
       setLoading(true);
-      const [statsResponse, chartsResponse, childrenResponse] = await Promise.all([
+      const [statsResponse, chartsResponse, childrenResponse, alertsResponse] = await Promise.all([
         dashboardService.getAdminStats(),
         dashboardService.getAdminCharts(),
         dashboardService.getAdminRecentChildren(),
+        alertsService.getAll({ limit: 1 }).catch(() => ({ stats: { total: 0, high: 0, pending: 0 } })),
       ]);
 
       setDashboardData(statsResponse.data);
       setChartsData(chartsResponse.data);
       setRecentChildren(childrenResponse.data.children || []);
+
+      // Extract alert stats from the alerts API response
+      // alertsService.getAll() returns { data: [...], stats: { total, high, pending } }
+      const alertStatsData = alertsResponse?.stats || { total: 0, high: 0, pending: 0 };
+      setAlertStats(alertStatsData);
     } catch (error) {
       console.error('Failed to load admin dashboard:', error);
     } finally {

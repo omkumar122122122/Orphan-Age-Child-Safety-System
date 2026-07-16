@@ -146,7 +146,7 @@ export class ReportsService {
         FROM ai_risk_scores ars
         JOIN children c ON c.id = ars.child_id
         WHERE c.is_active = true
-          ${userRole === Role.ORPHANAGE && orphanageId ? this.prisma.$queryRawUnsafe(`AND c.orphanage_id = $1`, orphanageId) : this.prisma.$queryRawUnsafe('')}
+          ${userRole === Role.ORPHANAGE && orphanageId ? this.prisma.$queryRawUnsafe(`AND c.orphanage_id = '${orphanageId}'`) : ''}
         ORDER BY child_id, computed_at DESC
       )
       SELECT 
@@ -432,7 +432,7 @@ export class ReportsService {
         FROM ai_risk_scores ars
         JOIN children c ON c.id = ars.child_id
         WHERE c.is_active = true
-          ${userRole === Role.ORPHANAGE && orphanageId ? this.prisma.$queryRawUnsafe(`AND c.orphanage_id = $1`, orphanageId) : this.prisma.$queryRawUnsafe('')}
+          ${userRole === Role.ORPHANAGE && orphanageId ? this.prisma.$queryRawUnsafe(`AND c.orphanage_id = '${orphanageId}'`) : ''}
         ORDER BY child_id, computed_at DESC
       )
       SELECT AVG(overall_score)::float AS "avgScore"
@@ -459,7 +459,7 @@ export class ReportsService {
           FROM ai_risk_scores ars
           JOIN children c ON c.id = ars.child_id
           WHERE c.is_active = true
-            ${userRole === Role.ORPHANAGE && orphanageId ? this.prisma.$queryRawUnsafe(`AND c.orphanage_id = $1`, orphanageId) : this.prisma.$queryRawUnsafe('')}
+            ${userRole === Role.ORPHANAGE && orphanageId ? this.prisma.$queryRawUnsafe(`AND c.orphanage_id = '${orphanageId}'`) : ''}
           ORDER BY child_id, computed_at DESC
         )
         SELECT COUNT(*)::bigint AS count
@@ -513,7 +513,7 @@ export class ReportsService {
       WHERE c.is_active = true
         AND ars.computed_at >= ${start60Days}
         AND ars.computed_at < ${start30Days}
-        ${userRole === Role.ORPHANAGE && orphanageId ? this.prisma.$queryRawUnsafe(`AND c.orphanage_id = $1`, orphanageId) : this.prisma.$queryRawUnsafe('')}
+        ${userRole === Role.ORPHANAGE && orphanageId ? this.prisma.$queryRawUnsafe(`AND c.orphanage_id = '${orphanageId}'`) : ''}
     `;
 
     const avgRiskScore = riskScoreResult[0]?.avgScore || 0;
@@ -587,7 +587,7 @@ export class ReportsService {
         WHERE c.is_active = true
           AND ars.computed_at >= ${monthStart}
           AND ars.computed_at < ${monthEnd}
-          ${userRole === Role.ORPHANAGE && orphanageId ? this.prisma.$queryRawUnsafe(`AND c.orphanage_id = $1`, orphanageId) : this.prisma.$queryRawUnsafe('')}
+          ${userRole === Role.ORPHANAGE && orphanageId ? this.prisma.$queryRawUnsafe(`AND c.orphanage_id = '${orphanageId}'`) : ''}
       `;
 
       const avgRiskScore = riskScoreResult[0]?.avgScore || 85 + Math.random() * 10;
