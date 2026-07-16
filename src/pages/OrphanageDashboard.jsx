@@ -15,7 +15,7 @@ const quickActions = [
   { label: "AI Attendance",   to: "/orphanage/ai-attendance",  icon: FiCamera,   color: "bg-violet-600",  ring: "ring-violet-500/20",  desc: "Face recognition check-in" },
   { label: "Visit Requests",  to: "/orphanage/visit-requests", icon: FiCalendar, color: "bg-civic-600",   ring: "ring-civic-500/20",   desc: "Review parent visits" },
   { label: "Register Child",  to: "/orphanage/register-child", icon: FiUserPlus, color: "bg-emerald-600", ring: "ring-emerald-500/20", desc: "New child intake" },
-  { label: "View Reports",    to: "/orphanage/reports",        icon: FiBarChart2,color: "bg-indigo-600",  ring: "ring-indigo-500/20",  desc: "Safety & compliance" },
+  { label: "View Reports",    to: "/orphanage/reports",        icon: FiBarChart2, color: "bg-indigo-600",  ring: "ring-indigo-500/20",  desc: "Safety & compliance" },
 ];
 
 const fadeUp = (delay = 0) => ({
@@ -39,24 +39,35 @@ export default function OrphanageDashboard() {
   async function loadDashboardData() {
     try {
       setLoading(true);
+
+      // Handle each API call individually to prevent one failure from breaking the entire dashboard
+      const statsPromise = orphanagesService.getDashboardStats().catch(() => null);
+      const childrenPromise = orphanagesService.getMyChildren(10).catch(() => ({ data: [], total: 0 }));
+      const chartPromise = orphanagesService.getSafetyChart().catch(() => ({ labels: [], datasets: [] }));
+      const alertsPromise = alertsService.getAll().catch(() => ({ data: [], stats: { total: 0, high: 0, pending: 0 } }));
+
       const [stats, childrenData, safetyChart, alertData] = await Promise.all([
-        orphanagesService.getDashboardStats(),
-        orphanagesService.getMyChildren(10),
-        orphanagesService.getSafetyChart(),
-        alertsService.getAll(),
+        statsPromise, childrenPromise, chartPromise, alertsPromise
       ]);
+
       setDashboardData(stats);
       setChildren(childrenData?.data || (Array.isArray(childrenData) ? childrenData : []));
-      setChartData(safetyChart || { labels: [], datasets: [] });
-      
-      const alertsArray = alertData?.data || (Array.isArray(alertData) ? alertData : []);
-      setAlerts(alertsArray.map((alert) => ({ 
-        id: alert.id, 
-        title: alert.title, 
-        detail: alert.detail, 
-        type: "Alert", 
-        time: alert.createdAt ? new Date(alert.createdAt).toLocaleString('en-IN') : '' 
-      })));
+
+      // Ensure chart data always has valid structure
+      const safeChartData = safetyChart && typeof safetyChart === 'object' && Array.isArray(safetyChart.labels)
+        ? safetyChart
+        : { labels: [], datasets: [] };
+      setChartData(safeChartData);
+
+      // Ensure alerts data is always an array
+      const alertsData = Array.isArray(alertData) ? alertData : (alertData?.data || []);
+      setAlerts(Array.isArray(alertsData) ? alertsData.map((alert) => ({
+        id: alert.id,
+        title: alert.title,
+        detail: alert.detail,
+        type: "Alert",
+        time: alert.createdAt ? new Date(alert.createdAt).toLocaleString('en-IN') : ''
+      })) : []);
     } catch (error) {
       console.error('Failed to load dashboard:', error);
     } finally {
@@ -166,10 +177,10 @@ export default function OrphanageDashboard() {
 
       {/* Chart */}
       <motion.div {...fadeUp(0.2)}>
-        <LineChartCard 
-          title="Care Home Safety Performance" 
-          subtitle="Monthly welfare and compliance trend" 
-          data={chartData || { labels: [], datasets: [] }} 
+        <LineChartCard
+          title="Care Home Safety Performance"
+          subtitle="Monthly welfare and compliance trend"
+          data={chartData || { labels: [], datasets: [] }}
         />
       </motion.div>
 

@@ -32,9 +32,15 @@ export class ChildrenService {
     userId: string,
     userRole: Role,
   ): Promise<CreateChildResponseDto> {
-    if (userRole === Role.ORPHANAGE && dto.orphanageId) {
-      await this.validateOrphanageAccess(dto.orphanageId, userId);
+    // For ORPHANAGE users, auto-assign orphanage based on their staff record
+    if (userRole === Role.ORPHANAGE) {
+      if (!dto.orphanageId) {
+        dto.orphanageId = await this.getUserOrphanageId(userId);
+      } else {
+        await this.validateOrphanageAccess(dto.orphanageId, userId);
+      }
     }
+    // For ADMIN users, validate orphanage exists if provided
 
     if (dto.orphanageId) {
       const orphanage = await this.prisma.orphanage.findUnique({

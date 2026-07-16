@@ -14,7 +14,7 @@ import { classNames } from "../utils/formatters";
 
 const summaryConfig = [
   { label: "Total Children", key: "total",    icon: FiUsers,        color: "bg-civic-50 text-civic-700 ring-1 ring-civic-200 dark:bg-civic-500/10 dark:text-civic-300 dark:ring-civic-500/20" },
-  { label: "High Risk",      key: "highRisk",      icon: FiAlertTriangle,color: "bg-red-50 text-red-700 ring-1 ring-red-200 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/20" },
+  { label: "High Risk",      key: "highRisk",      icon: FiAlertTriangle, color: "bg-red-50 text-red-700 ring-1 ring-red-200 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/20" },
   { label: "Adopted",        key: "adopted",   icon: FiHeart,        color: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20" },
   { label: "Needs Review",   key: "needsReview",    icon: FiUserCheck,    color: "bg-amber-50 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20" },
 ];
@@ -29,7 +29,19 @@ export default function Children() {
   const { user } = useAuth();
   const { toasts, error: showError, removeToast } = useToast();
 
-  const basePath = user?.role === "ADMIN" ? "/admin" : "/orphanage";
+  const isOrphanageUser = user?.role === 'orphanage';
+  const basePath = user?.role === "admin" ? "/admin" : "/orphanage";
+
+  // Define columns based on user role - orphanage column only for admin users
+  const columns = [
+    { key: "childCode",  label: "Child ID" },
+    { key: "name",       label: "Name" },
+    { key: "age",        label: "Age" },
+    ...(isOrphanageUser ? [] : [{ key: "orphanage",  label: "Orphanage" }]),
+    { key: "risk",       label: "Risk" },
+    { key: "health",     label: "Health" },
+    { key: "attendance", label: "Attendance" },
+  ];
 
   const loadChildren = async (page = 1, searchQuery = query) => {
     try {
@@ -39,13 +51,15 @@ export default function Children() {
         page,
         limit: 8,
       });
-      
-      // apiClient returns full envelope: { success, data: { data, pagination, summary }, timestamp }
-      // We must unwrap .data to get the actual payload
-      const payload = response.data ?? response;
-      setData(Array.isArray(payload.data) ? payload.data : []);
-      setPagination(payload.pagination ?? { page: 1, limit: 8, total: 0, totalPages: 0 });
-      setSummary(payload.summary ?? { total: 0, highRisk: 0, adopted: 0, needsReview: 0 });
+
+      // childrenService.getAll returns unwrapped response: { data, pagination, summary }
+      // Handle both wrapped and unwrapped responses
+      const payload = response?.data && typeof response?.data === 'object' && !Array.isArray(response?.data)
+        ? response.data
+        : response;
+      setData(Array.isArray(payload?.data) ? payload.data : []);
+      setPagination(payload?.pagination ?? { page: 1, limit: 8, total: 0, totalPages: 0 });
+      setSummary(payload?.summary ?? { total: 0, highRisk: 0, adopted: 0, needsReview: 0 });
     } catch (err) {
       showError(err.message || "Failed to load children");
       console.error("Error loading children:", err);
@@ -79,7 +93,7 @@ export default function Children() {
   return (
     <div className="space-y-6">
       <ToastContainer toasts={toasts} onRemove={removeToast} />
-      
+
       <Breadcrumb items={["Records", "Children"]} />
 
       {/* Header */}
@@ -94,7 +108,11 @@ export default function Children() {
           </div>
           <div>
             <h1 className="page-title">Child Records</h1>
-            <p className="page-subtitle">Centralised welfare and AI risk monitoring list</p>
+            <p className="page-subtitle">
+              {isOrphanageUser
+                ? "Children in your care home"
+                : "Centralised welfare and AI risk monitoring list"}
+            </p>
           </div>
         </div>
         <SearchBar value={query} onChange={setQuery} placeholder="Search by name, ID or risk…" className="sm:max-w-xs" />
@@ -137,30 +155,22 @@ export default function Children() {
             <div className="empty-state-icon"><FiUsers className="h-6 w-6 text-slate-400" /></div>
             <p className="empty-state-title">No Children Found</p>
             <p className="empty-state-desc">
-              {query ? "Try adjusting your search query" : "No children registered yet"}
+              {query ? "Try adjusting your search query" : isOrphanageUser ? "No children registered yet in your care home" : "No children registered yet"}
             </p>
           </div>
         ) : (
           <>
             <DataTable
-              columns={[
-                { key: "childCode",  label: "Child ID" },
-                { key: "name",       label: "Name" },
-                { key: "age",        label: "Age" },
-                { key: "orphanage",  label: "Orphanage" },
-                { key: "risk",       label: "Risk" },
-                { key: "health",     label: "Health" },
-                { key: "attendance", label: "Attendance" },
-              ]}
+              columns={columns}
               rows={data}
               onRowClick={handleRowClick}
             />
             {pagination.totalPages > 1 && (
               <div className="border-t border-slate-100 px-5 py-4 dark:border-slate-800">
-                <Pagination 
-                  page={pagination.page} 
-                  totalPages={pagination.totalPages} 
-                  onPageChange={handlePageChange} 
+                <Pagination
+                  page={pagination.page}
+                  totalPages={pagination.totalPages}
+                  onPageChange={handlePageChange}
                 />
               </div>
             )}

@@ -5,8 +5,14 @@ import { apiClient } from './apiClient';
  *   { success: true, data: { data: Alert[], stats: {...} } }
  * After unwrap the caller receives:
  *   { data: Alert[], stats: { total, high, pending } }
+ * If response is an error or doesn't have expected format, returns empty data structure
  */
-const unwrap = (response) => (response?.success ? response.data : response);
+const unwrap = (response) => {
+  if (!response) return { data: [], stats: { total: 0, high: 0, pending: 0 } };
+  if (response?.success) return response.data;
+  // Return empty structure for error responses
+  return { data: [], stats: { total: 0, high: 0, pending: 0 } };
+};
 
 export const alertsService = {
   /**

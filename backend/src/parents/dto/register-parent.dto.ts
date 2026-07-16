@@ -3,9 +3,9 @@ import {
   IsString,
   IsEmail,
   IsOptional,
-  IsPhoneNumber,
   IsEnum,
   IsNumber,
+  MinLength,
 } from 'class-validator';
 
 /**
@@ -15,19 +15,21 @@ import {
 export class RegisterParentDto {
   @ApiProperty({ example: 'John', description: 'Parent first name' })
   @IsString()
+  @MinLength(1)
   firstName!: string;
 
-  @ApiProperty({ example: 'Doe', description: 'Parent last name' })
+  @ApiPropertyOptional({ example: 'Doe', description: 'Parent last name' })
+  @IsOptional()
   @IsString()
-  lastName!: string;
+  lastName?: string;
 
-  @ApiProperty({ example: 'john@example.com', description: 'Parent email address' })
+  @ApiPropertyOptional({ example: 'john@example.com', description: 'Parent email address' })
   @IsEmail()
   email!: string;
 
-  @ApiProperty({ example: '+919876543210', description: 'Parent phone number', required: false })
+  @ApiPropertyOptional({ example: '+919876543210', description: 'Parent phone number' })
   @IsOptional()
-  @IsPhoneNumber()
+  @IsString()
   phone?: string;
 
   @ApiProperty({ example: 'SecurePassword123', description: 'Password' })

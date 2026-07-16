@@ -1,5 +1,5 @@
 import { FiActivity, FiMessageCircle, FiShield, FiUser, FiCalendar, FiHeart, FiAlertTriangle } from "react-icons/fi";
-import DashboardLayout from "./DashboardLayout";
+import DashboardLayout from "./DashboardLayout.jsx";
 
 const parentNav = [
   { label: "Dashboard", path: "/parent", icon: FiActivity },

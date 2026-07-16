@@ -285,6 +285,12 @@ export class CreateOrphanageDto {
   @IsString()
   panCard?: string;
 
+  // Section 13: Login Credentials - Password for orphanage account
+  @ApiProperty({ example: 'Auto-generated password' })
+  @IsString()
+  @MinLength(8)
+  password: string;
+
   // Section 9: Facilities (FIX-2)
   @ApiPropertyOptional({
     example: ['Medical Room', 'CCTV Surveillance', 'School'],

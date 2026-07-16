@@ -16,10 +16,9 @@ import dashboardService from "../services/dashboardService";
 import { alertsService } from "../services/alertsService";
 
 const quickActions = [
-  { label: "Register Child",      to: "/admin/register-child",     icon: FiUserPlus,     color: "bg-civic-600",   ring: "ring-civic-500/20",   desc: "New child intake" },
-  { label: "Register Orphanage",  to: "/admin/register-orphanage", icon: FiHome,         color: "bg-indigo-600",  ring: "ring-indigo-500/20",  desc: "Onboard care home" },
-  { label: "View Orphanages",     to: "/admin/orphanages",         icon: FiShield,       color: "bg-violet-600",  ring: "ring-violet-500/20",  desc: "Monitor facilities" },
-  { label: "Review Alerts",       to: "/admin/alerts",             icon: FiAlertTriangle,color: "bg-red-600",     ring: "ring-red-500/20",     desc: "Safety flags pending" },
+  { label: "Register Orphanage", to: "/admin/register-orphanage", icon: FiHome, color: "bg-indigo-600", ring: "ring-indigo-500/20", desc: "Onboard care home" },
+  { label: "View Orphanages", to: "/admin/orphanages", icon: FiShield, color: "bg-violet-600", ring: "ring-violet-500/20", desc: "Monitor facilities" },
+  { label: "Review Alerts", to: "/admin/alerts", icon: FiAlertTriangle, color: "bg-red-600", ring: "ring-red-500/20", desc: "Safety flags pending" },
 ];
 
 const iconMap = {
@@ -57,14 +56,14 @@ export default function AdminDashboard() {
         alertsService.getAll({ limit: 1 }).catch(() => ({ stats: { total: 0, high: 0, pending: 0 } })),
       ]);
 
-      setDashboardData(statsResponse.data);
-      setChartsData(chartsResponse.data);
-      setRecentChildren(childrenResponse.data.children || []);
+       setDashboardData(statsResponse.data);
+       setChartsData(chartsResponse?.data || null);
+       setRecentChildren(childrenResponse?.data?.children || []);
 
-      // Extract alert stats from the alerts API response
-      // alertsService.getAll() returns { data: [...], stats: { total, high, pending } }
-      const alertStatsData = alertsResponse?.stats || { total: 0, high: 0, pending: 0 };
-      setAlertStats(alertStatsData);
+       // Extract alert stats from the alerts API response
+       // alertsService.getAll() returns { data: [...], stats: { total, high, pending } }
+       const alertStatsData = alertsResponse?.stats || { total: 0, high: 0, pending: 0 };
+       setAlertStats(alertStatsData);
     } catch (error) {
       console.error('Failed to load admin dashboard:', error);
     } finally {

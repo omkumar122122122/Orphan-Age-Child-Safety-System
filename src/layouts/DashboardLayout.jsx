@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { FiX } from "react-icons/fi";
-import Navbar from "../components/Navbar";
-import Sidebar from "../components/Sidebar";
-import { roleLabels } from "../utils/constants";
+import Navbar from "../components/Navbar.jsx";
+import Sidebar from "../components/Sidebar.jsx";
+import { roleLabels } from "../utils/constants.js";
 
 export default function DashboardLayout({ navItems, role, title }) {
   const [mobileOpen, setMobileOpen] = useState(false);

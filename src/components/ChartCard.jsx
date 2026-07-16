@@ -3,6 +3,7 @@ import {
   Legend, LinearScale, LineElement, PointElement, Tooltip,
 } from "chart.js";
 import { Doughnut, Line } from "react-chartjs-2";
+import { useMemo } from "react";
 
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement,
@@ -92,6 +93,12 @@ const DOUGHNUT_OPTIONS = {
   },
 };
 
+// Default empty chart data structure
+const EMPTY_CHART_DATA = {
+  labels: [],
+  datasets: [],
+};
+
 function CardShell({ title, subtitle, action, children }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-card dark:border-slate-800 dark:bg-slate-900">
@@ -108,20 +115,36 @@ function CardShell({ title, subtitle, action, children }) {
 }
 
 export function LineChartCard({ title, subtitle, data, action }) {
+  // Ensure data always has valid structure
+  const chartData = useMemo(() => {
+    if (!data || typeof data !== 'object') return EMPTY_CHART_DATA;
+    if (!Array.isArray(data.labels)) return { ...EMPTY_CHART_DATA, datasets: data.datasets || [] };
+    if (!Array.isArray(data.datasets)) return { ...EMPTY_CHART_DATA, labels: data.labels };
+    return data;
+  }, [data]);
+
   return (
     <CardShell title={title} subtitle={subtitle} action={action}>
       <div style={{ height: 280 }}>
-        <Line data={data} options={LINE_OPTIONS} />
+        <Line data={chartData} options={LINE_OPTIONS} />
       </div>
     </CardShell>
   );
 }
 
 export function DoughnutChartCard({ title, subtitle, data, action }) {
+  // Ensure data always has valid structure
+  const chartData = useMemo(() => {
+    if (!data || typeof data !== 'object') return EMPTY_CHART_DATA;
+    if (!Array.isArray(data.labels)) return { ...EMPTY_CHART_DATA, datasets: data.datasets || [] };
+    if (!Array.isArray(data.datasets)) return { ...EMPTY_CHART_DATA, labels: data.labels };
+    return data;
+  }, [data]);
+
   return (
     <CardShell title={title} subtitle={subtitle} action={action}>
       <div style={{ height: 280 }}>
-        <Doughnut data={data} options={DOUGHNUT_OPTIONS} />
+        <Doughnut data={chartData} options={DOUGHNUT_OPTIONS} />
       </div>
     </CardShell>
   );

@@ -5,30 +5,30 @@ import {
   FiCalendar, FiCamera, FiCheckCircle, FiFileText,
   FiMapPin, FiSave, FiUser, FiAlertCircle
 } from "react-icons/fi";
-import Breadcrumb from "../components/Breadcrumb";
-import Button from "../components/Button";
-import FormInput from "../components/FormInput";
-import Modal from "../components/Modal";
-import ToastContainer from "../components/Toast";
-import { useAuth } from "../context/AuthContext";
-import { useToast } from "../hooks/useToast";
-import { childrenService } from "../services/childrenService";
-import { orphanagesService } from "../services/orphanagesService";
-import { roleLabels } from "../utils/constants";
-import { classNames } from "../utils/formatters";
+import Breadcrumb from "../components/Breadcrumb.jsx";
+import Button from "../components/Button.jsx";
+import FormInput from "../components/FormInput.jsx";
+import Modal from "../components/Modal.jsx";
+import ToastContainer from "../components/Toast.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
+import { useToast } from "../hooks/useToast.js";
+import { childrenService } from "../services/childrenService.js";
+import { orphanagesService } from "../services/orphanagesService.js";
+import { roleLabels } from "../utils/constants.js";
+import { classNames } from "../utils/formatters.js";
 
-const bloodGroups    = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const foundConditions = ["Found alone","Rescued by police","Referred by hospital","Transferred from agency","Surrendered safely"];
 
 const selectCls = "mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-civic-500 focus:ring-2 focus:ring-civic-500/15 disabled:bg-slate-50 disabled:cursor-not-allowed dark:border-slate-700 dark:bg-slate-800/80 dark:text-white";
 const textareaCls = "mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-civic-500 focus:ring-2 focus:ring-civic-500/15 placeholder:text-slate-400 dark:border-slate-700 dark:bg-slate-800/80 dark:text-white";
 
-export default function RegisterChild() {
+function RegisterChild() {
   const { user } = useAuth();
   const { toasts, success: showSuccess, error: showError, removeToast } = useToast();
   const navigate = useNavigate();
   const [photoPreview, setPhotoPreview] = useState("");
-  const [savedRecord,  setSavedRecord]  = useState(null);
+  const [savedRecord, setSavedRecord] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [orphanages, setOrphanages] = useState([]);
   const [loadingOrphanages, setLoadingOrphanages] = useState(true);
@@ -68,7 +68,7 @@ export default function RegisterChild() {
   });
 
   const selectedPhoto = watch("photo");
-  const photoName     = selectedPhoto?.[0]?.name;
+  const photoName = selectedPhoto?.[0]?.name;
   const recordId = useMemo(() => `CH-${Math.floor(1000 + Math.random() * 9000)}`, []);
 
   const handlePhotoChange = (e) => {
@@ -295,3 +295,5 @@ function FormSection({ title, desc, children: content, first = false }) {
     </section>
   );
 }
+
+export default RegisterChild;

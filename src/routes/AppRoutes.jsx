@@ -1,36 +1,36 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import AdminLayout          from "../layouts/AdminLayout";
-import OrphanageLayout      from "../layouts/OrphanageLayout";
-import ParentLayout         from "../layouts/ParentLayout";
-import AdminDashboard       from "../pages/AdminDashboard";
-import Alerts               from "../pages/Alerts";
-import ChildAdoptionManagement from "../pages/ChildAdoptionManagement";
-import ChildProfile         from "../pages/ChildProfile";
-import Children             from "../pages/Children";
-import HealthMonitoring     from "../pages/HealthMonitoring";
-import Login                from "../pages/Login";
-import ManageVisitRequests  from "../pages/ManageVisitRequests";
-import AIAttendance         from "../pages/AIAttendance";
-import NotFound             from "../pages/NotFound";
-import OrphanageDashboard   from "../pages/OrphanageDashboard";
-import OrphanageDetail      from "../pages/OrphanageDetail";
-import OrphanageFullProfile from "../pages/OrphanageFullProfile";
-import Orphanages           from "../pages/Orphanages";
-import ParentDashboard      from "../pages/ParentDashboard";
-import ParentKYC            from "../pages/ParentKYC";
-import ParentProfile        from "../pages/ParentProfile";
-import ParentVerificationCenter from "../pages/ParentVerificationCenter";
-import Profile              from "../pages/Profile";
-import RegisterChild        from "../pages/RegisterChild";
-import RegisterOrphanage    from "../pages/RegisterOrphanage";
-import Reports              from "../pages/Reports";
-import StaffManagement      from "../pages/StaffManagement";
-import StaffProfile         from "../pages/StaffProfile";
-import SystemSettings       from "../pages/SystemSettings";
-import ChildWelfareFollowUpSession from "../pages/ChildWelfareFollowUpSession";
-import VisitRequest         from "../pages/VisitRequest";
-import SahayakAI            from "../pages/SahayakAI";
-import ProtectedRoute       from "./ProtectedRoute";
+import AdminLayout          from "../layouts/AdminLayout.jsx";
+import OrphanageLayout      from "../layouts/OrphanageLayout.jsx";
+import ParentLayout         from "../layouts/ParentLayout.jsx";
+import AdminDashboard       from "../pages/AdminDashboard.jsx";
+import Alerts               from "../pages/Alerts.jsx";
+import ChildAdoptionManagement from "../pages/ChildAdoptionManagement.jsx";
+import ChildProfile         from "../pages/ChildProfile.jsx";
+import Children             from "../pages/Children.jsx";
+import HealthMonitoring     from "../pages/HealthMonitoring.jsx";
+import Login                from "../pages/Login.jsx";
+import ManageVisitRequests  from "../pages/ManageVisitRequests.jsx";
+import AIAttendance         from "../pages/AIAttendance.jsx";
+import NotFound             from "../pages/NotFound.jsx";
+import OrphanageDashboard   from "../pages/OrphanageDashboard.jsx";
+import OrphanageDetail      from "../pages/OrphanageDetail.jsx";
+import OrphanageFullProfile from "../pages/OrphanageFullProfile.jsx";
+import Orphanages           from "../pages/Orphanages.jsx";
+import ParentDashboard      from "../pages/ParentDashboard.jsx";
+import ParentKYC            from "../pages/ParentKYC.jsx";
+import ParentProfile        from "../pages/ParentProfile.jsx";
+import ParentVerificationCenter from "../pages/ParentVerificationCenter.jsx";
+import Profile              from "../pages/Profile.jsx";
+import RegisterChild        from "../pages/RegisterChild.jsx";
+import RegisterOrphanage    from "../pages/RegisterOrphanage.jsx";
+import Reports              from "../pages/Reports.jsx";
+import StaffManagement      from "../pages/StaffManagement.jsx";
+import StaffProfile         from "../pages/StaffProfile.jsx";
+import SystemSettings       from "../pages/SystemSettings.jsx";
+import ChildWelfareFollowUpSession from "../pages/ChildWelfareFollowUpSession.jsx";
+import VisitRequest         from "../pages/VisitRequest.jsx";
+import SahayakAI            from "../pages/SahayakAI.jsx";
+import ProtectedRoute       from "./ProtectedRoute.jsx";
 
 export default function AppRoutes() {
   return (
@@ -47,9 +47,8 @@ export default function AppRoutes() {
           <Route path="children/:childId"                 element={<ChildProfile />} />
           <Route path="children/:childId/welfare-followup" element={<ChildWelfareFollowUpSession />} />
           <Route path="parent-profiles/:parentId"         element={<ParentProfile />} />
-          <Route path="parent-profiles/:parentId/kyc"     element={<ParentKYC />} />
-          <Route path="register-child"                    element={<RegisterChild />} />
-          <Route path="register-orphanage"                element={<RegisterOrphanage />} />
+           <Route path="parent-profiles/:parentId/kyc"     element={<ParentKYC />} />
+           <Route path="register-orphanage"                element={<RegisterOrphanage />} />
           <Route path="orphanages"                        element={<Orphanages />} />
           <Route path="orphanages/:orphanageId"           element={<OrphanageDetail />} />
           <Route path="orphanages/:orphanageId/profile"   element={<OrphanageFullProfile />} />

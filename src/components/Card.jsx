@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { classNames } from "../utils/formatters";
+import { FiActivity } from "react-icons/fi";
 
 const fadeUp = {
   initial: { opacity: 0, y: 10 },
@@ -67,6 +68,8 @@ export function StatCard({ label, value, trend, icon: Icon, tone = "blue" }) {
   const cfg = toneConfig[tone] ?? toneConfig.blue;
   const isPositive = trend?.startsWith("+");
   const isNegative = trend?.startsWith("-");
+  // Use a fallback icon if Icon is not provided or invalid
+  const IconComponent = Icon && typeof Icon === 'function' ? Icon : FiActivity;
 
   return (
     <motion.div
@@ -102,7 +105,7 @@ export function StatCard({ label, value, trend, icon: Icon, tone = "blue" }) {
           </div>
         </div>
         <div className={classNames("flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-sm", cfg.icon)}>
-          <Icon className="h-5 w-5" />
+          <IconComponent className="h-5 w-5" />
         </div>
       </div>
     </motion.div>

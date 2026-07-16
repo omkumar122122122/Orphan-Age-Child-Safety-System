@@ -4,9 +4,9 @@ import {
   FiMenu, FiBell, FiMoon, FiSun, FiChevronDown,
   FiLogOut, FiUser, FiSearch, FiX, FiCheck
 } from "react-icons/fi";
-import { useAuth } from "../context/AuthContext";
-import { useTheme } from "../context/ThemeContext";
-import notificationsService from "../services/notificationsService";
+import { useAuth } from "../context/AuthContext.jsx";
+import { useTheme } from "../context/ThemeContext.jsx";
+import notificationsService from "../services/notificationsService.js";
 
 const roleColors = {
   admin:     "bg-indigo-600",

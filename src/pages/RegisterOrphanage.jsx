@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { FiBriefcase, FiCamera, FiCheckSquare, FiCreditCard, FiFileText, FiHome, FiMail, FiPhone, FiShield, FiUpload, FiUserCheck, FiUsers } from "react-icons/fi";
+import { FiBriefcase, FiCamera, FiCheckSquare, FiCreditCard, FiFileText, FiHome, FiLock, FiMail, FiPhone, FiShield, FiUpload, FiUserCheck, FiUsers, FiRefreshCw } from "react-icons/fi";
 import Breadcrumb from "../components/Breadcrumb";
 import Button from "../components/Button";
 import Card from "../components/Card";
@@ -27,7 +27,8 @@ export default function RegisterOrphanage() {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
-  const { register, handleSubmit, reset, formState } = useForm({
+  const [generatedPassword, setGeneratedPassword] = useState("");
+  const { register, handleSubmit, reset, formState, setValue, watch } = useForm({
     defaultValues: {
       organizationType: "NGO",
       country: "India",
@@ -35,9 +36,21 @@ export default function RegisterOrphanage() {
       cctvInstalled: "Yes",
       visitorFaceVerificationEnabled: "No",
       gpsTrackingAvailable: "No",
-      emergencyAlertSystemEnabled: "Yes"
+      emergencyAlertSystemEnabled: "Yes",
+      password: ""
     }
   });
+
+  // Password generation function
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+    let password = '';
+    for (let i = 0; i < 12; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setValue("password", password);
+    setGeneratedPassword(password);
+  };
 
   const onSubmit = async (values) => {
     try {
@@ -68,6 +81,10 @@ export default function RegisterOrphanage() {
       const result = await orphanagesService.create(formData, files);
       
       setSuccess(`✅ Orphanage registered successfully! Code: ${result.code}`);
+      // Store credentials for display
+      if (result.loginEmail && result.generatedPassword) {
+        setGeneratedPassword(result.generatedPassword);
+      }
       showToast?.('Orphanage registered successfully', 'success');
       
       // Reset form after 2 seconds and navigate
@@ -232,7 +249,45 @@ export default function RegisterOrphanage() {
           </div>
         </Section>
 
-        {success && <p className="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">{success}</p>}
+        <Section title="13. Login Credentials">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="md:col-span-2 xl:col-span-2">
+              <FormInput 
+                label="Password *" 
+                type="text" 
+                icon={FiLock} 
+                readOnly 
+                {...register("password", { required: "Password is required" })} 
+              />
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                Password will be used as login ID (email) and password for the orphanage account
+              </p>
+            </div>
+            <div className="flex items-end">
+              <Button 
+                type="button"
+                variant="secondary"
+                icon={FiRefreshCw}
+                onClick={generatePassword}
+                disabled={loading}
+              >
+                Generate Password
+              </Button>
+            </div>
+          </div>
+        </Section>
+
+        {success && generatedPassword && (
+          <div className="rounded-lg bg-emerald-50 p-4 dark:bg-emerald-500/10">
+            <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300 mb-2">{success}</p>
+            <div className="text-xs space-y-1">
+              <p className="text-slate-600 dark:text-slate-400">Login Email: <span className="font-medium text-slate-900 dark:text-white">{watch("officialEmail")}</span></p>
+              <p className="text-slate-600 dark:text-slate-400">Generated Password: <span className="font-medium text-slate-900 dark:text-white">{generatedPassword}</span></p>
+              <p className="text-amber-600 dark:text-amber-400 mt-2">Store these credentials safely - they will not be shown again!</p>
+            </div>
+          </div>
+        )}
+        {success && !generatedPassword && <p className="rounded-lg bg-emerald-50 p-3 text-sm font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">{success}</p>}
         <div className="flex justify-end gap-3">
           <Button 
             type="button" 

@@ -364,7 +364,6 @@ export const adminNav = [
   { label: "Dashboard", path: "/admin", icon: FiActivity },
   { label: "Children", path: "/admin/children", icon: FiUsers },
   { label: "Parent Verification", path: "/admin/parent-verification", icon: FiUserCheck },
-  { label: "Register Child", path: "/admin/register-child", icon: FiPlusCircle },
   { label: "Register Orphanage", path: "/admin/register-orphanage", icon: FiHome },
   { label: "Orphanages", path: "/admin/orphanages", icon: FiHome },
   { label: "Staff Management", path: "/admin/staff", icon: FiBriefcase },

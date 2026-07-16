@@ -38,9 +38,30 @@ class ApiClient {
       const data = await response.json().catch(() => null);
 
       if (!response.ok) {
-        const error = new Error(data?.message || `HTTP ${response.status}`);
+        // Format validation error messages from NestJS
+        let errorMessage = '';
+        if (response.status === 400 && data) {
+          // NestJS validation errors come as array of messages
+          if (data.statusCode === 400) {
+            console.error('API Validation Error:', data);
+            if (Array.isArray(data.message)) {
+              errorMessage = data.message.join('; ');
+            } else if (typeof data.message === 'string') {
+              errorMessage = data.message;
+            } else {
+              errorMessage = 'Validation error - check console for details';
+            }
+          } else {
+            errorMessage = data.message || data.error || `Validation error: ${JSON.stringify(data)}`;
+          }
+        } else {
+          errorMessage = data?.message || data?.error || `HTTP ${response.status}`;
+        }
+        
+        const error = new Error(errorMessage);
         error.status = response.status;
         error.data = data;
+        error.validation = data?.statusCode === 400 ? data : null;
         throw error;
       }
 

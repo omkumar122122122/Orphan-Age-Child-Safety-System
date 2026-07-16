@@ -14,10 +14,10 @@ function unwrap(response) {
  */
 class ParentsService {
   /** Register a new parent user (public endpoint) */
-  async registerParent(parentData) {
-    const response = await apiClient.post('/auth/register-parent', parentData);
-    return unwrap(response);
-  }
+   async registerParent(parentData) {
+     const response = await apiClient.post('/parents/register', parentData);
+     return unwrap(response);
+   }
 
   /** Create a new parent profile */
   async createParent(parentData) {

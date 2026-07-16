@@ -58,6 +58,8 @@ import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { Logger } from '@nestjs/common';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '@prisma/client';
 
 @ApiTags('Parents')
 @ApiBearerAuth()
@@ -67,86 +69,109 @@ export class ParentsController {
   private readonly logger = new Logger(ParentsController.name);
 
   constructor(
-    private readonly parentsService: ParentsService,
-    private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
-  ) {}
+  private readonly parentsService: ParentsService,
+  private readonly prisma: PrismaService,
+  private readonly configService: ConfigService,
+  private readonly notificationsService: NotificationsService,
+) {}
 
-  @Public()
-  @Post('register')
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({
-    summary: 'Register a new parent (public endpoint)',
-    description:
-      'Creates a new user account with PARENT role and parent profile. The user will be in PENDING verification status until an admin approves them.',
-  })
-  @ApiBody({ type: RegisterParentDto })
-  @ApiResponse({
-    status: 201,
-    description: 'Parent registration successful — pending admin verification',
-  })
-  @ApiResponse({ status: 409, description: 'Email already registered' })
-  @ApiResponse({ status: 400, description: 'Validation error' })
-  async registerParent(@Body() dto: RegisterParentDto) {
-    // Check email uniqueness
-    const existing = await this.prisma.user.findUnique({
-      where: { email: dto.email },
-    });
-    if (existing) {
-      throw new BadRequestException('An account with this email already exists');
-    }
-
-    // Check phone uniqueness if provided
-    if (dto.phone) {
-      const existingPhone = await this.prisma.user.findUnique({
-        where: { phone: dto.phone },
-      });
-      if (existingPhone) {
-        throw new BadRequestException('An account with this phone number already exists');
-      }
-    }
-
-    const bcryptRounds = this.configService.get<number>('app.security.bcryptRounds', 12);
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(dto.password, bcryptRounds);
-
-    // Create user with PARENT role
-    const user = await this.prisma.user.create({
-      data: {
-        email: dto.email,
-        firstName: dto.firstName,
-        lastName: dto.lastName,
-        phone: dto.phone,
-        password: hashedPassword,
-        role: Role.PARENT,
-        isEmailVerified: false,
-        passwordChangedAt: new Date(),
-      },
-    });
-
-    // Create parent profile
-    const parent = await this.parentsService.create(user.id, {
-      dateOfBirth: dto.dateOfBirth as any,
-      gender: undefined,
-      nationality: dto.nationality || 'Indian',
-      maritalStatus: undefined,
-      occupation: dto.occupation,
-      annualIncome: dto.annualIncome,
-      houseOwnership: dto.houseOwnership as any,
-      numberOfRooms: dto.numberOfRooms,
-      adoptionMotivation: dto.adoptionMotivation,
-    } as any);
-
-    this.logger.log(`Parent registered: ${user.email} (${user.id})`);
-
-    return {
-      message:
-        'Parent registration submitted successfully. An admin will verify your account.',
-      userId: user.id,
-      parentId: parent.id,
-    };
+@Public()
+@Post('register')
+@HttpCode(HttpStatus.CREATED)
+@ApiOperation({
+  summary: 'Register a new parent (public endpoint)',
+  description:
+    'Creates a new user account with PARENT role and parent profile. The user will be in PENDING verification status until an admin approves them.',
+})
+@ApiBody({ type: RegisterParentDto })
+@ApiResponse({
+  status: 201,
+  description: 'Parent registration successful — pending admin verification',
+})
+@ApiResponse({ status: 409, description: 'Email already registered' })
+@ApiResponse({ status: 400, description: 'Validation error' })
+async registerParent(@Body() dto: RegisterParentDto) {
+  // Check email uniqueness
+  const existing = await this.prisma.user.findUnique({
+    where: { email: dto.email },
+  });
+  if (existing) {
+    throw new BadRequestException('An account with this email already exists');
   }
+
+  // Check phone uniqueness if provided
+  if (dto.phone) {
+    const existingPhone = await this.prisma.user.findUnique({
+      where: { phone: dto.phone },
+    });
+    if (existingPhone) {
+      throw new BadRequestException('An account with this phone number already exists');
+    }
+  }
+
+  const bcryptRounds = this.configService.get<number>('app.security.bcryptRounds', 12);
+
+  // Hash password
+  const hashedPassword = await bcrypt.hash(dto.password, bcryptRounds);
+
+  // Create user with PARENT role
+  const user = await this.prisma.user.create({
+    data: {
+      email: dto.email,
+      firstName: dto.firstName,
+      lastName: dto.lastName || '',
+      phone: dto.phone,
+      password: hashedPassword,
+      role: Role.PARENT,
+      isEmailVerified: false,
+      passwordChangedAt: new Date(),
+    },
+  });
+
+  // Create parent profile
+  const parent = await this.parentsService.create(user.id, {
+    dateOfBirth: dto.dateOfBirth || undefined,
+    nationality: dto.nationality || 'Indian',
+    occupation: dto.occupation || undefined,
+    annualIncome: dto.annualIncome || undefined,
+    houseOwnership: dto.houseOwnership || undefined,
+    numberOfRooms: dto.numberOfRooms || undefined,
+    adoptionMotivation: dto.adoptionMotivation || undefined,
+  } as any);
+
+  // Send notification to all admins
+  try {
+    const adminUsers = await this.prisma.user.findMany({
+      where: { role: Role.ADMIN },
+      select: { id: true },
+    });
+    const adminIds = adminUsers.map((a) => a.id);
+    if (adminIds.length > 0) {
+      await this.notificationsService.sendBulkNotifications(
+        adminIds,
+        NotificationType.KYC_STATUS_CHANGED,
+        'New Parent Registration',
+        `${dto.firstName} ${dto.lastName || ''} has registered and is pending verification.`,
+        {
+          relatedEntityType: 'PARENT',
+          relatedEntityId: parent.id,
+        },
+      );
+    }
+    this.logger.log(`Notification sent to ${adminIds.length} admins for new parent registration`);
+  } catch (error) {
+    this.logger.error('Failed to send admin notification:', error);
+  }
+
+  this.logger.log(`Parent registered: ${user.email} (${user.id})`);
+
+  return {
+    message:
+      'Parent registration submitted successfully. An admin will verify your account.',
+    userId: user.id,
+    parentId: parent.id,
+  };
+}
 
   @Post()
   @Roles(Role.PARENT, Role.ADMIN)

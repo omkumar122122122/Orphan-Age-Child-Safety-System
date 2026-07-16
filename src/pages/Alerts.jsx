@@ -31,12 +31,13 @@ export default function Alerts() {
   useEffect(() => {
     alertsService.getAll()
       .then((result) => {
-        setAlertQueue((result.data || []).map((alert) => ({
+        const alertsData = Array.isArray(result?.data) ? result.data : [];
+        setAlertQueue(alertsData.map((alert) => ({
           ...alert,
           level: ['HIGH', 'CRITICAL'].includes(alert.severity) ? 'high' : alert.severity === 'MEDIUM' ? 'medium' : 'low',
           time: new Date(alert.createdAt).toLocaleString('en-IN'),
         })));
-        setStats(result.stats || { total: 0, high: 0, pending: 0 });
+        setStats(result?.stats || { total: 0, high: 0, pending: 0 });
       })
       .catch((err) => setError(err.message || 'Failed to load alerts'))
       .finally(() => setLoading(false));

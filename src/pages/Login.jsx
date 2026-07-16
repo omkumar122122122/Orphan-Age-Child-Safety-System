@@ -64,30 +64,33 @@ export default function Login() {
     }
   };
 
-  const onSignupSubmit = async (values) => {
-    setSignupLoading(true);
-    setError("");
-    try {
-      // Call backend API to register parent
-      await parentsService.registerParent({
-        firstName: values.fatherName || "Parent",
-        lastName: "",
-        email: values.email,
-        phone: values.fatherPhone || values.motherPhone,
-        password: values.password || "TempPassword123!", // Will be prompted to change
-        relationship: "Father",
-        occupation: values.fatherOccupation || values.motherOccupation,
-        adoptionMotivation: values.adoptionReason,
-        // Additional data can be added later in KYC section
-      });
-      setSignupSuccess("Application submitted for admin verification.");
-      signupForm.reset({ hasAnotherChild: "no", otherChildStatus: "own" });
-    } catch (err) {
-      setError(err.message || "Registration failed. Please try again.");
-    } finally {
-      setSignupLoading(false);
-    }
-  };
+const onSignupSubmit = async (values) => {
+      setSignupLoading(true);
+      setError("");
+      try {
+        // Call backend API to register parent
+        const requestData = {
+          firstName: values.firstName || "Parent",
+          lastName: values.lastName || "",
+          email: values.email,
+          phone: values.phone || "",
+          password: values.password || "TempPassword123!",
+          relationship: "Parent",
+          occupation: values.occupation || "",
+          adoptionMotivation: values.adoptionReason || "",
+        };
+        console.log('Parent registration request data:', requestData);
+        const response = await parentsService.registerParent(requestData);
+        setSignupSuccess("Application submitted for admin verification.");
+        signupForm.reset({ hasAnotherChild: "no", otherChildStatus: "own" });
+      } catch (err) {
+        console.error('Registration error:', err);
+        const errorMsg = err?.data?.message || err.message || "Registration failed. Please try again.";
+        setError(errorMsg);
+      } finally {
+        setSignupLoading(false);
+      }
+    };
 
   return (
     /* Root: white in light, near-black in dark */

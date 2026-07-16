@@ -11,7 +11,8 @@ import { EncryptionService } from '../common/services/encryption.service';
 import { CreateOrphanageDto } from './dto/create-orphanage.dto';
 import { UpdateOrphanageDto } from './dto/update-orphanage.dto';
 import { OrphanageQueryDto } from './dto/orphanage-query.dto';
-import { Prisma, OrphanageStaffRole, ChildGender, OrganizationType } from '@prisma/client';
+import { Prisma, OrphanageStaffRole, ChildGender, OrganizationType, Role } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class OrphanagesService {
@@ -37,6 +38,14 @@ export class OrphanagesService {
     });
     if (existingByEmail) {
       throw new ConflictException('Official email already exists');
+    }
+
+    // Check for duplicate user email (for login)
+    const existingUserEmail = await this.prisma.user.findUnique({
+      where: { email: dto.officialEmail },
+    });
+    if (existingUserEmail) {
+      throw new ConflictException('Email already exists as user account');
     }
 
     // Check for duplicate government license if provided
@@ -100,6 +109,23 @@ export class OrphanagesService {
         : dto.facilities
         ? [dto.facilities]
         : [];
+
+      // Create user account for orphanage login
+      const bcryptRounds = 12;
+      const hashedPassword = await bcrypt.hash(dto.password, bcryptRounds);
+      
+      const user = await tx.user.create({
+        data: {
+          email: dto.officialEmail,
+          firstName: dto.name || 'Orphanage',
+          lastName: 'Admin',
+          phone: dto.phone,
+          password: hashedPassword,
+          role: Role.ORPHANAGE,
+          isEmailVerified: true, // Auto-verified for orphanage accounts
+          isActive: true,
+        },
+      });
 
       // Create orphanage
       const orphanage = await tx.orphanage.create({
@@ -228,18 +254,16 @@ export class OrphanagesService {
         }
       }
 
-      // Link administrator if userId provided
-      if (userId) {
-        await tx.orphanageStaff.create({
-          data: {
-            orphanageId: orphanage.id,
-            userId,
-            role: OrphanageStaffRole.ADMINISTRATOR,
-            designation: dto.designation || 'Administrator',
-            isActive: true,
-          },
-        });
-      }
+      // Link the created user as administrator for this orphanage
+      await tx.orphanageStaff.create({
+        data: {
+          orphanageId: orphanage.id,
+          userId: user.id,
+          role: OrphanageStaffRole.ADMINISTRATOR,
+          designation: dto.designation || 'Administrator',
+          isActive: true,
+        },
+      });
 
       // FIX-6: Calculate and update compliance score
       const licenses = await tx.orphanageLicense.findMany({
@@ -275,6 +299,8 @@ export class OrphanagesService {
           id: orphanage.id,
           code: orphanage.code,
           name: orphanage.name,
+          loginEmail: user.email,
+          generatedPassword: dto.password,
         },
       };
     });

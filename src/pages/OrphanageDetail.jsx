@@ -49,6 +49,19 @@ export default function OrphanageDetail() {
     );
   }
 
+  // Ensure orphanage has required fields with defaults
+  const orphanageData = {
+    name: orphanage?.name || "Unknown Orphanage",
+    code: orphanage?.code || "",
+    city: orphanage?.city || "",
+    compliance: orphanage?.compliance ?? 0,
+    capacity: orphanage?.capacity ?? 0,
+    registrationNumber: orphanage?.registrationNumber || "",
+    governmentLicenseNumber: orphanage?.governmentLicenseNumber || "",
+    phone: orphanage?.phone || "",
+    fullAddress: orphanage?.fullAddress || "",
+  };
+
   if (error || !orphanage) {
     return (
       <div className="space-y-5">
@@ -69,25 +82,26 @@ export default function OrphanageDetail() {
     );
   }
 
-  const totalAdmissions = statistics?.totalAdmissions || 0;
-  const adoptedChildren = statistics?.adoptedChildrenCount || 0;
-  const currentChildren = statistics?.currentChildrenCount || orphanage.occupancy;
-  const occupancyPct = statistics?.occupancyPercentage || 0;
-  const complianceColor = orphanage.compliance >= 90 ? "text-green-600 dark:text-green-400" : orphanage.compliance >= 75 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400";
+  const totalAdmissions = statistics?.data?.totalAdmissions || statistics?.totalAdmissions || 0;
+  const adoptedChildren = statistics?.data?.adoptedChildrenCount || statistics?.adoptedChildrenCount || 0;
+  const currentChildren = statistics?.data?.currentChildrenCount || statistics?.currentChildrenCount || orphanage.occupancy || 0;
+  const occupancyPct = statistics?.data?.occupancyPercentage || statistics?.occupancyPercentage || 0;
+  const compliance = orphanageData?.compliance ?? 0;
+  const complianceColor = compliance >= 90 ? "text-green-600 dark:text-green-400" : compliance >= 75 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400";
 
   return (
     <div className="space-y-5">
-      <Breadcrumb items={["Admin", "Orphanages", orphanage.name]} />
+      <Breadcrumb items={["Admin", "Orphanages", orphanageData.name]} />
 
       {/* Page header */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
         <div className="flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-indigo-100 text-xl font-bold text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">
-            {orphanage.name.split(" ").map(w => w[0]).join("").slice(0, 2)}
+            {orphanageData.name.split(" ").map(w => w[0]).join("").slice(0, 2)}
           </div>
           <div>
-            <h1 className="page-title">{orphanage.name}</h1>
-            <p className="page-subtitle">{orphanage.code} · {orphanage.city}</p>
+            <h1 className="page-title">{orphanageData.name}</h1>
+            <p className="page-subtitle">{orphanageData.code} · {orphanageData.city}</p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -138,11 +152,11 @@ export default function OrphanageDetail() {
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-card dark:border-slate-800 dark:bg-slate-900">
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Compliance Score</p>
-          <p className={classNames("mt-2 text-4xl font-bold", complianceColor)}>{orphanage.compliance}%</p>
+          <p className={classNames("mt-2 text-4xl font-bold", complianceColor)}>{compliance}%</p>
           <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-slate-700">
             <div
-              className={classNames("h-full rounded-full", orphanage.compliance >= 90 ? "bg-green-500" : orphanage.compliance >= 75 ? "bg-amber-500" : "bg-red-500")}
-              style={{ width: `${orphanage.compliance}%` }}
+              className={classNames("h-full rounded-full", compliance >= 90 ? "bg-green-500" : compliance >= 75 ? "bg-amber-500" : "bg-red-500")}
+              style={{ width: `${compliance}%` }}
             />
           </div>
         </div>
@@ -150,7 +164,7 @@ export default function OrphanageDetail() {
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Occupancy</p>
           <div className="mt-2 flex items-baseline gap-2">
             <p className="text-4xl font-bold text-slate-900 dark:text-white">{currentChildren}</p>
-            <p className="text-lg text-slate-400">/ {orphanage.capacity}</p>
+          <p className="text-lg text-slate-400">/ {orphanageData.capacity}</p>
           </div>
           <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-slate-700">
             <div
@@ -167,14 +181,14 @@ export default function OrphanageDetail() {
           <h2 className="text-sm font-bold text-slate-900 dark:text-white">Basic Details</h2>
         </div>
         <div className="grid gap-3 p-5 sm:grid-cols-2 xl:grid-cols-3">
-          <Field icon={FiHome}     label="Orphanage Name"          value={orphanage.name} />
-          <Field icon={FiFileText} label="Registration Number"     value={orphanage.registrationNumber} />
-          <Field icon={FiShield}   label="Govt License Number"     value={orphanage.governmentLicenseNumber} />
-          <Field icon={FiHome}     label="City"                    value={orphanage.city} />
-          <Field icon={FiUsers}    label="Capacity"                value={orphanage.capacity} />
-          <Field icon={FiShield}   label="Compliance"              value={`${orphanage.compliance}%`} />
-          <Field icon={FiPhone}    label="Phone Number"            value={orphanage.phone} />
-          <Field icon={FiHome}     label="Address"                 value={orphanage.fullAddress} wide />
+          <Field icon={FiHome}     label="Orphanage Name"          value={orphanageData.name} />
+          <Field icon={FiFileText} label="Registration Number"     value={orphanageData.registrationNumber} />
+          <Field icon={FiShield}   label="Govt License Number"     value={orphanageData.governmentLicenseNumber} />
+          <Field icon={FiHome}     label="City"                    value={orphanageData.city} />
+          <Field icon={FiUsers}    label="Capacity"                value={orphanageData.capacity} />
+          <Field icon={FiShield}   label="Compliance"              value={`${compliance}%`} />
+          <Field icon={FiPhone}    label="Phone Number"            value={orphanageData.phone} />
+          <Field icon={FiHome}     label="Address"                 value={orphanageData.fullAddress} wide />
         </div>
       </div>
 
