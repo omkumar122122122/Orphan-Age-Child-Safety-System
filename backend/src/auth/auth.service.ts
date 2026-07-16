@@ -19,6 +19,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { SendOtpDto } from './dto/send-otp.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { RefreshTokenPayload } from './interfaces/jwt-payload.interface';
 import { AuthResponse, AuthenticatedUser, TokenPair } from './interfaces/auth-response.interface';
@@ -99,7 +100,7 @@ export class AuthService {
         firstName: user.firstName,
         token: rawToken,
       })
-      .catch((err) => this.logger.error('Failed to send verification email', err.stack));
+      .catch((err) => this.logger.error('Failed to send verification email', err as Error));
 
     await this.logAudit(user.id, AUDIT_ACTIONS.REGISTER, meta?.ipAddress, meta?.userAgent);
 
@@ -289,7 +290,7 @@ export class AuthService {
     // Send welcome email
     this.emailService
       .sendWelcomeEmail({ to: user.email, firstName: user.firstName })
-      .catch((err) => this.logger.error('Failed to send welcome email', err.stack));
+      .catch((err) => this.logger.error('Failed to send welcome email', err as Error));
 
     await this.logAudit(user.id, AUDIT_ACTIONS.VERIFY_EMAIL);
 
@@ -367,7 +368,7 @@ export class AuthService {
         firstName: user.firstName,
         token: rawToken,
       })
-      .catch((err) => this.logger.error('Failed to send password reset email', err.stack));
+      .catch((err) => this.logger.error('Failed to send password reset email', err as Error));
 
     await this.logAudit(user.id, AUDIT_ACTIONS.FORGOT_PASSWORD, meta?.ipAddress, meta?.userAgent);
 
@@ -617,7 +618,7 @@ export class AuthService {
         data: { userId, action, ipAddress, userAgent, success },
       });
     } catch (err) {
-      this.logger.error('Failed to write audit log', err.stack);
+      this.logger.error('Failed to write audit log', err as Error);
     }
   }
 }

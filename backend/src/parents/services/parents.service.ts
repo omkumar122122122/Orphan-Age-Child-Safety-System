@@ -6,6 +6,8 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { NotificationsService } from '../../notifications/notifications.service';
+import { NotificationType, NotificationChannel } from '@prisma/client';
 import { Role } from '../../common/enums/role.enum';
 import { Prisma } from '@prisma/client';
 import {
@@ -43,8 +45,8 @@ export class ParentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly documentUpload: DocumentUploadService,
+    private readonly notificationsService: NotificationsService,
   ) {}
-
 
   async create(userId: string, dto: CreateParentDto): Promise<{ id: string }> {
     const existingParent = await this.prisma.parent.findUnique({
@@ -937,6 +939,23 @@ export class ParentsService {
       }
     });
 
+    // Send notification to the parent
+    try {
+      await this.notificationsService.sendNotification(
+        parent.userId,
+        NotificationType.KYC_STATUS_CHANGED,
+        'Parent Registration Approved',
+        `Your parent registration has been approved by the admin. You can now access all parent features and submit visit requests to orphanages.`,
+        {
+          relatedEntityType: 'PARENT',
+          relatedEntityId: parent.id,
+        },
+      );
+      this.logger.log(`Notification sent to parent ${parent.id} for approval`);
+    } catch (error) {
+      this.logger.error(`Failed to send notification to parent ${parent.id}:`, error);
+    }
+
     this.logger.log(`Parent approved: ${id}`);
   }
 
@@ -957,6 +976,23 @@ export class ParentsService {
         updatedAt: new Date(),
       },
     });
+
+    // Send notification to the parent
+    try {
+      await this.notificationsService.sendNotification(
+        parent.userId,
+        NotificationType.KYC_STATUS_CHANGED,
+        'Parent Registration Rejected',
+        `Your parent registration has been rejected. Reason: ${reason}. Please contact support for more information.`,
+        {
+          relatedEntityType: 'PARENT',
+          relatedEntityId: parent.id,
+        },
+      );
+      this.logger.log(`Notification sent to parent ${parent.id} for rejection`);
+    } catch (error) {
+      this.logger.error(`Failed to send notification to parent ${parent.id}:`, error);
+    }
 
     this.logger.log(`Parent rejected: ${id}`);
   }

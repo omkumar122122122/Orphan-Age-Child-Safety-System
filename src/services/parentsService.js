@@ -13,6 +13,12 @@ function unwrap(response) {
  * Parents Service — handles all parent-related API calls
  */
 class ParentsService {
+  /** Register a new parent user (public endpoint) */
+  async registerParent(parentData) {
+    const response = await apiClient.post('/auth/register-parent', parentData);
+    return unwrap(response);
+  }
+
   /** Create a new parent profile */
   async createParent(parentData) {
     const response = await apiClient.post('/parents', parentData);

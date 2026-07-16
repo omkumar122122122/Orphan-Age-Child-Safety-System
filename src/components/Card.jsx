@@ -108,3 +108,5 @@ export function StatCard({ label, value, trend, icon: Icon, tone = "blue" }) {
     </motion.div>
   );
 }
+
+

@@ -16,6 +16,7 @@ import Chatbot from "../components/Chatbot/Chatbot";
 import ChatWindow from "../components/Chatbot/ChatWindow";
 import { useChat } from "../hooks/useChat";
 
+
 /* ── Quick navigation links ──────── */
 const quickLinks = [
   { label: "Visit Request",  to: "/parent/visit-request", icon: FiCalendar, desc: "Schedule a visit",   color: "bg-civic-600",  ring: "ring-civic-500/20"  },

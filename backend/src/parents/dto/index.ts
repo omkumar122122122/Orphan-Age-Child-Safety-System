@@ -10,3 +10,4 @@ export * from './manual-trust-score.dto';
 export * from './police-verification.dto';
 export * from './submit-kyc.dto';
 export * from './upload-document.dto';
+export * from './register-parent.dto';

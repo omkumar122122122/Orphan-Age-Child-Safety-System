@@ -10,6 +10,7 @@ import ThemeToggle from "../components/ThemeToggle";
 import Button from "../components/Button";
 import { useAuth } from "../context/AuthContext";
 import { roleHome } from "../utils/constants";
+import { parentsService } from "../services/parentsService";
 
 /* ─── Role config ───────────────────────────────────── */
 const roleConfig = {
@@ -40,6 +41,7 @@ export default function Login() {
   const [authMode, setAuthMode]         = useState("login");
   const [selectedRole, setSelectedRole] = useState(null);
   const [signupSuccess, setSignupSuccess] = useState("");
+  const [signupLoading, setSignupLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   // ✅ FIXED: Removed default values (no pre-filled credentials)
@@ -62,13 +64,29 @@ export default function Login() {
     }
   };
 
-  const onSignupSubmit = (values) => {
-    const apps = JSON.parse(localStorage.getItem("parent_signup_applications") || "[]");
-    localStorage.setItem("parent_signup_applications",
-      JSON.stringify([...apps, { id: `PSA-${Date.now()}`, submittedAt: new Date().toISOString(), ...values }])
-    );
-    setSignupSuccess("Application submitted for admin verification.");
-    signupForm.reset({ hasAnotherChild: "no", otherChildStatus: "own" });
+  const onSignupSubmit = async (values) => {
+    setSignupLoading(true);
+    setError("");
+    try {
+      // Call backend API to register parent
+      await parentsService.registerParent({
+        firstName: values.fatherName || "Parent",
+        lastName: "",
+        email: values.email,
+        phone: values.fatherPhone || values.motherPhone,
+        password: values.password || "TempPassword123!", // Will be prompted to change
+        relationship: "Father",
+        occupation: values.fatherOccupation || values.motherOccupation,
+        adoptionMotivation: values.adoptionReason,
+        // Additional data can be added later in KYC section
+      });
+      setSignupSuccess("Application submitted for admin verification.");
+      signupForm.reset({ hasAnotherChild: "no", otherChildStatus: "own" });
+    } catch (err) {
+      setError(err.message || "Registration failed. Please try again.");
+    } finally {
+      setSignupLoading(false);
+    }
   };
 
   return (
@@ -186,6 +204,7 @@ export default function Login() {
                     form={signupForm}
                     onSubmit={onSignupSubmit}
                     success={signupSuccess}
+                    loading={signupLoading}
                     onBack={() => setAuthMode("login")}
                   />
                 )}
@@ -333,7 +352,7 @@ function LoginForm({
 }
 
 /* ─── Parent signup form ─────────────────────────────── */
-function ParentSignupForm({ form, onSubmit, success, onBack }) {
+function ParentSignupForm({ form, onSubmit, success, loading, onBack }) {
   const { register, handleSubmit } = form;
 
   /* Light mode: white bg, slate-900 text. Dark mode: slate-800, white text */
@@ -354,63 +373,27 @@ function ParentSignupForm({ form, onSubmit, success, onBack }) {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
-          <label className={labelCls}>Father Name
-            <input placeholder="Full name" className={fieldCls} {...register("fatherName", { required: true })} />
+          <label className={labelCls}>First Name *
+            <input placeholder="First name" className={fieldCls} {...register("firstName", { required: true })} />
           </label>
-          <label className={labelCls}>Mother Name
-            <input placeholder="Full name" className={fieldCls} {...register("motherName", { required: true })} />
+          <label className={labelCls}>Last Name
+            <input placeholder="Last name" className={fieldCls} {...register("lastName")} />
           </label>
-          <label className={labelCls}>Father Phone
-            <input type="tel" placeholder="+91 XXXXX XXXXX" className={fieldCls} {...register("fatherPhone", { required: true })} />
+          <label className={labelCls}>Phone *
+            <input type="tel" placeholder="+91 XXXXX XXXXX" className={fieldCls} {...register("phone", { required: true })} />
           </label>
-          <label className={labelCls}>Mother Phone
-            <input type="tel" placeholder="+91 XXXXX XXXXX" className={fieldCls} {...register("motherPhone", { required: true })} />
-          </label>
-          <label className={labelCls}>Father Aadhaar
-            <input placeholder="XXXX-XXXX-XXXX" className={fieldCls} {...register("fatherAadhaar", { required: true })} />
-          </label>
-          <label className={labelCls}>Mother Aadhaar
-            <input placeholder="XXXX-XXXX-XXXX" className={fieldCls} {...register("motherAadhaar", { required: true })} />
-          </label>
-          <label className={labelCls}>Father Occupation
-            <input placeholder="e.g. Teacher" className={fieldCls} {...register("fatherOccupation", { required: true })} />
-          </label>
-          <label className={labelCls}>Mother Occupation
-            <input placeholder="e.g. Nurse" className={fieldCls} {...register("motherOccupation", { required: true })} />
-          </label>
-          <label className={labelCls}>Email
+          <label className={labelCls}>Email *
             <input type="email" placeholder="family@example.com" className={fieldCls} {...register("email", { required: true })} />
           </label>
-          <label className={labelCls}>Voter ID
-            <input placeholder="VTR-XXXX" className={fieldCls} {...register("voterId", { required: true })} />
+          <label className={labelCls}>Password *
+            <input type="password" placeholder="Create password" className={fieldCls} {...register("password", { required: true, minLength: 8 })} />
+          </label>
+          <label className={labelCls}>Occupation
+            <input placeholder="e.g. Teacher" className={fieldCls} {...register("occupation")} />
           </label>
         </div>
 
-        <label className={labelCls}>Address
-          <textarea rows={2} placeholder="Full residential address" className={fieldCls} {...register("address", { required: true })} />
-        </label>
-
-        <label className={labelCls}>Financial Condition
-          <textarea rows={2} placeholder="Briefly describe household income and stability" className={fieldCls} {...register("financialCondition", { required: true })} />
-        </label>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className={labelCls}>Has Another Child?
-            <select className={fieldCls} {...register("hasAnotherChild")}>
-              <option value="no">No</option>
-              <option value="yes">Yes</option>
-            </select>
-          </label>
-          <label className={labelCls}>Other Child Status
-            <select className={fieldCls} {...register("otherChildStatus")}>
-              <option value="own">Own child</option>
-              <option value="adopted">Adopted child</option>
-              <option value="not-applicable">Not applicable</option>
-            </select>
-          </label>
-        </div>
-
-        <label className={labelCls}>Reason for Adoption
+        <label className={labelCls}>Reason for Adoption *
           <textarea rows={3} placeholder="Why do you wish to adopt?" className={fieldCls} {...register("adoptionReason", { required: true })} />
         </label>
 
@@ -424,7 +407,9 @@ function ParentSignupForm({ form, onSubmit, success, onBack }) {
           <Button type="button" variant="secondary" onClick={onBack} className="flex-none">
             ← Back
           </Button>
-          <Button type="submit" fullWidth>Submit Application</Button>
+          <Button type="submit" fullWidth disabled={loading}>
+            {loading ? "Submitting..." : "Submit Application"}
+          </Button>
         </div>
       </form>
     </div>
