@@ -4,13 +4,17 @@ import {
   FiUserCheck, FiUsers, FiHeart, FiCheckCircle, FiUser
 } from "react-icons/fi";
 import { motion } from "framer-motion";
+import { useState } from "react";
 import Breadcrumb from "../components/Breadcrumb";
 import Button from "../components/Button";
 import ProfileActions from "../components/ProfileActions";
 import { useAuth } from "../context/AuthContext";
+import { changePassword, updateMe } from "../services/authService";
 import { children, orphanages } from "../data/dummyData";
 import { roleLabels } from "../utils/constants";
 import { classNames } from "../utils/formatters";
+import ChangePasswordModal from "../components/ChangePasswordModal";
+import EditProfileModal from "../components/EditProfileModal";
 
 /* ── role avatar colours ─────────────────────────────────── */
 const roleAvatarBg = {
@@ -29,16 +33,68 @@ const roleBadge = {
    MAIN
 ═══════════════════════════════════════════════════════════ */
 export default function Profile() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const isAdmin     = user?.role === "admin";
   const isParent    = user?.role === "parent";
   const isOrphanage = user?.role === "orphanage";
   const orphanage   = orphanages.find((o) => o.name === user.department);
   const child       = children[1]; // linked child for parent demo
 
+  // Modal states
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [notification, setNotification] = useState(null);
+
+  const handleEditProfile = async (data) => {
+    setActionLoading(true);
+    try {
+      await updateUser(data);
+      setNotification({ type: "success", message: "Profile updated successfully" });
+      setTimeout(() => setNotification(null), 3000);
+    } catch (error) {
+      setNotification({ type: "error", message: error.message || "Failed to update profile" });
+      setTimeout(() => setNotification(null), 3000);
+      throw error;
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleChangePassword = async (data) => {
+    setActionLoading(true);
+    try {
+      await changePassword(data);
+      setNotification({ type: "success", message: "Password changed successfully. Please log in again." });
+      setTimeout(() => setNotification(null), 3000);
+    } catch (error) {
+      setNotification({ type: "error", message: error.message || "Failed to change password" });
+      setTimeout(() => setNotification(null), 3000);
+      throw error;
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-5">
       <Breadcrumb items={[roleLabels[user.role], "Profile"]} />
+
+      {/* Notification */}
+      {notification && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={classNames(
+            "rounded-xl px-4 py-3 text-sm font-medium",
+            notification.type === "success"
+              ? "bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400"
+              : "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400"
+          )}
+        >
+          {notification.message}
+        </motion.div>
+      )}
 
       {/* ── Hero header card ─────────────────────────────────── */}
       <motion.div
@@ -100,9 +156,29 @@ export default function Profile() {
 
         {/* profile actions */}
         <div className="border-t border-gray-100 dark:border-slate-800">
-          <ProfileActions onEdit={() => {}} onChangePassword={() => {}} />
+          <ProfileActions 
+            onEdit={() => setEditProfileOpen(true)} 
+            onChangePassword={() => setChangePasswordOpen(true)} 
+          />
         </div>
       </motion.div>
+
+      {/* Edit Profile Modal */}
+      <EditProfileModal
+        isOpen={editProfileOpen}
+        onClose={() => setEditProfileOpen(false)}
+        user={user}
+        onSave={handleEditProfile}
+        loading={actionLoading}
+      />
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={changePasswordOpen}
+        onClose={() => setChangePasswordOpen(false)}
+        onSave={handleChangePassword}
+        loading={actionLoading}
+      />
 
       {/* ── Contact & identity info ───────────────────────────── */}
       <SectionCard title="Personal Information" icon={FiUser}>

@@ -429,6 +429,53 @@ export class AuthController {
   }
 
   // ─────────────────────────────────────────────
+  // Update Current User Profile
+  // ─────────────────────────────────────────────
+
+  @Patch('me')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: 'Update current user profile',
+    description: 'Updates the profile of the currently authenticated user. Only firstName, lastName, and phone can be updated.',
+  })
+  @ApiBody({
+    schema: {
+      example: {
+        firstName: 'John',
+        lastName: 'Doe',
+        phone: '+1234567890',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Profile updated successfully',
+    schema: {
+      example: {
+        success: true,
+        statusCode: 200,
+        data: {
+          id: 'uuid',
+          email: 'john@example.com',
+          firstName: 'John',
+          lastName: 'Doe',
+          phone: '+1234567890',
+          role: 'ADMIN',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Validation error' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async updateMe(
+    @CurrentUser('sub') userId: string,
+    @Body() dto: { firstName?: string; lastName?: string; phone?: string },
+  ) {
+    return this.authService.updateProfile(userId, dto);
+  }
+
+  // ─────────────────────────────────────────────
   // Admin — Role management
   // ─────────────────────────────────────────────
 

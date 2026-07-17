@@ -559,6 +559,45 @@ export class AuthService {
   }
 
   // ─────────────────────────────────────────────
+  // Update Current User Profile
+  // ─────────────────────────────────────────────
+
+  async updateProfile(
+    userId: string,
+    data: { firstName?: string; lastName?: string; phone?: string },
+  ): Promise<AuthenticatedUser> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user || !(user as any).isActive) {
+      throw new NotFoundException('User not found');
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(data.firstName !== undefined && { firstName: data.firstName }),
+        ...(data.lastName !== undefined && { lastName: data.lastName }),
+        ...(data.phone !== undefined && { phone: data.phone }),
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        isEmailVerified: true,
+        isTwoFactorEnabled: true,
+        avatar: true,
+        phone: true,
+      },
+    });
+
+    return this.toAuthenticatedUser(updatedUser as any);
+  }
+
+  // ─────────────────────────────────────────────
   // Private helpers
   // ─────────────────────────────────────────────
 

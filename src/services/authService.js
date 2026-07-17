@@ -152,6 +152,14 @@ export async function changePassword({ currentPassword, newPassword, confirmPass
 }
 
 /**
+ * Update current user profile
+ */
+export async function updateMe(data) {
+  const response = await apiClient.patch('/auth/me', data);
+  return normalizeUser(unwrap(response));
+}
+
+/**
  * Verify email with token
  */
 export async function verifyEmail(token) {

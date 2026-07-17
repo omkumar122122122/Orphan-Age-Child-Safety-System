@@ -119,6 +119,21 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const updateUser = async (data) => {
+    try {
+      const updatedUser = await authService.updateMe(data);
+      setAuthState(prev => ({
+        ...prev,
+        user: updatedUser
+      }));
+      persistAuth(updatedUser, prev.token, prev.refreshToken);
+      return updatedUser;
+    } catch (error) {
+      const message = error.data?.message || error.message || 'Failed to update profile';
+      throw new Error(message);
+    }
+  };
+
   const value = useMemo(() => ({
     user: authState.user,
     token: authState.token,
@@ -127,6 +142,7 @@ export function AuthProvider({ children }) {
     login,
     logout,
     refreshAccessToken,
+    updateUser,
     isAuthenticated: Boolean(authState.user && authState.token)
   }), [authState.user, authState.token, authState.refreshToken, loading]);
 

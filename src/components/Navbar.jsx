@@ -4,6 +4,7 @@ import {
   FiMenu, FiBell, FiMoon, FiSun, FiChevronDown,
   FiLogOut, FiUser, FiSearch, FiX, FiCheck
 } from "react-icons/fi";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
 import notificationsService from "../services/notificationsService.js";
@@ -311,9 +312,13 @@ export default function Navbar({ title, onMenuClick }) {
                     </div>
                   </div>
                 </div>
-                <button className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-slate-600 transition hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800">
+                <Link
+                  to={`/${user?.role}/profile`}
+                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-slate-600 transition hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                  onClick={() => setProfileOpen(false)}
+                >
                   <FiUser className="h-4 w-4" /> My Profile
-                </button>
+                </Link>
                 <div className="mx-2 my-1 h-px bg-slate-100 dark:bg-slate-800" />
                 <button
                   onClick={logout}
