@@ -1398,6 +1398,7 @@ enum TrustScoreEvent {
   ACCOUNT_SUSPENDED
   MANUAL_ADJUSTMENT
   VISIT_COMPLETED
+  VISIT_COMPLETED
 }
 
 enum ChildGender {
@@ -1579,6 +1580,7 @@ enum LicenseStatus {
   UNDER_RENEWAL
   REVOKED
   PENDING
+  VERIFIED
   VERIFIED
 }
 
