@@ -11,6 +11,7 @@ import Button from "../components/Button";
 import Modal from "../components/Modal";
 import { classNames } from "../utils/formatters";
 import { parentsService } from "../services/parentsService";
+import { apiClient } from "../services/apiClient";
 import { useAuth } from "../context/AuthContext";
 
 /* ── Helpers ─────────────────────────────────────────────── */
@@ -134,6 +135,9 @@ export default function ParentKYC() {
   const [docsOpen,   setDocsOpen]   = useState(false);
   const [ackOpen,    setAckOpen]    = useState(false);
 
+  /* upload state */
+  const [uploadingReport, setUploadingReport] = useState(false);
+
   useEffect(() => {
     loadKycStatus();
   }, []);
@@ -167,6 +171,42 @@ export default function ParentKYC() {
     } catch (err) {
       alert(err.message);
     }
+  }
+
+  async function handleHealthReportUpload(file) {
+    if (!kyc.childId) {
+      alert('No child linked to your profile. Health reports require a linked child.');
+      return;
+    }
+
+    setUploadingReport(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('reportDate', new Date().toISOString());
+      formData.append('reportedBy', 'Parent');
+      
+      // Call health report upload endpoint (to be implemented in backend)
+      const response = await apiClient.post(`/children/${kyc.childId}/health-reports`, formData);
+      alert('Health report uploaded successfully!');
+      setReportOpen(false);
+      await loadKycStatus();
+    } catch (err) {
+      alert(err?.message || 'Failed to upload health report');
+    } finally {
+      setUploadingReport(false);
+    }
+  }
+
+  function handleAcknowledgementDownload() {
+    // Check if adoption is completed and has acknowledgement
+    if (!kyc.adoptionRecord || !kyc.adoptionRecord.adoptionCertUrl) {
+      alert('No adoption acknowledgement available. Acknowledgement documents are generated after adoption completion.');
+      return;
+    }
+
+    // Open the acknowledgement document in new tab
+    window.open(kyc.adoptionRecord.adoptionCertUrl, '_blank');
   }
 
   if (loading) return (
@@ -217,7 +257,7 @@ export default function ParentKYC() {
           <div className="flex shrink-0 flex-wrap gap-2">
             <Button icon={FiRefreshCw} onClick={() => setKycOpen(true)} disabled={kyc.kycStatus === 'APPROVED'}>Submit KYC</Button>
             <Button icon={FiUpload} variant="secondary" onClick={() => setReportOpen(true)}>Upload Report</Button>
-            <Button icon={FiDownload} variant="secondary" onClick={() => setAckOpen(true)}>Acknowledgement</Button>
+            <Button icon={FiDownload} variant="secondary" onClick={handleAcknowledgementDownload}>Acknowledgement</Button>
           </div>
         </div>
       </motion.div>
@@ -249,14 +289,20 @@ export default function ParentKYC() {
         </div>
         <div className="space-y-6">
           <RemindersPanel kycDays={kycDays} reportDays={reportDays} kycUrg={kycUrg} reportUrg={reportUrg} />
-          <HealthReportSection kyc={kyc} reportStatus={kyc.healthReportStatus} reportDays={reportDays} />
+          <HealthReportSection kyc={kyc} reportStatus={kyc.healthReportStatus} reportDays={reportDays} onUploadReport={() => setReportOpen(true)} />
         </div>
       </div>
 
       {/* Modals */}
       <SubmitKycModal open={kycOpen} onClose={() => setKycOpen(false)} onConfirm={handleKycSubmit} />
+      <UploadHealthReportModal 
+        open={reportOpen} 
+        onClose={() => setReportOpen(false)} 
+        onUpload={handleHealthReportUpload}
+        uploading={uploadingReport}
+        childName={kyc.childName}
+      />
       <ViewDocsModal open={docsOpen} onClose={() => setDocsOpen(false)} docs={kyc.documents} />
-      {/* simplified modals for this iteration */}
     </div>
   );
 }
@@ -393,7 +439,7 @@ function RemindersPanel({ kycDays, reportDays, kycUrg, reportUrg }) {
   );
 }
 
-function HealthReportSection({ kyc, reportStatus, reportDays }) {
+function HealthReportSection({ kyc, reportStatus, reportDays, onUploadReport }) {
   return (
      <div className="p-5 rounded-2xl border border-emerald-100 bg-emerald-50/30 dark:border-emerald-500/20 dark:bg-emerald-500/5">
         <div className="flex items-center gap-2 mb-3">
@@ -406,7 +452,7 @@ function HealthReportSection({ kyc, reportStatus, reportDays }) {
               <p className="text-[10px] font-bold text-slate-400 uppercase">Status</p>
               <p className="text-xs font-bold">{reportStatus}</p>
            </div>
-           <Button size="sm" variant="secondary" icon={FiUpload}>Upload</Button>
+           <Button size="sm" variant="secondary" icon={FiUpload} onClick={onUploadReport}>Upload</Button>
         </div>
      </div>
   );
@@ -463,3 +509,140 @@ function ViewDocsModal({ open, onClose, docs }) {
     </div>
   );
 }
+
+function UploadHealthReportModal({ open, onClose, onUpload, uploading, childName }) {
+  const [file, setFile] = useState(null);
+  const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
+  const [notes, setNotes] = useState("");
+
+  const handleFileSelect = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      // Validate file type
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+      if (!allowedTypes.includes(selectedFile.type)) {
+        alert('Invalid file type. Please upload PDF, JPG, or PNG files only.');
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (selectedFile.size > 5 * 1024 * 1024) {
+        alert('File size exceeds 5MB. Please upload a smaller file.');
+        return;
+      }
+      
+      setFile(selectedFile);
+    }
+  };
+
+  const handleSubmit = () => {
+    if (!file) {
+      alert('Please select a file to upload.');
+      return;
+    }
+    onUpload(file);
+  };
+
+  const handleClose = () => {
+    if (!uploading) {
+      setFile(null);
+      setNotes("");
+      onClose();
+    }
+  };
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+       <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-md w-full shadow-2xl">
+          <div className="flex justify-between items-center mb-4">
+             <div className="flex items-center gap-2">
+                <FiHeart className="text-emerald-600 h-5 w-5" />
+                <h3 className="text-lg font-bold">Upload Health Report</h3>
+             </div>
+             <button onClick={handleClose} disabled={uploading} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50">
+                <FiX className="h-5 w-5" />
+             </button>
+          </div>
+
+          {childName && (
+            <div className="mb-4 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20">
+               <p className="text-xs text-emerald-800 dark:text-emerald-300">
+                  <FiUser className="inline h-3 w-3 mr-1" />
+                  Uploading report for: <span className="font-bold">{childName}</span>
+               </p>
+            </div>
+          )}
+
+          <div className="space-y-4">
+             <div>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                   Report Date
+                </label>
+                <input 
+                   type="date" 
+                   value={reportDate}
+                   onChange={(e) => setReportDate(e.target.value)}
+                   max={new Date().toISOString().split('T')[0]}
+                   className="input-field w-full"
+                   disabled={uploading}
+                />
+             </div>
+
+             <div>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                   Health Report Document
+                </label>
+                <div className="flex items-center gap-3">
+                   <label className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer hover:border-civic-400 hover:bg-civic-50/50 dark:hover:bg-civic-500/5 transition">
+                      <FiUpload className="h-4 w-4 text-slate-400" />
+                      <span className="text-sm text-slate-600 dark:text-slate-400">
+                         {file ? file.name : 'Choose file...'}
+                      </span>
+                      <input 
+                         type="file" 
+                         accept=".pdf,.jpg,.jpeg,.png"
+                         onChange={handleFileSelect}
+                         className="hidden"
+                         disabled={uploading}
+                      />
+                   </label>
+                </div>
+                <p className="mt-1.5 text-xs text-slate-400">
+                   Accepted formats: PDF, JPG, PNG (Max 5MB)
+                </p>
+             </div>
+
+             <div>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                   Notes (Optional)
+                </label>
+                <textarea 
+                   className="input-field w-full h-20 resize-none" 
+                   placeholder="Add any additional notes about this health report..."
+                   value={notes}
+                   onChange={(e) => setNotes(e.target.value)}
+                   disabled={uploading}
+                />
+             </div>
+          </div>
+
+          <div className="flex gap-3 mt-6">
+             <Button variant="secondary" fullWidth onClick={handleClose} disabled={uploading}>
+                Cancel
+             </Button>
+             <Button 
+                fullWidth 
+                onClick={handleSubmit} 
+                disabled={!file || uploading}
+                icon={uploading ? FiLoader : FiUpload}
+             >
+                {uploading ? 'Uploading...' : 'Upload Report'}
+             </Button>
+          </div>
+       </div>
+    </div>
+  );
+}
+
