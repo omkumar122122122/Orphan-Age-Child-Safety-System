@@ -4,11 +4,9 @@
  * Frontend API layer for the AI chat assistant.
  * Communicates with the NestJS backend at /chat endpoint.
  * The Gemini API key is never exposed to the browser.
- *
- * Base URL: http://localhost:3000 (NestJS backend)
  */
 
-const BASE_URL = "http://localhost:3000";
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1";
 
 /**
  * @typedef {Object} ConversationTurn
@@ -37,7 +35,10 @@ export async function sendChatMessage({ message, conversation = [], childId = nu
 
   try {
     // Get JWT token from localStorage (set by AuthContext after login)
-    const token = localStorage.getItem('accessToken');
+    // Check both localStorage and sessionStorage for the token
+    const token = localStorage.getItem('child_safety_token') || 
+                  sessionStorage.getItem('child_safety_token');
+    
     if (!token) {
       throw new Error('Authentication required. Please log in.');
     }
