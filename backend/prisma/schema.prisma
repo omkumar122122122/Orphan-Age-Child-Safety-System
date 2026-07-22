@@ -128,12 +128,12 @@ model AuditLog {
   userId     String?
   action     String
   resource   String?
+  resourceId String?
   details    Json?
   ipAddress  String?
   userAgent  String?
   success    Boolean  @default(true)
   createdAt  DateTime @default(now())
-  resourceId String?
   user       User?    @relation("UserAuditLogs", fields: [userId], references: [id])
 
   @@index([userId])
@@ -188,14 +188,14 @@ model Orphanage {
   isFeatured                   Boolean            @default(false)
   gstNumber                    String?
   panNumber                    String?
-  createdAt                    DateTime           @default(now())
-  updatedAt                    DateTime           @updatedAt
-  deletedAt                    DateTime?
   emergencyContactPerson       String?
   emergencyContactMobile       String?
   emergencyContactEmail        String?
   emergencyContactRelationship String?
   facilities                   Json?
+  createdAt                    DateTime           @default(now())
+  updatedAt                    DateTime           @updatedAt
+  deletedAt                    DateTime?
   alerts                       Alert[]            @relation("OrphanageAlerts")
   children                     Child[]
   licenses                     OrphanageLicense[]
@@ -261,6 +261,7 @@ model Parent {
   id                       String                   @id @default(uuid())
   userId                   String                   @unique
   dateOfBirth              DateTime?
+  gender                   Gender?
   nationality              String                   @default("Indian")
   religion                 String?
   maritalStatus            MaritalStatus?
@@ -280,6 +281,7 @@ model Parent {
   annualIncome             Float?
   incomeRange              IncomeRange?
   incomeVerified           Boolean                  @default(false)
+  houseOwnership           HouseOwnership?
   numberOfRooms            Int?
   hasChildRoom             Boolean                  @default(false)
   hasChronicIllness        Boolean                  @default(false)
@@ -288,6 +290,7 @@ model Parent {
   disabilityDetails        String?
   hasHealthInsurance       Boolean                  @default(false)
   preferredChildAge        String?
+  preferredGender          GenderPreference?
   preferredCount           Int                      @default(1)
   openToSpecialNeeds       Boolean                  @default(false)
   specialNeedsDetails      String?
@@ -303,6 +306,7 @@ model Parent {
   trustScore               Int                      @default(0)
   trustScoreBreakdown      Json?
   lastTrustScoreUpdate     DateTime?
+  kycStatus                KycStatus                @default(PENDING)
   kycSubmittedAt           DateTime?
   kycApprovedAt            DateTime?
   kycRejectionReason       String?
@@ -314,10 +318,6 @@ model Parent {
   createdAt                DateTime                 @default(now())
   updatedAt                DateTime                 @updatedAt
   deletedAt                DateTime?
-  gender                   Gender?
-  houseOwnership           HouseOwnership?
-  preferredGender          GenderPreference?
-  kycStatus                KycStatus                @default(PENDING)
   adoptionRecords          AdoptionRecord[]
   alerts                   Alert[]                  @relation("ParentAlerts")
   caseAssignments          CaseAssignment[]
@@ -393,15 +393,15 @@ model FamilyMember {
   name          String
   relationship  RelationshipType
   dateOfBirth   DateTime?
+  gender        Gender?
   occupation    String?
   annualIncome  Float?
   isDependent   Boolean          @default(false)
   contactPhone  String?
+  aadhaarNumber String?
   notes         String?
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
-  aadhaarNumber String?
-  gender        Gender?
   parent        Parent           @relation(fields: [parentId], references: [id], onDelete: Cascade)
 
   @@index([parentId])
@@ -535,7 +535,10 @@ model Child {
   entrySource             String?
   referredBy              String?
   fatherName              String?
+  fatherStatus            ParentStatus?
   motherName              String?
+  motherStatus            ParentStatus?
+  parentsMaritalStatus    MaritalStatus?
   familyBackground        String?
   foundLocation           String?
   foundDistrict           String?
@@ -547,9 +550,6 @@ model Child {
   createdAt               DateTime            @default(now())
   updatedAt               DateTime            @updatedAt
   deletedAt               DateTime?
-  fatherStatus            ParentStatus?
-  motherStatus            ParentStatus?
-  parentsMaritalStatus    MaritalStatus?
   adoptionRecord          AdoptionRecord?
   aiRiskScores            AIRiskScore[]
   aiSessions              AISession[]
@@ -661,11 +661,11 @@ model AttendanceRecord {
   markedById        String?
   verifiedBy        String?
   isVerified        Boolean          @default(false)
+  verifiedById      String?
   biometricVerified Boolean          @default(false)
   faceMatchScore    Float?
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
-  verifiedById      String?
   child             Child            @relation(fields: [childId], references: [id], onDelete: Cascade)
   markedBy          User?            @relation("AttendanceMarkedBy", fields: [markedById], references: [id])
   verifiedByUser    User?            @relation("AttendanceVerifiedBy", fields: [verifiedById], references: [id])
@@ -933,58 +933,58 @@ model CaseAssignment {
 
 model VisitRequest {
   id                     String             @id @default(uuid())
+  requestId              String             @unique
   parentId               String
-  childId                String?
   orphanageId            String
-  visitType              VisitType          @default(REGULAR_VISIT)
+  childId                String?
+  visitDate              DateTime           @db.Date
+  visitTime              String
+  purpose                String
+  reason                 String?
+  adoptionTimeline       String?
+  visitorsCount          Int                @default(1)
+  relationshipOfVisitors String?
+  specialRequirements    String?
+  familyBackground       String?
   status                 VisitRequestStatus @default(PENDING)
-  adoptionRecordId       String?
+  visitType              VisitType          @default(REGULAR_VISIT)
+  riskLevel              RiskLevel          @default(LOW)
+  trustScore             Int                @default(0)
+  faceMatch              Int                @default(0)
+  documentAuthenticity   String?
+  behaviourPrediction    String?
+  adoptionReadiness      String?
+  recommendation         String?
+  verification           Json?
+  meetingRoom            String?
+  assignedStaff          String?
+  qrStatus               String             @default("Pending")
+  qrCode                 String?
+  checkInTime            DateTime?
+  checkOutTime           DateTime?
+  expectedArrivalTime    String?
+  uploadedDocuments      String[]
+  missingDocuments       String[]
   reviewedById           String?
+  reviewedAt             DateTime?
   approvalNotes          String?
   rejectionReason        String?
+  rejectionComments      String?
+  originalVisitDate      DateTime?          @db.Date
+  originalVisitTime      String?
+  rescheduleReason       String?
+  rescheduleCount        Int                @default(0)
   visitSupervisorId      String?
   completedAt            DateTime?
   noShowReason           String?
+  postVisitFeedback      Json?
+  parentNotified         Boolean            @default(false)
+  notifiedAt             DateTime?
+  instructions           String?
+  adoptionRecordId       String?
+  agreedToRules          Boolean            @default(false)
   createdAt              DateTime           @default(now())
   updatedAt              DateTime           @updatedAt
-  adoptionReadiness      String?
-  adoptionTimeline       String?
-  agreedToRules          Boolean            @default(false)
-  assignedStaff          String?
-  behaviourPrediction    String?
-  checkInTime            DateTime?
-  checkOutTime           DateTime?
-  documentAuthenticity   String?
-  expectedArrivalTime    String?
-  faceMatch              Int                @default(0)
-  familyBackground       String?
-  instructions           String?
-  meetingRoom            String?
-  missingDocuments       String[]
-  notifiedAt             DateTime?
-  originalVisitDate      DateTime?          @db.Date
-  originalVisitTime      String?
-  parentNotified         Boolean            @default(false)
-  postVisitFeedback      Json?
-  purpose                String
-  qrCode                 String?
-  qrStatus               String             @default("Pending")
-  reason                 String?
-  recommendation         String?
-  rejectionComments      String?
-  relationshipOfVisitors String?
-  requestId              String             @unique
-  rescheduleCount        Int                @default(0)
-  rescheduleReason       String?
-  reviewedAt             DateTime?
-  riskLevel              RiskLevel          @default(LOW)
-  specialRequirements    String?
-  trustScore             Int                @default(0)
-  uploadedDocuments      String[]
-  verification           Json?
-  visitDate              DateTime           @db.Date
-  visitTime              String
-  visitorsCount          Int                @default(1)
   child                  Child?             @relation(fields: [childId], references: [id])
   orphanage              Orphanage          @relation(fields: [orphanageId], references: [id], onDelete: Cascade)
   parent                 Parent             @relation(fields: [parentId], references: [id], onDelete: Cascade)
@@ -1395,10 +1395,9 @@ enum TrustScoreEvent {
   INTERVIEW_FAILED
   REFERENCE_VERIFIED
   PREVIOUS_ADOPTION
+  VISIT_COMPLETED
   ACCOUNT_SUSPENDED
   MANUAL_ADJUSTMENT
-  VISIT_COMPLETED
-  VISIT_COMPLETED
 }
 
 enum ChildGender {
@@ -1581,7 +1580,6 @@ enum LicenseStatus {
   REVOKED
   PENDING
   VERIFIED
-  VERIFIED
 }
 
 enum VisitRequestStatus {
@@ -1669,6 +1667,7 @@ enum AlertType {
   UNAUTHORIZED_ACCESS
   ADOPTION_BLOCKED
   MANUAL
+  KYC_VERIFICATION_FAILED
 }
 
 enum AlertStatus {

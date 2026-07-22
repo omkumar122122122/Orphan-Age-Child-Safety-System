@@ -581,7 +581,16 @@ export class ParentsService {
   async submitKyc(userId: string, dto: SubmitKycDto = {}): Promise<{ message: string; kycStatus: string }> {
     const parent = await this.prisma.parent.findUnique({
       where: { userId },
-      include: { documents: true },
+      include: { 
+        documents: true,
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
     });
 
     if (!parent || parent.deletedAt) {
@@ -615,6 +624,32 @@ export class ParentsService {
         updatedAt: new Date(),
       },
     });
+
+    // Send notification to all admins about new KYC submission
+    try {
+      const adminUsers = await this.prisma.user.findMany({
+        where: { role: Role.ADMIN, isActive: true },
+        select: { id: true },
+      });
+      
+      if (adminUsers.length > 0) {
+        const parentName = `${parent.user.firstName} ${parent.user.lastName}`.trim();
+        await this.notificationsService.sendBulkNotifications(
+          adminUsers.map((admin) => admin.id),
+          NotificationType.KYC_STATUS_CHANGED,
+          'New KYC Submitted',
+          `${parentName} has submitted KYC documents for verification. Please review the submission.`,
+          {
+            relatedEntityType: 'PARENT',
+            relatedEntityId: parent.id,
+          },
+        );
+        this.logger.log(`KYC submission notification sent to ${adminUsers.length} admin(s) for parent ${parent.id}`);
+      }
+    } catch (error) {
+      this.logger.error(`Failed to send KYC submission notification for parent ${parent.id}:`, error);
+      // Don't fail the KYC submission if notification fails
+    }
 
     this.logger.log(`KYC submitted for parent: ${parent.id}`);
     return { message: 'KYC submitted successfully for review', kycStatus: 'SUBMITTED' };
@@ -939,21 +974,47 @@ export class ParentsService {
       }
     });
 
+    const parentName = `${parent.user.firstName} ${parent.user.lastName}`.trim();
+
     // Send notification to the parent
     try {
       await this.notificationsService.sendNotification(
         parent.userId,
         NotificationType.KYC_STATUS_CHANGED,
-        'Parent Registration Approved',
-        `Your parent registration has been approved by the admin. You can now access all parent features and submit visit requests to orphanages.`,
+        'KYC Approved',
+        `Your KYC verification has been approved. You can now access all parent features and submit visit requests to orphanages.`,
         {
           relatedEntityType: 'PARENT',
           relatedEntityId: parent.id,
         },
       );
-      this.logger.log(`Notification sent to parent ${parent.id} for approval`);
+      this.logger.log(`Approval notification sent to parent ${parent.id}`);
     } catch (error) {
-      this.logger.error(`Failed to send notification to parent ${parent.id}:`, error);
+      this.logger.error(`Failed to send approval notification to parent ${parent.id}:`, error);
+    }
+
+    // Send notification to all admins about successful verification
+    try {
+      const adminUsers = await this.prisma.user.findMany({
+        where: { role: Role.ADMIN, isActive: true },
+        select: { id: true },
+      });
+      
+      if (adminUsers.length > 0) {
+        await this.notificationsService.sendBulkNotifications(
+          adminUsers.map((admin) => admin.id),
+          NotificationType.KYC_STATUS_CHANGED,
+          'Parent Verified',
+          `${parentName} has been successfully verified and approved. KYC status updated to APPROVED.`,
+          {
+            relatedEntityType: 'PARENT',
+            relatedEntityId: parent.id,
+          },
+        );
+        this.logger.log(`Parent approval notification sent to ${adminUsers.length} admin(s) for parent ${parent.id}`);
+      }
+    } catch (error) {
+      this.logger.error(`Failed to send admin notification for parent approval ${parent.id}:`, error);
     }
 
     this.logger.log(`Parent approved: ${id}`);
@@ -961,20 +1022,61 @@ export class ParentsService {
 
 
   async rejectParent(id: string, reason: string, adminId: string): Promise<void> {
-    const parent = await this.prisma.parent.findUnique({ where: { id } });
+    const parent = await this.prisma.parent.findUnique({ 
+      where: { id },
+      include: {
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+    });
 
     if (!parent) {
       throw new NotFoundException('Parent not found');
     }
 
-    await this.prisma.parent.update({
-      where: { id },
-      data: {
-        verificationStatus: 'REJECTED' as any,
-        rejectionReason: reason,
-        verifiedById: adminId,
-        updatedAt: new Date(),
-      },
+    const parentName = `${parent.user.firstName} ${parent.user.lastName}`.trim();
+
+    await this.prisma.$transaction(async (tx) => {
+      // Update parent status
+      await tx.parent.update({
+        where: { id },
+        data: {
+          verificationStatus: 'REJECTED' as any,
+          kycStatus: 'REJECTED' as any,
+          rejectionReason: reason,
+          kycRejectionReason: reason,
+          verifiedById: adminId,
+          updatedAt: new Date(),
+        },
+      });
+
+      // Create HIGH severity alert for KYC rejection
+      await tx.alert.create({
+        data: {
+          severity: 'HIGH' as any,
+          type: 'KYC_VERIFICATION_FAILED' as any,
+          status: 'OPEN' as any,
+          title: 'KYC Verification Rejected',
+          details: `Parent ${parentName} (${parent.user.email}) KYC verification was rejected. Reason: ${reason}`,
+          parentId: parent.id,
+          createdById: adminId,
+          isAutoGenerated: false,
+          sourceService: 'ParentsService',
+          metadata: {
+            parentId: parent.id,
+            parentName,
+            parentEmail: parent.user.email,
+            rejectionReason: reason,
+            rejectedBy: adminId,
+            rejectedAt: new Date().toISOString(),
+          },
+        },
+      });
     });
 
     // Send notification to the parent
@@ -982,19 +1084,43 @@ export class ParentsService {
       await this.notificationsService.sendNotification(
         parent.userId,
         NotificationType.KYC_STATUS_CHANGED,
-        'Parent Registration Rejected',
-        `Your parent registration has been rejected. Reason: ${reason}. Please contact support for more information.`,
+        'KYC Rejected',
+        `Your KYC verification has been rejected. Reason: ${reason}. Please update your documents and resubmit or contact support for assistance.`,
         {
           relatedEntityType: 'PARENT',
           relatedEntityId: parent.id,
         },
       );
-      this.logger.log(`Notification sent to parent ${parent.id} for rejection`);
+      this.logger.log(`Rejection notification sent to parent ${parent.id}`);
     } catch (error) {
-      this.logger.error(`Failed to send notification to parent ${parent.id}:`, error);
+      this.logger.error(`Failed to send rejection notification to parent ${parent.id}:`, error);
     }
 
-    this.logger.log(`Parent rejected: ${id}`);
+    // Send notification to all admins about KYC rejection
+    try {
+      const adminUsers = await this.prisma.user.findMany({
+        where: { role: Role.ADMIN, isActive: true },
+        select: { id: true },
+      });
+      
+      if (adminUsers.length > 0) {
+        await this.notificationsService.sendBulkNotifications(
+          adminUsers.map((admin) => admin.id),
+          NotificationType.KYC_STATUS_CHANGED,
+          'KYC Verification Failed',
+          `KYC verification failed for ${parentName}. Reason: ${reason}. A high-priority alert has been created.`,
+          {
+            relatedEntityType: 'PARENT',
+            relatedEntityId: parent.id,
+          },
+        );
+        this.logger.log(`KYC rejection notification sent to ${adminUsers.length} admin(s) for parent ${parent.id}`);
+      }
+    } catch (error) {
+      this.logger.error(`Failed to send admin notification for parent rejection ${parent.id}:`, error);
+    }
+
+    this.logger.log(`Parent rejected: ${id} | Reason: ${reason} | Alert created`);
   }
 
   private calculateProfileCompletion(dto: CreateParentDto): number {
